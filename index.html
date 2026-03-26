@@ -1,0 +1,4344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Ticked</title>
+
+    <!-- PWA -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ticked">
+    <meta name="theme-color" content="#0d0f14">
+    <link rel="manifest" href="manifest.json">
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0d0f14;
+            --surface: #161920;
+            --surface2: #1e2230;
+            --border: #2a2f42;
+            --accent: #00e5a0;
+            --accent-dim: rgba(0, 229, 160, 0.12);
+            --accent-glow: rgba(0, 229, 160, 0.35);
+            --text: #e8ecf5;
+            --text-muted: #6b748f;
+            --text-dim: #9aa3be;
+            --danger: #ff5a6e;
+            --danger-dim: rgba(255, 90, 110, 0.12);
+            --danger-border: rgba(255, 90, 110, 0.55);
+            --custom: #f5a623;
+            --custom-dim: rgba(245, 166, 35, 0.10);
+            --custom-border: rgba(245, 166, 35, 0.55);
+            --edited: #a78bfa;
+            --edited-dim: rgba(167, 139, 250, 0.10);
+            --edited-border: rgba(167, 139, 250, 0.55);
+            --today-bg: rgba(0, 229, 160, 0.04);
+            --today-border: rgba(0, 229, 160, 0.28);
+            --mono: 'IBM Plex Mono', monospace;
+            --sans: 'Syne', sans-serif;
+            --radius: 10px;
+            --transition: 0.18s ease;
+        }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            padding-top: max(20px, env(safe-area-inset-top));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            padding-left: max(20px, env(safe-area-inset-left));
+            padding-right: max(20px, env(safe-area-inset-right));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        body.sheet-open { overflow: hidden; }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 680px;
+            position: relative;
+            z-index: 1;
+            padding-bottom: 60px;
+        }
+
+        /* ── Header ── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-top: 16px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-dim);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 0 16px var(--accent-glow);
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: clamp(1.2rem, 4vw, 1.55rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            line-height: 1.1;
+        }
+
+        h1 span { color: var(--accent); }
+
+        .entry-count-badge {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 10px;
+            white-space: nowrap;
+        }
+
+        /* ── Tab navigation ── */
+        .tab-nav {
+            display: flex;
+            gap: 2px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 3px;
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            border-radius: 7px;
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            padding: 9px 16px;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+        }
+
+        .tab-btn:hover { color: var(--text-dim); }
+
+        .tab-btn.active {
+            background: var(--accent-dim);
+            color: var(--accent);
+            box-shadow: 0 0 12px var(--accent-dim);
+        }
+
+        .tab-btn .tab-count {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1px 6px;
+        }
+
+        .tab-btn.active .tab-count {
+            background: rgba(0,229,160,0.08);
+            border-color: rgba(0,229,160,0.25);
+            color: var(--accent);
+        }
+
+        /* ── Color Palette ── */
+        .palette-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .palette-label {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .palette-swatches {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .palette-swatch {
+            position: relative;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.12);
+            cursor: pointer;
+            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+            flex-shrink: 0;
+        }
+
+        .palette-swatch:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 12px rgba(255,255,255,0.15);
+        }
+
+        .palette-swatch input[type="color"] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+        }
+
+        /* ── Input card ── */
+        .input-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .input-card:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .input-wrap { flex: 1; position: relative; }
+
+        input[type="text"], input[type="date"], input[type="time"] {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 16px;
+            padding: 12px 14px;
+            outline: none;
+            transition: border-color var(--transition);
+            -webkit-appearance: none;
+        }
+
+        input[type="date"], input[type="time"] {
+            color-scheme: dark;
+            cursor: pointer;
+        }
+
+        input[type="text"]::placeholder { color: var(--text-muted); }
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        input[type="time"]:focus { border-color: var(--accent); }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+            flex-shrink: 0;
+        }
+
+        .add-btn {
+            background: var(--accent);
+            color: #0d0f14;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 12px 22px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .add-btn:hover {
+            opacity: 0.88;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        .add-btn:active { transform: translateY(0); }
+
+        /* ── Custom entry button ── */
+        .custom-trigger-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 16px;
+            width: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .custom-trigger-btn:hover {
+            border-color: var(--custom);
+            color: var(--custom);
+            background: var(--custom-dim);
+            box-shadow: 0 0 10px rgba(245,166,35,0.2);
+        }
+
+        .custom-trigger-btn.active {
+            border-color: var(--custom);
+            color: var(--custom);
+            background: var(--custom-dim);
+        }
+
+        /* ── Custom entry panel ── */
+        .custom-panel {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.28s ease, opacity 0.22s ease, margin-top 0.22s ease;
+            margin-top: 0;
+        }
+
+        .custom-panel.open {
+            max-height: 240px;
+            opacity: 1;
+            margin-top: 14px;
+        }
+
+        .custom-panel-inner {
+            border-top: 1px solid var(--custom-border);
+            padding-top: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .custom-panel-label {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--custom);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .custom-panel-label::before {
+            content: '✦';
+            font-size: 9px;
+        }
+
+        .custom-fields {
+            display: flex;
+            gap: 10px;
+        }
+
+        .custom-fields input[type="date"],
+        .custom-fields input[type="time"] {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 0.82rem;
+        }
+
+        .custom-add-btn {
+            background: var(--custom-dim);
+            color: var(--custom);
+            border: 1px solid var(--custom-border);
+            border-radius: 8px;
+            font-family: var(--sans);
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 10px 18px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+
+        .custom-add-btn:hover {
+            background: rgba(245, 166, 35, 0.18);
+            box-shadow: 0 0 12px rgba(245,166,35,0.2);
+        }
+
+        .hint {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        /* ── Section header ── */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 0 2px;
+        }
+
+        .section-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .section-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── Import / Export buttons (icon-only) ── */
+        .icon-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+
+        .icon-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .icon-btn svg { flex-shrink: 0; }
+
+        .icon-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            box-shadow: 0 0 8px var(--accent-dim);
+        }
+
+        /* Clear button */
+        .clear-btn {
+            background: none;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+            height: 28px;
+            display: flex;
+            align-items: center;
+        }
+
+        .clear-btn:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: var(--danger-dim);
+        }
+
+        /* Persistence info button */
+        .info-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            cursor: default;
+        }
+
+        .question-mark {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background var(--transition), border-color var(--transition);
+            flex-shrink: 0;
+            font-family: var(--mono);
+        }
+
+        .question-mark:hover {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+        }
+
+        .tooltip {
+            position: fixed;
+            width: min(300px, calc(100vw - 24px));
+            background: var(--surface2);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            line-height: 1.6;
+            color: var(--text-dim);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.18s ease, transform 0.18s ease;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .tooltip p + p { margin-top: 8px; }
+        .tooltip strong { color: var(--text); }
+
+        .tooltip-title {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ── Sort controls ── */
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sort-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            padding: 4px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+
+        .sort-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .sort-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .sort-dir {
+            font-size: 10px;
+            line-height: 1;
+            display: inline-block;
+            transition: transform 0.18s ease;
+        }
+
+        .sort-sep {
+            color: var(--border);
+            font-size: 0.7rem;
+            user-select: none;
+        }
+
+        /* ── Toolbar row ── */
+        .toolbar-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 0 2px;
+            flex-wrap: wrap;
+            row-gap: 8px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 14px;
+            background: var(--border);
+            margin: 0 3px;
+        }
+
+        .filter-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .filter-toggle-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            padding: 0 10px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+
+        .filter-toggle-btn:hover,
+        .filter-toggle-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .filter-toggle-btn .chevron {
+            display: inline-block;
+            transition: transform 0.22s ease;
+            font-size: 10px;
+        }
+
+        .filter-toggle-btn.active .chevron {
+            transform: rotate(180deg);
+        }
+
+        .filter-active-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent-glow);
+            display: none;
+        }
+
+        .filter-active-dot.visible { display: block; }
+
+        /* Filter panel */
+        .filter-panel {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.3s ease, opacity 0.22s ease, margin-bottom 0.22s ease;
+            margin-bottom: 0;
+        }
+
+        .filter-panel.open {
+            max-height: 200px;
+            opacity: 1;
+            margin-bottom: 14px;
+        }
+
+        .filter-panel-inner {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-search-wrap {
+            flex: 1;
+            position: relative;
+        }
+
+        .filter-search-wrap svg {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .filter-search-wrap input {
+            padding-left: 34px !important;
+        }
+
+        .filter-date-wrap { flex-shrink: 0; }
+
+        .filter-date-wrap input[type="date"] {
+            padding: 11px 12px;
+            font-size: 0.82rem;
+            width: 160px;
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip-label {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+        }
+
+        .filter-chip {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            padding: 3px 10px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .filter-chip:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .filter-chip.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .filter-chip.custom-chip.active {
+            background: var(--custom-dim);
+            border-color: var(--custom-border);
+            color: var(--custom);
+        }
+
+        .filter-chip.edited-chip.active {
+            background: var(--edited-dim);
+            border-color: var(--edited-border);
+            color: var(--edited);
+        }
+
+        .filter-chip.overdue-chip.active {
+            background: var(--danger-dim);
+            border-color: var(--danger-border);
+            color: var(--danger);
+        }
+
+        .filter-clear-link {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            margin-left: auto;
+            transition: color var(--transition);
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .filter-clear-link:hover { color: var(--danger); }
+
+        .results-count-row {
+            min-height: 20px;
+            margin-bottom: 8px;
+            padding: 0 2px;
+        }
+
+        /* Results count */
+        .results-count {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .results-count.visible { display: block; }
+
+        /* ── Entry list ── */
+        .entry-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* Swipe container — clips overflow, holds delete/action zone behind */
+        .entry-wrap {
+            position: relative;
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        /* Delete zone revealed behind the card on LEFT swipe */
+        .entry-delete-zone {
+            position: absolute;
+            inset: 0;
+            background: #1a1220;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 22px;
+            border-radius: var(--radius);
+            pointer-events: none;
+            transition: background 0.18s ease;
+        }
+
+        .entry-delete-zone svg {
+            opacity: 0;
+            transform: scale(0.6) rotate(-15deg);
+            transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+            color: #7a3a4a;
+        }
+
+        .entry-wrap.swiping-left .entry-delete-zone {
+            background: #1e1018;
+        }
+
+        .entry-wrap.swiping-left .entry-delete-zone svg {
+            opacity: 0.6;
+            transform: scale(0.9) rotate(0deg);
+            color: #c4566a;
+        }
+
+        .entry-wrap.will-delete .entry-delete-zone {
+            background: #2a0d18;
+        }
+
+        .entry-wrap.will-delete .entry-delete-zone svg {
+            opacity: 1;
+            transform: scale(1.1) rotate(0deg);
+            color: #e8748a;
+        }
+
+        /* ── Red aura / glow on left-swipe (intensifies with distance) ── */
+        .entry-wrap.swiping-left > .entry-item {
+            --g: var(--swipe-glow, 0);
+            box-shadow:
+                0 0 calc(6px + 12px * var(--g))  calc(1px + 3px * var(--g)) rgba(232, 116, 138, calc(0.08 + 0.30 * var(--g))),
+                0 0 calc(14px + 26px * var(--g)) calc(2px + 6px * var(--g)) rgba(232, 116, 138, calc(0.04 + 0.14 * var(--g)));
+            border-color: rgba(232, 116, 138, calc(0.15 + 0.40 * var(--g)));
+            transition: box-shadow 0.06s linear, border-color 0.06s linear;
+        }
+
+        .entry-wrap.will-delete > .entry-item {
+            box-shadow: 0 0 18px 5px rgba(232, 116, 138, 0.40),
+                        0 0 40px 10px rgba(232, 116, 138, 0.18);
+            border-color: rgba(232, 116, 138, 0.60);
+        }
+
+        /* ── Confirm-delete overlay (appears ON TOP of the card) ── */
+        .confirm-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            border-radius: var(--radius);
+            background: rgba(42, 13, 24, 0.92);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .entry-wrap.confirm-delete .confirm-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .confirm-overlay .confirm-delete-btn {
+            background: #c4566a;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 8px 18px;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.1s ease;
+            animation: confirmBtnPulse 1.5s ease-in-out infinite;
+        }
+
+        .confirm-overlay .confirm-delete-btn:active {
+            transform: scale(0.95);
+            background: #e8748a;
+        }
+
+        @keyframes confirmBtnPulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(232, 116, 138, 0.3); }
+            50% { box-shadow: 0 0 18px rgba(232, 116, 138, 0.6); }
+        }
+
+        .confirm-overlay .confirm-cancel-btn {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-dim);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .confirm-overlay .confirm-cancel-btn:active {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .entry-wrap.confirm-delete > .entry-item {
+            box-shadow: 0 0 16px 4px rgba(232, 116, 138, 0.30),
+                        0 0 36px 8px rgba(232, 116, 138, 0.12);
+            border-color: rgba(232, 116, 138, 0.50);
+        }
+
+        /* Auto-dismiss progress bar */
+        .confirm-timer-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e8748a, #c4566a);
+            border-radius: 0 0 var(--radius) var(--radius);
+            animation: timerShrink 4s linear forwards;
+        }
+
+        @keyframes timerShrink {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+
+        /* Right-swipe card feedback */
+        .entry-wrap.swiping-right > .entry-item {
+            border-color: rgba(91, 160, 208, 0.25);
+        }
+
+        .entry-wrap.will-action > .entry-item {
+            border-color: rgba(126, 200, 240, 0.4);
+            box-shadow: 0 0 12px rgba(126, 200, 240, 0.1);
+        }
+
+        /* Action zone revealed behind the card on RIGHT swipe */
+        .entry-action-zone {
+            position: absolute;
+            inset: 0;
+            background: #121828;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 22px;
+            border-radius: var(--radius);
+            pointer-events: none;
+            transition: background 0.18s ease;
+        }
+
+        .entry-action-zone svg {
+            opacity: 0;
+            transform: scale(0.6) rotate(15deg);
+            transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+            color: #3b6080;
+        }
+
+        .entry-wrap.swiping-right .entry-action-zone {
+            background: #0f1a2a;
+        }
+
+        .entry-wrap.swiping-right .entry-action-zone svg {
+            opacity: 0.6;
+            transform: scale(0.9) rotate(0deg);
+            color: #5ba0d0;
+        }
+
+        .entry-wrap.will-action .entry-action-zone {
+            background: #0d1e30;
+        }
+
+        .entry-wrap.will-action .entry-action-zone svg {
+            opacity: 1;
+            transform: scale(1.1) rotate(0deg);
+            color: #7ec8f0;
+        }
+
+        .entry-item {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            animation: slideIn 0.22s ease both;
+            transition: border-color var(--transition), background var(--transition), box-shadow 0.22s ease;
+            position: relative;
+            z-index: 1;
+            cursor: grab;
+            will-change: transform;
+            touch-action: pan-y;
+        }
+
+        .entry-item:active { cursor: grabbing; }
+
+        .entry-item.snap-back {
+            transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        border-color var(--transition),
+                        background var(--transition);
+        }
+
+        .entry-item.snap-delete {
+            transition: transform 0.22s ease, opacity 0.22s ease;
+        }
+
+        /* Today highlight */
+        .entry-item.today {
+            background: var(--today-bg);
+            border-color: var(--today-border);
+        }
+
+        .entry-item.today:hover {
+            background: rgba(0, 229, 160, 0.07);
+            border-color: rgba(0, 229, 160, 0.38);
+        }
+
+        /* Custom entry */
+        .entry-item.custom-entry {
+            border-left: 3px solid var(--custom);
+            padding-left: 14px;
+        }
+
+        .entry-item.custom-entry.today {
+            border-left-color: var(--custom);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Swipe hint — always-visible pulsing indicator */
+        .entry-item::after { content: none; }
+
+        .swipe-hint {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0.35;
+            animation: hintPulse 3s ease-in-out infinite;
+        }
+        .swipe-hint svg { color: var(--text-muted); }
+        @keyframes hintPulse { 0%,100% { opacity: 0.35; } 50% { opacity: 0.1; } }
+        .entry-wrap:hover .swipe-hint { opacity: 0.55; animation: none; }
+
+        .entry-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent-glow);
+            flex-shrink: 0;
+        }
+
+        .entry-item.custom-entry .entry-dot {
+            background: var(--custom);
+            box-shadow: 0 0 6px rgba(245,166,35,0.4);
+        }
+
+        .entry-body { min-width: 0; }
+
+        .entry-text {
+            font-size: 0.92rem;
+            color: var(--text);
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .entry-text.no-text { color: var(--text-muted); font-style: italic; font-weight: 400; }
+
+        .custom-badge {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--custom);
+            background: var(--custom-dim);
+            border: 1px solid var(--custom-border);
+            border-radius: 4px;
+            padding: 1px 5px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            flex-shrink: 0;
+            font-style: normal;
+        }
+
+        .edited-badge {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--edited);
+            background: var(--edited-dim);
+            border: 1px solid var(--edited-border);
+            border-radius: 4px;
+            padding: 1px 5px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            flex-shrink: 0;
+            font-style: normal;
+        }
+
+        .entry-ts {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-muted);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+            display: none;
+        }
+
+        .empty-state.visible { display: block; }
+        .empty-icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.5; }
+
+        .empty-state p {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        /* Hidden file input */
+        #importFileInput { display: none; }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--surface2);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            color: var(--accent);
+            z-index: 999;
+            transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.22s ease;
+            opacity: 0;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.error {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* ── View toggle ── */
+        .view-toggle {
+            display: flex;
+            align-items: center;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 2px;
+            gap: 1px;
+        }
+
+        .view-toggle-btn {
+            background: none;
+            border: none;
+            border-radius: 5px;
+            color: var(--text-muted);
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .view-toggle-btn:hover { color: var(--text); }
+        .view-toggle-btn.active { background: var(--accent-dim); color: var(--accent); }
+
+        /* ── Timeline ── */
+        .timeline-outer {
+            position: relative;
+        }
+
+        .tl-day {
+            margin-bottom: 32px;
+        }
+        .tl-day:last-child { margin-bottom: 0; }
+
+        .tl-day-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .tl-day-pill {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 12px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .tl-day-pill.is-today {
+            color: var(--accent);
+            border-color: var(--today-border);
+            background: var(--accent-dim);
+        }
+
+        .tl-day-rule {
+            height: 1px;
+            background: var(--border);
+            flex: 1;
+        }
+
+        .tl-day-count {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .tl-track {
+            overflow-x: auto;
+            overflow-y: visible;
+            padding: 8px 4px 20px;
+            cursor: grab;
+            user-select: none;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+            -webkit-mask-image: linear-gradient(90deg, transparent 0px, #000 24px, #000 calc(100% - 24px), transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0px, #000 24px, #000 calc(100% - 24px), transparent 100%);
+        }
+
+        .tl-track.single {
+            -webkit-mask-image: none;
+            mask-image: none;
+            cursor: default;
+        }
+
+        .tl-track:active { cursor: grabbing; }
+
+        .tl-track::-webkit-scrollbar { height: 4px; }
+        .tl-track::-webkit-scrollbar-track { background: transparent; }
+        .tl-track::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .tl-track::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        .tl-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+            position: relative;
+            min-width: max-content;
+            padding: 0 16px;
+        }
+
+        .tl-spine {
+            position: absolute;
+            top: 7px;
+            left: calc(16px + 65px);
+            right: calc(16px + 65px);
+            height: 2px;
+            background: linear-gradient(90deg, var(--border), var(--border));
+            z-index: 0;
+            border-radius: 1px;
+        }
+
+        .tl-day.is-today .tl-spine {
+            background: linear-gradient(90deg, var(--border) 0%, var(--today-border) 50%, var(--border) 100%);
+        }
+
+        .tl-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+            width: 130px;
+            flex-shrink: 0;
+        }
+
+        .tl-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2.5px solid var(--bg);
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+            cursor: pointer;
+        }
+
+        .tl-node:hover .tl-dot {
+            transform: scale(1.5);
+        }
+
+        .tl-node.is-today .tl-dot::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            border: 1.5px solid currentColor;
+            opacity: 0.35;
+            animation: pulse-ring 2.4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 0.35; transform: scale(1); }
+            50%       { opacity: 0.08; transform: scale(1.6); }
+        }
+
+        .tl-stem {
+            width: 1px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .tl-time {
+            font-family: var(--mono);
+            font-size: 0.58rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            text-align: center;
+            transition: color 0.15s ease;
+            order: -1;
+        }
+
+        .tl-node:hover .tl-time { color: var(--text-dim); }
+
+        .tl-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 11px;
+            width: 116px;
+            transition: transform 0.2s cubic-bezier(0.34, 1.3, 0.64, 1),
+                        box-shadow 0.2s ease,
+                        border-color 0.15s ease;
+        }
+
+        .tl-node:hover .tl-card {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.5);
+        }
+
+        .tl-card-name {
+            font-family: var(--sans);
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .tl-card-name.no-text {
+            color: var(--text-muted);
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        .tl-card-badge {
+            font-family: var(--mono);
+            font-size: 0.56rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 2px 5px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-top: 6px;
+        }
+
+        .tl-node.tl-auto .tl-dot {
+            background: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+            color: var(--accent);
+        }
+        .tl-node.tl-auto .tl-stem { background: var(--accent); opacity: 0.3; }
+        .tl-node.tl-auto .tl-card { border-top: 2.5px solid var(--accent); }
+        .tl-node.tl-auto:hover .tl-dot { box-shadow: 0 0 0 5px var(--accent-dim), 0 0 14px var(--accent-glow); }
+        .tl-node.tl-auto:hover .tl-card { border-color: var(--accent); }
+
+        .tl-node.tl-custom .tl-dot {
+            background: var(--custom);
+            box-shadow: 0 0 0 3px var(--custom-dim);
+            color: var(--custom);
+        }
+        .tl-node.tl-custom .tl-stem { background: var(--custom); opacity: 0.3; }
+        .tl-node.tl-custom .tl-card { border-top: 2.5px solid var(--custom); }
+        .tl-node.tl-custom .tl-card-badge {
+            background: var(--custom-dim);
+            border: 1px solid var(--custom-border);
+            color: var(--custom);
+        }
+        .tl-node.tl-custom:hover .tl-dot { box-shadow: 0 0 0 5px var(--custom-dim), 0 0 14px rgba(245,166,35,0.3); }
+        .tl-node.tl-custom:hover .tl-card { border-color: var(--custom-border); }
+
+        .timeline-empty {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-muted);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        .tl-legend {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding: 0 2px;
+        }
+
+        .tl-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .tl-legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .tl-legend-dot.auto { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+        .tl-legend-dot.custom { background: var(--custom); box-shadow: 0 0 6px rgba(245,166,35,0.4); }
+
+
+        /* ── Ko-fi toggle ── */
+        .kofi-toggle {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            font-size: 0.82rem;
+            opacity: 0.3;
+            transition: opacity var(--transition), transform var(--transition);
+            line-height: 1;
+            flex-shrink: 0;
+            margin: 0 2px;
+        }
+
+        .kofi-toggle:hover { opacity: 0.7; transform: scale(1.15); }
+        .kofi-toggle.hidden { opacity: 0.15; }
+
+        /* ── Ko-fi badge ── */
+        .kofi-badge {
+            position: fixed;
+            bottom: 18px;
+            right: 18px;
+            opacity: 0.22;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            z-index: 50;
+            line-height: 0;
+            border-radius: 8px;
+        }
+
+        .kofi-badge:hover {
+            opacity: 0.85;
+            transform: translateY(-2px);
+        }
+
+        .kofi-badge img {
+            display: block;
+            border: 0;
+            height: 36px;
+            width: auto;
+        }
+
+        /* ── Bottom Sheet / Action Menu ── */
+        .sheet-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 900;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+
+        .sheet-overlay.open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-radius: 16px 16px 0 0;
+            padding: 12px 20px max(20px, env(safe-area-inset-bottom));
+            z-index: 901;
+            transform: translateY(100%);
+            transition: transform 0.32s cubic-bezier(0.34, 1.2, 0.64, 1);
+            max-height: 85vh;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .sheet-overlay.open .sheet {
+            transform: translateY(0);
+        }
+
+        .sheet.dragging {
+            transition: none !important;
+        }
+
+        .sheet-handle {
+            width: 40px;
+            height: 5px;
+            border-radius: 3px;
+            background: var(--border);
+            margin: 0 auto 14px;
+            cursor: grab;
+            touch-action: none;
+        }
+        .sheet-handle:active { cursor: grabbing; }
+
+        .sheet-title {
+            font-family: var(--sans);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .sheet-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sheet-opt {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all var(--transition);
+            border-left: 3px solid transparent;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .sheet-opt:hover {
+            border-color: var(--accent);
+            border-left-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .sheet-opt-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .sheet-opt-text {
+            flex: 1;
+        }
+
+        .sheet-opt-title {
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .sheet-opt-desc {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ── Color picker in sheet ── */
+        .sheet-colors {
+            display: flex;
+            gap: 12px;
+            padding: 16px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .sheet-color-swatch {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 3px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.15s ease;
+        }
+
+        .sheet-color-swatch:hover {
+            transform: scale(1.15);
+            border-color: var(--text);
+        }
+
+        .sheet-color-swatch.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .sheet-sub-title {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-align: center;
+            margin-bottom: 8px;
+            letter-spacing: 0.06em;
+        }
+
+        .sheet-btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .sheet-btn {
+            flex: 1;
+            padding: 11px 16px;
+            border-radius: 8px;
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+            text-align: center;
+            min-height: 44px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .sheet-btn.primary {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .sheet-btn.primary:hover {
+            opacity: 0.88;
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        .sheet-btn.secondary {
+            background: var(--surface2);
+            color: var(--text-muted);
+        }
+
+        .sheet-btn.secondary:hover {
+            border-color: var(--text-muted);
+            color: var(--text);
+        }
+
+        /* ── Checkpoint Timeline (Processes) ── */
+        .cp-track {
+            overflow-x: auto;
+            overflow-y: visible;
+            padding: 8px 0 4px;
+            margin-top: 8px;
+            user-select: none;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+            -webkit-mask-image: linear-gradient(90deg, transparent 0px, #000 12px, #000 calc(100% - 12px), transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0px, #000 12px, #000 calc(100% - 12px), transparent 100%);
+            touch-action: pan-x; /* allow horizontal scroll, don't fight card swipe */
+            cursor: grab;
+        }
+
+        .cp-track:active { cursor: grabbing; }
+
+        .cp-track::-webkit-scrollbar { height: 3px; }
+        .cp-track::-webkit-scrollbar-track { background: transparent; }
+        .cp-track::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        .cp-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+            position: relative;
+            min-width: max-content;
+            padding: 0 8px;
+        }
+
+        .cp-spine {
+            position: absolute;
+            top: 7px;
+            left: calc(8px + 30px);
+            right: calc(8px + 40px + 30px); /* skip add-btn width */
+            height: 2px;
+            background: var(--border);
+            z-index: 0;
+            border-radius: 1px;
+        }
+
+        .cp-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+            z-index: 1;
+            width: 60px;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: opacity 0.15s ease;
+        }
+
+        .cp-node:hover { opacity: 0.85; }
+
+        /* Quick-add checkpoint button at end of row */
+        .cp-add-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+            z-index: 1;
+            width: 40px;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: opacity 0.18s ease, transform 0.18s ease;
+            opacity: 0.35;
+            padding-top: 0;
+        }
+
+        .cp-add-btn:hover {
+            opacity: 0.7;
+            transform: scale(1.1);
+        }
+
+        .cp-add-btn:active {
+            transform: scale(0.95);
+        }
+
+        .cp-add-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+
+        .cp-add-btn:hover .cp-add-dot {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .cp-add-dot svg {
+            color: var(--text-muted);
+            transition: color 0.15s ease;
+        }
+
+        .cp-add-btn:hover .cp-add-dot svg {
+            color: var(--accent);
+        }
+
+        .cp-add-label {
+            font-family: var(--mono);
+            font-size: 0.42rem;
+            color: var(--text-muted);
+            text-align: center;
+            white-space: nowrap;
+            transition: color 0.15s ease;
+        }
+
+        .cp-add-btn:hover .cp-add-label {
+            color: var(--accent);
+        }
+
+        .cp-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--surface2);
+            border: 2.5px solid var(--border);
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cp-dot.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim), 0 0 8px var(--accent-glow);
+        }
+
+        .cp-dot.completed {
+            background: var(--accent);
+            border-color: var(--accent);
+            opacity: 0.55;
+        }
+
+        .cp-node:hover .cp-dot {
+            transform: scale(1.4);
+        }
+
+        .cp-node.active .cp-dot::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            border: 1.5px solid var(--accent);
+            opacity: 0.35;
+            animation: pulse-ring 2.4s ease-in-out infinite;
+        }
+
+        .cp-stem {
+            width: 1px;
+            height: 10px;
+            background: var(--border);
+            opacity: 0.3;
+            flex-shrink: 0;
+        }
+
+        .cp-stem.active {
+            background: var(--accent);
+            opacity: 0.4;
+        }
+
+        .cp-label {
+            font-family: var(--mono);
+            font-size: 0.48rem;
+            color: var(--text-muted);
+            text-align: center;
+            max-width: 56px;
+            line-height: 1.2;
+            transition: color 0.15s ease;
+            word-break: break-word;
+        }
+
+        .cp-node.active .cp-label {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .cp-node.completed .cp-label {
+            color: var(--text-dim);
+        }
+
+        .cp-due {
+            font-family: var(--mono);
+            font-size: 0.42rem;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .cp-due.overdue {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        /* ── Stage detail in sheet ── */
+        .stage-detail-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px 0;
+        }
+
+        .stage-detail-form textarea {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            padding: 10px 14px;
+            outline: none;
+            resize: vertical;
+            min-height: 60px;
+            transition: border-color var(--transition);
+        }
+
+        .stage-detail-form textarea:focus { border-color: var(--accent); }
+
+        /* ── Tab content panels ── */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 520px) {
+            body { padding: 12px; }
+            .input-row { flex-direction: column; }
+            .btn-group { flex-direction: row; }
+            .add-btn { flex: 1; justify-content: center; padding: 13px; }
+            .entry-item { grid-template-columns: auto 1fr auto; gap: 10px; padding: 12px 12px; }
+            .custom-fields { flex-direction: column; }
+            .filter-row { flex-direction: column; }
+            .filter-date-wrap input[type="date"] { width: 100%; }
+            .section-actions { flex-wrap: wrap; gap: 6px; }
+            .palette-section { flex-wrap: wrap; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+
+        <header>
+            <div class="header-left">
+                <div class="logo-icon">✔</div>
+                <div>
+                    <h1>Tick<span>ed</span></h1>
+                </div>
+            </div>
+            <button class="kofi-toggle" id="kofiToggle" onclick="toggleKofi()" title="Toggle support badge">☕</button>
+            <span class="entry-count-badge" id="countBadge">0 entries</span>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" id="tabTasksBtn" onclick="switchTab('tasks')">
+                ✔ Log <span class="tab-count" id="tabTasksCount">0</span>
+            </button>
+            <button class="tab-btn" id="tabProcessesBtn" onclick="switchTab('processes')">
+                ⟳ Processes <span class="tab-count" id="tabProcessesCount">0</span>
+            </button>
+        </div>
+
+        <!-- Color Palette -->
+        <div class="palette-section">
+            <span class="palette-label">Palette</span>
+            <div class="palette-swatches" id="paletteSwatches"></div>
+        </div>
+
+        <!-- ═══════════ TASKS TAB ═══════════ -->
+        <div class="tab-panel active" id="panelTasks">
+
+            <!-- Input card -->
+            <div class="input-card">
+                <div class="input-row">
+                    <div class="input-wrap">
+                        <input type="text" id="inputText" placeholder="Enter a note (optional)…">
+                    </div>
+                    <div class="btn-group">
+                        <button class="custom-trigger-btn" id="customTriggerBtn" onclick="toggleCustomPanel()" title="Add custom-timestamped entry">
+                            ✦
+                        </button>
+                        <button class="add-btn" onclick="addEntry()">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                            Log Entry
+                        </button>
+                    </div>
+                </div>
+
+                <div class="custom-panel" id="customPanel">
+                    <div class="custom-panel-inner">
+                        <div class="custom-panel-label">Custom timestamp</div>
+                        <div class="custom-fields">
+                            <input type="date" id="customDate" />
+                            <input type="time" id="customTime" />
+                            <button class="custom-add-btn" onclick="addCustomEntry()">Log ✦</button>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="hint">↵ Press Enter to log · timestamp is added automatically</p>
+            </div>
+
+            <!-- Section header -->
+            <div class="section-header">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span class="section-title">Log</span>
+                    <div class="sort-controls" id="tasksSortControls">
+                        <button class="sort-btn active" id="sortTimeBtn" onclick="setSort('time','tasks')">
+                            Time <span class="sort-dir" id="sortTimeDir">↓</span>
+                        </button>
+                        <span class="sort-sep">·</span>
+                        <button class="sort-btn" id="sortTextBtn" onclick="setSort('text','tasks')">
+                            Name <span class="sort-dir" id="sortTextDir">↓</span>
+                        </button>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="view-toggle">
+                        <button class="view-toggle-btn active" id="viewListBtn" onclick="setView('list')" title="List view">
+                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                                <rect x="0" y="1" width="13" height="1.8" rx="0.9" fill="currentColor"/>
+                                <rect x="0" y="5.6" width="13" height="1.8" rx="0.9" fill="currentColor"/>
+                                <rect x="0" y="10.2" width="13" height="1.8" rx="0.9" fill="currentColor"/>
+                            </svg>
+                        </button>
+                        <button class="view-toggle-btn" id="viewTimelineBtn" onclick="setView('timeline')" title="Timeline view">
+                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                                <circle cx="2" cy="6.5" r="1.5" fill="currentColor"/>
+                                <circle cx="6.5" cy="6.5" r="1.5" fill="currentColor"/>
+                                <circle cx="11" cy="6.5" r="1.5" fill="currentColor"/>
+                                <line x1="3.5" y1="6.5" x2="5" y2="6.5" stroke="currentColor" stroke-width="1.2"/>
+                                <line x1="8" y1="6.5" x2="9.5" y2="6.5" stroke="currentColor" stroke-width="1.2"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="info-btn">
+                        <span class="question-mark" tabindex="0" role="button" aria-label="Storage info">?</span>
+                        <div class="tooltip" role="tooltip">
+                            <div class="tooltip-title">💾 How data is saved</div>
+                            <p>Your log entries are saved in your <strong>browser's localStorage</strong> — they persist across page refreshes and browser restarts on this device.</p>
+                            <p><strong>To keep data long-term:</strong> avoid clearing your browser's site data for this page, and don't use incognito mode.</p>
+                            <p><strong>Back up anytime</strong> using the Export button — saves a <strong>.json</strong> file you can re-import later.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar row -->
+            <div class="toolbar-row">
+                <div class="toolbar-group">
+                    <button class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleFilterPanel('tasks')">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/>
+                            <path d="M8 8l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                        Search &amp; Filter
+                        <span class="chevron">▾</span>
+                    </button>
+                    <div class="filter-active-dot" id="filterActiveDot"></div>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="icon-btn" title="Import JSON" onclick="document.getElementById('importFileInput').click()">
+                        <svg width="13" height="13" viewBox="0 0 11 11" fill="none">
+                            <path d="M5.5 1v6M2.5 5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M1 9h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <input type="file" id="importFileInput" accept=".json" onchange="importJSON(event)">
+                    <button class="icon-btn" title="Export JSON" onclick="exportJSON()">
+                        <svg width="13" height="13" viewBox="0 0 11 11" fill="none">
+                            <path d="M5.5 7V1M2.5 3l3-3 3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M1 9h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" id="reminderBtn" title="Enable hourly log reminders" onclick="toggleReminder()">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 1.5a4.5 4.5 0 00-4.5 4.5c0 2.1-.7 3.4-1.3 4.1a.5.5 0 00.4.9h10.8a.5.5 0 00.4-.9c-.6-.7-1.3-2-1.3-4.1A4.5 4.5 0 008 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M6.5 12.5a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <div class="toolbar-divider"></div>
+                    <button class="clear-btn" id="clearBtn" onclick="clearAll('tasks')" style="display:none;">Clear all</button>
+                </div>
+            </div>
+
+            <!-- Filter panel -->
+            <div class="filter-panel" id="filterPanel">
+                <div class="filter-panel-inner">
+                    <div class="filter-row">
+                        <div class="filter-search-wrap input-wrap">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            <input type="text" id="searchInput" placeholder="Search by name, date, or time…" oninput="applyFilters('tasks')">
+                        </div>
+                        <div class="filter-date-wrap">
+                            <input type="date" id="filterDate" onchange="applyFilters('tasks')">
+                        </div>
+                    </div>
+                    <div class="filter-chips">
+                        <span class="filter-chip-label">Show:</span>
+                        <button class="filter-chip active" data-filter="all" onclick="setTypeFilter('all', this, 'tasks')">All</button>
+                        <button class="filter-chip" data-filter="auto" onclick="setTypeFilter('auto', this, 'tasks')">Auto-logged</button>
+                        <button class="filter-chip custom-chip" data-filter="custom" onclick="setTypeFilter('custom', this, 'tasks')">✦ Custom</button>
+                        <button class="filter-chip edited-chip" data-filter="edited" onclick="setTypeFilter('edited', this, 'tasks')">✎ Edited</button>
+                        <button class="filter-clear-link" onclick="clearFilters('tasks')">Clear filters</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results count -->
+            <div class="results-count-row">
+                <span class="results-count" id="resultsCount"></span>
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-state visible" id="emptyState">
+                <div class="empty-icon">🕳️</div>
+                <p>No entries yet.<br>Add a note above to get started.</p>
+            </div>
+
+            <!-- Entry list -->
+            <ul class="entry-list" id="entryList"></ul>
+
+            <!-- Timeline view -->
+            <div id="timelineView" class="timeline-outer" style="display:none;"></div>
+        </div>
+
+        <!-- ═══════════ PROCESSES TAB ═══════════ -->
+        <div class="tab-panel" id="panelProcesses">
+
+            <!-- Input card for processes -->
+            <div class="input-card">
+                <div class="input-row">
+                    <div class="input-wrap">
+                        <input type="text" id="procInputText" placeholder="Enter process name…">
+                    </div>
+                    <div class="btn-group">
+                        <button class="add-btn" onclick="addProcess()">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                            Add Process
+                        </button>
+                    </div>
+                </div>
+                <p class="hint">↵ Press Enter to add · processes track work through checkpoints</p>
+            </div>
+
+            <!-- Section header for processes -->
+            <div class="section-header">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span class="section-title">Processes</span>
+                    <div class="sort-controls" id="procSortControls">
+                        <button class="sort-btn active" id="procSortTimeBtn" onclick="setSort('time','processes')">
+                            Time <span class="sort-dir" id="procSortTimeDir">↓</span>
+                        </button>
+                        <span class="sort-sep">·</span>
+                        <button class="sort-btn" id="procSortTextBtn" onclick="setSort('text','processes')">
+                            Name <span class="sort-dir" id="procSortTextDir">↓</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar row for processes -->
+            <div class="toolbar-row">
+                <div class="toolbar-group">
+                    <button class="filter-toggle-btn" id="procFilterToggleBtn" onclick="toggleFilterPanel('processes')">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/>
+                            <path d="M8 8l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                        Search &amp; Filter
+                        <span class="chevron">▾</span>
+                    </button>
+                    <div class="filter-active-dot" id="procFilterActiveDot"></div>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="clear-btn" id="procClearBtn" onclick="clearAll('processes')" style="display:none;">Clear all</button>
+                </div>
+            </div>
+
+            <!-- Filter panel for processes -->
+            <div class="filter-panel" id="procFilterPanel">
+                <div class="filter-panel-inner">
+                    <div class="filter-row">
+                        <div class="filter-search-wrap input-wrap">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            <input type="text" id="procSearchInput" placeholder="Search processes…" oninput="applyFilters('processes')">
+                        </div>
+                        <div class="filter-date-wrap">
+                            <input type="date" id="procFilterDate" onchange="applyFilters('processes')">
+                        </div>
+                    </div>
+                    <div class="filter-chips">
+                        <span class="filter-chip-label">Show:</span>
+                        <button class="filter-chip active" data-filter="all" onclick="setTypeFilter('all', this, 'processes')">All</button>
+                        <button class="filter-chip edited-chip" data-filter="edited" onclick="setTypeFilter('edited', this, 'processes')">✎ Edited</button>
+                        <button class="filter-chip overdue-chip" data-filter="overdue" onclick="setTypeFilter('overdue', this, 'processes')">⚠ Overdue</button>
+                        <button class="filter-clear-link" onclick="clearFilters('processes')">Clear filters</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results count processes -->
+            <div class="results-count-row">
+                <span class="results-count" id="procResultsCount"></span>
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-state visible" id="procEmptyState">
+                <div class="empty-icon">⟳</div>
+                <p>No processes yet.<br>Add a process above to track workflow checkpoints.</p>
+            </div>
+
+            <!-- Process list -->
+            <ul class="entry-list" id="processList"></ul>
+        </div>
+
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Action Sheet overlay -->
+    <div class="sheet-overlay" id="sheetOverlay">
+        <div class="sheet" id="sheetEl" onclick="event.stopPropagation()">
+            <div class="sheet-handle" id="sheetHandle"></div>
+            <div class="sheet-title" id="sheetTitle">Actions</div>
+            <div id="sheetContent"></div>
+        </div>
+    </div>
+
+    <!-- Ko-fi -->
+    <a class="kofi-badge" href="https://ko-fi.com/F1F1140LWT" target="_blank" rel="noopener" title="Buy Me a Coffee at ko-fi.com">
+        <img height="36" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" border="0" alt="Buy Me a Coffee at ko-fi.com" />
+    </a>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        // TICKED v2 — Enhanced with Processes, Color Palette, Swipe Actions
+        // ═══════════════════════════════════════════════════════════
+
+        const STORAGE_KEY    = 'ticked_store';
+        const SCHEMA_VERSION = 5;
+        const DEFAULT_PALETTE = ['#1e3a5f', '#1a3d2e', '#2d1f5e', '#4a3210', '#4a1520'];
+
+        // ── Safe localStorage wrapper ─────────────────────────────
+        const safeStorage = {
+            get(key) {
+                try { return localStorage.getItem(key); }
+                catch { return null; }
+            },
+            set(key, value) {
+                try { localStorage.setItem(key, value); return true; }
+                catch (e) {
+                    showToast('Storage full — data may not persist.', true);
+                    return false;
+                }
+            },
+            remove(key) {
+                try { localStorage.removeItem(key); } catch {}
+            }
+        };
+
+        // ── UUID generator ────────────────────────────────────────
+        function uuid() {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+        }
+
+        // ── State ─────────────────────────────────────────────────
+        let state = {
+            entries:          [],       // Tasks
+            processes:        [],       // Processes
+            palette:          [...DEFAULT_PALETTE],
+            activeTab:        'tasks',
+            // Tasks tab filters/sort
+            activeTypeFilter: 'all',
+            sortField:        'time',
+            sortDir:          'desc',
+            currentView:      'list',
+            // Processes tab filters/sort
+            procActiveTypeFilter: 'all',
+            procSortField:        'time',
+            procSortDir:          'desc',
+        };
+
+        function setState(patch) {
+            Object.assign(state, patch);
+            render();
+        }
+
+        // ── Overdue helper ───────────────────────────────────────
+        function isOverdue(p) {
+            const cpIdx = p.currentCheckpoint ?? 0;
+            const cps = p.checkpoints || [];
+            const cp = cps[cpIdx];
+            if (!cp || !cp.dueDate) return false;
+            return new Date(cp.dueDate + 'T23:59:59') < new Date();
+        }
+
+        // ── DOM refs ──────────────────────────────────────────────
+        const entryList       = document.getElementById('entryList');
+        const processList     = document.getElementById('processList');
+        const inputText       = document.getElementById('inputText');
+        const procInputText   = document.getElementById('procInputText');
+        const emptyState      = document.getElementById('emptyState');
+        const procEmptyState  = document.getElementById('procEmptyState');
+        const countBadge      = document.getElementById('countBadge');
+        const clearBtn        = document.getElementById('clearBtn');
+        const procClearBtn    = document.getElementById('procClearBtn');
+        const searchInput     = document.getElementById('searchInput');
+        const procSearchInput = document.getElementById('procSearchInput');
+        const filterDate      = document.getElementById('filterDate');
+        const procFilterDate  = document.getElementById('procFilterDate');
+        const resultsCount    = document.getElementById('resultsCount');
+        const procResultsCount= document.getElementById('procResultsCount');
+        const filterActiveDot = document.getElementById('filterActiveDot');
+        const procFilterActiveDot = document.getElementById('procFilterActiveDot');
+        const customPanel     = document.getElementById('customPanel');
+        const customTriggerBtn= document.getElementById('customTriggerBtn');
+        const timelineView    = document.getElementById('timelineView');
+
+        // ── Schema migration ──────────────────────────────────────
+        const migrations = {
+            2(store) {
+                return {
+                    ...store,
+                    version: 2,
+                    entries: (store.entries || []).map(e => ({ ...e, custom: e.custom ?? false }))
+                };
+            },
+            3(store) {
+                return {
+                    ...store,
+                    version: 3,
+                    entries: (store.entries || []).map(e => {
+                        if (e.isoDate) return e;
+                        const parsed = new Date(e.timestamp || '');
+                        return {
+                            id:      e.id || uuid(),
+                            isoDate: isNaN(parsed) ? new Date().toISOString() : parsed.toISOString(),
+                            text:    e.text  || '',
+                            custom:  !!e.custom,
+                        };
+                    })
+                };
+            },
+            4(store) {
+                return {
+                    ...store,
+                    version: 4,
+                    palette: store.palette || [...DEFAULT_PALETTE],
+                    entries: (store.entries || []).map(e => ({
+                        ...e,
+                        bgColor: e.bgColor || '',
+                        borderColor: e.borderColor || '',
+                        tags: e.tags || (e.custom ? ['custom'] : []),
+                    })),
+                    processes: (store.processes || []).map(p => ({
+                        ...p,
+                        bgColor: p.bgColor || '',
+                        borderColor: p.borderColor || '',
+                        tags: p.tags || [],
+                        currentStage: p.currentStage ?? 0,
+                        stages: p.stages || ['To Do','In Progress','Waiting','Review','Done'].map(() => ({ comment: '', dueDate: '' })),
+                    })),
+                };
+            },
+            5(store) {
+                // Convert old fixed stages to dynamic checkpoints
+                const OLD_STAGE_NAMES = ['To Do', 'In Progress', 'Waiting', 'Review', 'Done'];
+                return {
+                    ...store,
+                    version: 5,
+                    processes: (store.processes || []).map(p => {
+                        // Already migrated?
+                        if (p.checkpoints) return p;
+                        const stages = p.stages || OLD_STAGE_NAMES.map(() => ({ comment: '', dueDate: '' }));
+                        const currentStage = p.currentStage ?? 0;
+                        const checkpoints = stages.map((s, i) => ({
+                            id: uuid(),
+                            name: OLD_STAGE_NAMES[i] || `Stage ${i + 1}`,
+                            timestamp: i === 0 ? p.isoDate : (i <= currentStage ? new Date(new Date(p.isoDate).getTime() + i * 60000).toISOString() : ''),
+                            comment: s.comment || '',
+                            dueDate: s.dueDate || '',
+                            notify: false,
+                        }));
+                        const { stages: _s, currentStage: _cs, ...rest } = p;
+                        return { ...rest, checkpoints, currentCheckpoint: currentStage };
+                    }),
+                };
+            }
+        };
+
+        function migrate(raw) {
+            let store = raw;
+            for (let v = (store.version || 1) + 1; v <= SCHEMA_VERSION; v++) {
+                if (migrations[v]) store = migrations[v](store);
+            }
+            return store;
+        }
+
+        // ── Persistence ───────────────────────────────────────────
+        function save() {
+            const payload = {
+                version:   SCHEMA_VERSION,
+                savedAt:   new Date().toISOString(),
+                palette:   state.palette,
+                entries:   state.entries,
+                processes: state.processes,
+            };
+            safeStorage.set(STORAGE_KEY, JSON.stringify(payload));
+        }
+
+        function load() {
+            let loaded = { entries: [], processes: [], palette: [...DEFAULT_PALETTE] };
+
+            try {
+                const raw = safeStorage.get(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    const migrated = migrate(parsed);
+                    loaded.entries   = migrated.entries   || [];
+                    loaded.processes = migrated.processes || [];
+                    loaded.palette   = migrated.palette   || [...DEFAULT_PALETTE];
+                } else {
+                    const legacy2 = safeStorage.get('tickedEntries_v2');
+                    const legacy1 = safeStorage.get('tickedEntries');
+                    const legacyRaw = legacy2 || legacy1;
+                    if (legacyRaw) {
+                        const arr = JSON.parse(legacyRaw);
+                        const fakeStore = { version: 1, entries: arr };
+                        const migrated = migrate(fakeStore);
+                        loaded.entries = migrated.entries || [];
+                        safeStorage.remove('tickedEntries_v2');
+                        safeStorage.remove('tickedEntries');
+                    }
+                }
+            } catch {
+                showToast('Log data was unreadable — starting fresh.', true);
+            }
+
+            setState({
+                entries:   loaded.entries,
+                processes: loaded.processes,
+                palette:   loaded.palette,
+            });
+            initPalette();
+            save();
+        }
+
+        // ── Timestamp helpers ─────────────────────────────────────
+        function todayDateString() {
+            return new Date().toLocaleDateString('en-CA');
+        }
+
+        function isoToDateStr(iso) {
+            try { return new Date(iso).toLocaleDateString('en-CA'); }
+            catch { return ''; }
+        }
+
+        function isoToDisplayDate(iso) {
+            try {
+                return new Date(iso).toLocaleString('en-US', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+                });
+            } catch { return iso; }
+        }
+
+        function isoToTimeStr(iso) {
+            try {
+                return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            } catch { return ''; }
+        }
+
+        function formatDayLabel(dateStr) {
+            const today     = todayDateString();
+            const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
+            if (dateStr === today)     return 'Today';
+            if (dateStr === yesterday) return 'Yesterday';
+            const [y, m, d] = dateStr.split('-').map(Number);
+            return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+
+        function buildIso(dateStr, timeStr) {
+            const [y, mo, d] = dateStr.split('-').map(Number);
+            const [h, mi]    = timeStr.split(':').map(Number);
+            return new Date(y, mo - 1, d, h, mi, 0).toISOString();
+        }
+
+        // ── Utilities ─────────────────────────────────────────────
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast' + (isError ? ' error' : '');
+            void t.offsetWidth;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        // ── Palette ───────────────────────────────────────────────
+        function initPalette() {
+            const container = document.getElementById('paletteSwatches');
+            container.innerHTML = '';
+            state.palette.forEach((color, i) => {
+                const swatch = document.createElement('div');
+                swatch.className = 'palette-swatch';
+                swatch.style.background = color;
+                const inp = document.createElement('input');
+                inp.type = 'color';
+                inp.value = color;
+                inp.addEventListener('input', e => {
+                    state.palette[i] = e.target.value;
+                    swatch.style.background = e.target.value;
+                    save();
+                });
+                swatch.appendChild(inp);
+                container.appendChild(swatch);
+            });
+        }
+
+        // ── Tab switching ─────────────────────────────────────────
+        function switchTab(tab) {
+            state.activeTab = tab;
+            document.getElementById('tabTasksBtn').classList.toggle('active', tab === 'tasks');
+            document.getElementById('tabProcessesBtn').classList.toggle('active', tab === 'processes');
+            document.getElementById('panelTasks').classList.toggle('active', tab === 'tasks');
+            document.getElementById('panelProcesses').classList.toggle('active', tab === 'processes');
+            render();
+        }
+
+        // ── Add entries ───────────────────────────────────────────
+        function addEntry() {
+            const text   = inputText.value.trim();
+            const entry  = {
+                id: uuid(), isoDate: new Date().toISOString(), text, custom: false,
+                bgColor: '', borderColor: '', tags: []
+            };
+            setState({ entries: [entry, ...state.entries] });
+            save();
+            inputText.value = '';
+        }
+
+        function addCustomEntry() {
+            const text    = inputText.value.trim();
+            const dateVal = document.getElementById('customDate').value;
+            const timeVal = document.getElementById('customTime').value;
+            if (!dateVal || !timeVal) { showToast('Please set both date and time.', true); return; }
+
+            const entry  = {
+                id: uuid(), isoDate: buildIso(dateVal, timeVal), text, custom: true,
+                bgColor: '', borderColor: '', tags: ['custom']
+            };
+            const sorted = [...state.entries, entry].sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
+            setState({ entries: sorted });
+            save();
+            inputText.value = '';
+            toggleCustomPanel();
+            showToast('✦ Custom entry added');
+        }
+
+        function deleteEntry(id) {
+            setState({ entries: state.entries.filter(e => e.id !== id) });
+            save();
+        }
+
+        // ── Add process ───────────────────────────────────────────
+        function addProcess() {
+            const text = procInputText.value.trim();
+            if (!text) { showToast('Please enter a process name.', true); return; }
+            const now = new Date().toISOString();
+            const proc = {
+                id: uuid(),
+                isoDate: now,
+                text,
+                custom: false,
+                bgColor: '',
+                borderColor: '',
+                tags: [],
+                currentCheckpoint: 0,
+                checkpoints: [{
+                    id: uuid(),
+                    name: 'Start',
+                    timestamp: now,
+                    comment: '',
+                    dueDate: '',
+                    notify: false,
+                }],
+            };
+            setState({ processes: [proc, ...state.processes] });
+            save();
+            procInputText.value = '';
+        }
+
+        function deleteProcess(id) {
+            setState({ processes: state.processes.filter(p => p.id !== id) });
+            save();
+        }
+
+        function updateProcessStage(id, cpIdx) {
+            const procs = state.processes.map(p => {
+                if (p.id === id) return { ...p, currentCheckpoint: cpIdx };
+                return p;
+            });
+            setState({ processes: procs });
+            save();
+        }
+
+        function addCheckpointToProcess(procId) {
+            const procs = state.processes.map(p => {
+                if (p.id !== procId) return p;
+                const cps = [...p.checkpoints];
+                cps.push({
+                    id: uuid(),
+                    name: `Checkpoint ${cps.length + 1}`,
+                    timestamp: new Date().toISOString(),
+                    comment: '',
+                    dueDate: '',
+                    notify: false,
+                });
+                return { ...p, checkpoints: cps };
+            });
+            setState({ processes: procs });
+            save();
+            showToast('Checkpoint added ✓');
+        }
+
+        // ── Filter / Sort ─────────────────────────────────────────
+        function getFiltered(tab) {
+            if (tab === 'tasks') {
+                const query   = searchInput.value.trim().toLowerCase();
+                const dateFil = filterDate.value;
+                const { entries, activeTypeFilter } = state;
+
+                return entries.filter(e => {
+                    if (activeTypeFilter === 'auto'   && e.custom)  return false;
+                    if (activeTypeFilter === 'custom' && !e.custom) return false;
+                    if (activeTypeFilter === 'edited' && !(e.tags && e.tags.includes('edited'))) return false;
+                    if (dateFil && isoToDateStr(e.isoDate) !== dateFil) return false;
+                    if (query) {
+                        const display = isoToDisplayDate(e.isoDate).toLowerCase();
+                        const tagStr = (e.tags || []).join(' ').toLowerCase();
+                        if (!(e.text.toLowerCase().includes(query) || display.includes(query) || tagStr.includes(query))) return false;
+                    }
+                    return true;
+                });
+            } else {
+                const query   = procSearchInput.value.trim().toLowerCase();
+                const dateFil = procFilterDate.value;
+                const { processes, procActiveTypeFilter } = state;
+
+                return processes.filter(p => {
+                    if (procActiveTypeFilter === 'edited' && !(p.tags && p.tags.includes('edited'))) return false;
+                    if (procActiveTypeFilter === 'overdue' && !isOverdue(p)) return false;
+                    if (dateFil && isoToDateStr(p.isoDate) !== dateFil) return false;
+                    if (query) {
+                        const display = isoToDisplayDate(p.isoDate).toLowerCase();
+                        const tagStr = (p.tags || []).join(' ').toLowerCase();
+                        const textMatch = p.text.toLowerCase().includes(query) || display.includes(query) || tagStr.includes(query);
+                        const cpMatch = (p.checkpoints || p.stages || []).some(cp => ((cp.name || cp.comment || '')).toLowerCase().includes(query));
+                        if (!textMatch && !cpMatch) return false;
+                    }
+                    return true;
+                });
+            }
+        }
+
+        function getSorted(entries, tab) {
+            const sortField = tab === 'tasks' ? state.sortField : state.procSortField;
+            const sortDir   = tab === 'tasks' ? state.sortDir   : state.procSortDir;
+            return [...entries].sort((a, b) => {
+                const va = sortField === 'time' ? new Date(a.isoDate).getTime() : (a.text || '').toLowerCase();
+                const vb = sortField === 'time' ? new Date(b.isoDate).getTime() : (b.text || '').toLowerCase();
+                if (va < vb) return sortDir === 'desc' ?  1 : -1;
+                if (va > vb) return sortDir === 'desc' ? -1 :  1;
+                return 0;
+            });
+        }
+
+        // ── Keyed DOM diffing (tasks) ─────────────────────────────
+        const _listKeys = new Map();
+
+        function renderListView(filtered, today) {
+            const newIds = new Set(filtered.map(e => e.id));
+
+            for (const [id, nodes] of _listKeys) {
+                if (!newIds.has(id)) {
+                    nodes.wrap.remove();
+                    _listKeys.delete(id);
+                }
+            }
+
+            filtered.forEach((entry, idx) => {
+                const displayDate = isoToDateStr(entry.isoDate);
+                const isToday     = displayDate === today;
+                const displayTs   = isoToDisplayDate(entry.isoDate);
+                const tagsKey     = (entry.tags || []).join(',');
+                const bodyKey     = `${entry.text}|${displayTs}|${entry.custom}|${isToday}|${entry.bgColor}|${entry.borderColor}|${tagsKey}`;
+
+                if (_listKeys.has(entry.id)) {
+                    const cached = _listKeys.get(entry.id);
+                    if (cached.bodyKey !== bodyKey) {
+                        updateEntryNode(cached.card, entry, isToday, displayTs);
+                        cached.bodyKey = bodyKey;
+                    }
+                    const currentNodes = [...entryList.children];
+                    if (currentNodes[idx] !== cached.wrap) {
+                        entryList.insertBefore(cached.wrap, currentNodes[idx] || null);
+                    }
+                } else {
+                    const { wrap, card } = createEntryNode(entry, isToday, displayTs, 'tasks');
+                    const currentNodes   = [...entryList.children];
+                    entryList.insertBefore(wrap, currentNodes[idx] || null);
+                    _listKeys.set(entry.id, { wrap, card, bodyKey });
+                }
+            });
+        }
+
+        // ── Keyed DOM diffing (processes) ─────────────────────────
+        const _procKeys = new Map();
+
+        function renderProcessListView(filtered, today) {
+            const newIds = new Set(filtered.map(p => p.id));
+
+            for (const [id, nodes] of _procKeys) {
+                if (!newIds.has(id)) {
+                    nodes.wrap.remove();
+                    _procKeys.delete(id);
+                }
+            }
+
+            filtered.forEach((proc, idx) => {
+                const displayDate = isoToDateStr(proc.isoDate);
+                const isToday     = displayDate === today;
+                const displayTs   = isoToDisplayDate(proc.isoDate);
+                const tagsKey     = (proc.tags || []).join(',');
+                const bodyKey     = `${proc.text}|${displayTs}|${isToday}|${proc.bgColor}|${proc.borderColor}|${tagsKey}|${proc.currentCheckpoint}|${JSON.stringify(proc.checkpoints)}`;
+
+                if (_procKeys.has(proc.id)) {
+                    const cached = _procKeys.get(proc.id);
+                    if (cached.bodyKey !== bodyKey) {
+                        updateProcessNode(cached.card, proc, isToday, displayTs);
+                        cached.bodyKey = bodyKey;
+                    }
+                    const currentNodes = [...processList.children];
+                    if (currentNodes[idx] !== cached.wrap) {
+                        processList.insertBefore(cached.wrap, currentNodes[idx] || null);
+                    }
+                } else {
+                    const { wrap, card } = createEntryNode(proc, isToday, displayTs, 'processes');
+                    const currentNodes   = [...processList.children];
+                    processList.insertBefore(wrap, currentNodes[idx] || null);
+                    _procKeys.set(proc.id, { wrap, card, bodyKey });
+                }
+            });
+        }
+
+        function createEntryNode(entry, isToday, displayTs, tab) {
+            const wrap = document.createElement('li');
+            wrap.className = 'entry-wrap';
+
+            // Delete zone (left swipe)
+            const zone = document.createElement('div');
+            zone.className = 'entry-delete-zone';
+            zone.innerHTML = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>`;
+
+            // Confirm-delete overlay (appears on top of card after swipe threshold)
+            const confirmOverlay = document.createElement('div');
+            confirmOverlay.className = 'confirm-overlay';
+            confirmOverlay.innerHTML = `
+                <button class="confirm-delete-btn">Delete</button>
+                <button class="confirm-cancel-btn">Cancel</button>
+                <div class="confirm-timer-bar"></div>
+            `;
+
+            // Action zone (right swipe)
+            const actionZone = document.createElement('div');
+            actionZone.className = 'entry-action-zone';
+            actionZone.innerHTML = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="3" r="1.5" fill="currentColor"/>
+                <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+                <circle cx="8" cy="13" r="1.5" fill="currentColor"/>
+            </svg>`;
+
+            const card = document.createElement('div');
+            if (tab === 'processes') {
+                updateProcessNode(card, entry, isToday, displayTs);
+            } else {
+                updateEntryNode(card, entry, isToday, displayTs);
+            }
+
+            wrap.appendChild(zone);
+            wrap.appendChild(actionZone);
+            wrap.appendChild(card);
+            wrap.appendChild(confirmOverlay);
+
+            const deleteAction = tab === 'tasks'
+                ? () => deleteEntry(entry.id)
+                : () => deleteProcess(entry.id);
+
+            const swipeRightAction = () => openActionSheet(entry.id, tab);
+
+            initSwipe(wrap, card, confirmOverlay, deleteAction, swipeRightAction);
+            return { wrap, card };
+        }
+
+        function updateEntryNode(card, entry, isToday, displayTs) {
+            const hasEdited = entry.tags && entry.tags.includes('edited');
+            card.className = 'entry-item'
+                + (isToday       ? ' today'        : '')
+                + (entry.custom  ? ' custom-entry' : '');
+
+            // Apply custom colors
+            if (entry.bgColor) {
+                card.style.background = entry.bgColor;
+            } else {
+                card.style.background = '';
+            }
+            if (entry.borderColor) {
+                card.style.borderColor = entry.borderColor;
+                if (entry.custom) card.style.borderLeftColor = entry.borderColor;
+            } else {
+                card.style.borderColor = '';
+                card.style.borderLeftColor = '';
+            }
+
+            card.innerHTML = '';
+
+            const dot = document.createElement('div');
+            dot.className = 'entry-dot';
+
+            const body = document.createElement('div');
+            body.className = 'entry-body';
+
+            const textEl = document.createElement('div');
+            textEl.className = 'entry-text' + (entry.text ? '' : ' no-text');
+
+            const textSpan = document.createElement('span');
+            textSpan.textContent = entry.text || '(no text)';
+            textEl.appendChild(textSpan);
+
+            if (entry.custom) {
+                const badge = document.createElement('span');
+                badge.className = 'custom-badge';
+                badge.textContent = 'custom';
+                textEl.appendChild(badge);
+            }
+
+            if (hasEdited) {
+                const badge = document.createElement('span');
+                badge.className = 'edited-badge';
+                badge.textContent = 'edited';
+                textEl.appendChild(badge);
+            }
+
+            const tsEl = document.createElement('div');
+            tsEl.className = 'entry-ts';
+            tsEl.textContent = displayTs;
+
+            body.appendChild(textEl);
+            body.appendChild(tsEl);
+            card.appendChild(dot);
+            card.appendChild(body);
+
+            // Swipe hint indicator
+            const hint = document.createElement('div');
+            hint.className = 'swipe-hint';
+            hint.innerHTML = '<svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5h12M3 1L1 5l2 4M11 1l2 4-2 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            card.appendChild(hint);
+        }
+
+        function updateProcessNode(card, proc, isToday, displayTs) {
+            const hasEdited = proc.tags && proc.tags.includes('edited');
+            card.className = 'entry-item' + (isToday ? ' today' : '');
+
+            if (proc.bgColor) card.style.background = proc.bgColor;
+            else card.style.background = '';
+            if (proc.borderColor) card.style.borderColor = proc.borderColor;
+            else { card.style.borderColor = ''; card.style.borderLeftColor = ''; }
+
+            card.innerHTML = '';
+
+            const dot = document.createElement('div');
+            dot.className = 'entry-dot';
+
+            const body = document.createElement('div');
+            body.className = 'entry-body';
+
+            const textEl = document.createElement('div');
+            textEl.className = 'entry-text';
+            const textSpan = document.createElement('span');
+            textSpan.textContent = proc.text || '(no text)';
+            textEl.appendChild(textSpan);
+
+            if (hasEdited) {
+                const badge = document.createElement('span');
+                badge.className = 'edited-badge';
+                badge.textContent = 'edited';
+                textEl.appendChild(badge);
+            }
+
+            const tsEl = document.createElement('div');
+            tsEl.className = 'entry-ts';
+            tsEl.textContent = displayTs;
+
+            // Checkpoint timeline (horizontal, matching tl-* aesthetic)
+            const cps = proc.checkpoints || [];
+            const curCp = proc.currentCheckpoint ?? 0;
+
+            const track = document.createElement('div');
+            track.className = 'cp-track';
+
+            const row = document.createElement('div');
+            row.className = 'cp-row';
+
+            if (cps.length > 1) {
+                const spine = document.createElement('div');
+                spine.className = 'cp-spine';
+                row.appendChild(spine);
+            }
+
+            cps.forEach((cp, i) => {
+                const node = document.createElement('div');
+                node.className = 'cp-node'
+                    + (i === curCp ? ' active' : '')
+                    + (i < curCp ? ' completed' : '');
+
+                const dotEl = document.createElement('div');
+                dotEl.className = 'cp-dot'
+                    + (i === curCp ? ' active' : '')
+                    + (i < curCp ? ' completed' : '');
+
+                const stemEl = document.createElement('div');
+                stemEl.className = 'cp-stem'
+                    + (i <= curCp ? ' active' : '');
+
+                const label = document.createElement('div');
+                label.className = 'cp-label';
+                label.textContent = cp.name || `CP ${i + 1}`;
+
+                if (cp.dueDate) {
+                    const due = document.createElement('div');
+                    due.className = 'cp-due';
+                    const overdue = new Date(cp.dueDate + 'T23:59:59') < new Date();
+                    if (overdue) due.classList.add('overdue');
+                    due.textContent = cp.dueDate;
+                    node.appendChild(dotEl);
+                    node.appendChild(stemEl);
+                    node.appendChild(label);
+                    node.appendChild(due);
+                } else {
+                    node.appendChild(dotEl);
+                    node.appendChild(stemEl);
+                    node.appendChild(label);
+                }
+
+                node.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openCheckpointDetail(proc.id, i);
+                });
+
+                row.appendChild(node);
+            });
+
+            track.appendChild(row);
+
+            // "+" quick-add button at end of row
+            const addBtn = document.createElement('div');
+            addBtn.className = 'cp-add-btn';
+            addBtn.innerHTML = `<div class="cp-add-dot"><svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 1v6M1 4h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></div><div class="cp-add-label">add</div>`;
+            addBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                addCheckpointToProcess(proc.id);
+            });
+            row.appendChild(addBtn);
+
+            // Enable mouse drag-scroll on checkpoint track (desktop)
+            initDragScroll(track);
+
+            body.appendChild(textEl);
+            body.appendChild(tsEl);
+            body.appendChild(track);
+            card.appendChild(dot);
+            card.appendChild(body);
+
+            // Swipe hint indicator
+            const hint = document.createElement('div');
+            hint.className = 'swipe-hint';
+            hint.innerHTML = '<svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M1 5h12M3 1L1 5l2 4M11 1l2 4-2 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            card.appendChild(hint);
+        }
+
+        // ── Swipe handling (left = delete, right = actions) ────────
+        // Active confirm-delete state tracker (only one at a time)
+        let _activeConfirm = null;
+
+        function cancelActiveConfirm() {
+            if (!_activeConfirm) return;
+            const { wrap, card, timer } = _activeConfirm;
+            clearTimeout(timer);
+            wrap.classList.remove('confirm-delete', 'swiping-left', 'will-delete');
+            card.classList.add('snap-back');
+            card.style.transform = '';
+            card.style.opacity = '';
+            card.style.removeProperty('--swipe-glow');
+            // Reset the timer bar animation
+            const timerBar = wrap.querySelector('.confirm-timer-bar');
+            if (timerBar) { timerBar.style.animation = 'none'; void timerBar.offsetWidth; timerBar.style.animation = ''; }
+            _activeConfirm = null;
+        }
+
+        function initSwipe(wrap, card, confirmOverlay, onDelete, onSwipeRight) {
+            const THRESHOLD = 90;
+            let startX = null, startY = null, curX = 0, locked = false, direction = null;
+            let hapticFiredLeft = false, hapticFiredRight = false;
+
+            function doHaptic(ms) {
+                try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e) {}
+            }
+
+            // Wire up confirm overlay buttons (permanent listeners)
+            const confirmBtn = confirmOverlay.querySelector('.confirm-delete-btn');
+            const cancelBtn  = confirmOverlay.querySelector('.confirm-cancel-btn');
+
+            confirmBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!wrap.classList.contains('confirm-delete')) return;
+                doHaptic(12);
+                if (_activeConfirm && _activeConfirm.timer) clearTimeout(_activeConfirm.timer);
+                _activeConfirm = null;
+                wrap.classList.remove('confirm-delete');
+                card.classList.add('snap-delete');
+                card.style.transform = 'translateX(-110%)';
+                card.style.opacity = '0';
+                setTimeout(onDelete, 220);
+            });
+
+            cancelBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                cancelActiveConfirm();
+            });
+
+            // Also wire touchend for snappier mobile response
+            confirmBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                confirmBtn.click();
+            }, { passive: false });
+
+            cancelBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                cancelBtn.click();
+            }, { passive: false });
+
+            function pointerStart(x, y) {
+                // If this card is in confirm state, ignore new swipe gestures on it
+                if (wrap.classList.contains('confirm-delete')) return;
+                // Cancel any OTHER card's confirm state
+                cancelActiveConfirm();
+                startX = x; startY = y; curX = 0; locked = false; direction = null;
+                hapticFiredLeft = false; hapticFiredRight = false;
+                card.classList.remove('snap-back', 'snap-delete');
+            }
+
+            function pointerMove(x, y) {
+                if (startX === null) return;
+                const dx = x - startX, dy = y - startY;
+                if (!locked) {
+                    if (Math.abs(dy) > Math.abs(dx) + 4) { startX = null; return; }
+                    if (Math.abs(dx) > 6) {
+                        locked = true;
+                        direction = dx > 0 ? 'right' : 'left';
+                    }
+                }
+                if (!locked) return;
+
+                if (direction === 'left') {
+                    curX = Math.min(0, dx);
+                    card.style.transform = `translateX(${curX}px)`;
+                    const dist = -curX;
+                    const pastThreshold = dist >= THRESHOLD;
+                    wrap.classList.toggle('swiping-left',  dist > 10);
+                    wrap.classList.toggle('will-delete',   pastThreshold);
+                    wrap.classList.remove('swiping-right', 'will-action');
+                    // Dynamic glow intensity via CSS variable
+                    const glowIntensity = Math.min(1, dist / THRESHOLD);
+                    card.style.setProperty('--swipe-glow', glowIntensity.toFixed(2));
+                    // Haptic: fire once per threshold crossing
+                    if (pastThreshold && !hapticFiredLeft) {
+                        hapticFiredLeft = true;
+                        doHaptic(18);
+                    } else if (!pastThreshold) {
+                        hapticFiredLeft = false;
+                    }
+                } else {
+                    curX = Math.max(0, dx);
+                    card.style.transform = `translateX(${curX}px)`;
+                    const pastThreshold = curX >= THRESHOLD;
+                    wrap.classList.toggle('swiping-right', curX > 10);
+                    wrap.classList.toggle('will-action',   pastThreshold);
+                    wrap.classList.remove('swiping-left', 'will-delete');
+                    if (pastThreshold && !hapticFiredRight) {
+                        hapticFiredRight = true;
+                        doHaptic(18);
+                    } else if (!pastThreshold) {
+                        hapticFiredRight = false;
+                    }
+                }
+            }
+
+            function pointerEnd() {
+                if (startX === null) return;
+                startX = null;
+
+                if (direction === 'left' && -curX >= THRESHOLD) {
+                    // ── Show confirm overlay ──
+                    doHaptic(12);
+                    // Snap card back to resting position
+                    card.classList.add('snap-back');
+                    card.style.transform = '';
+                    card.style.removeProperty('--swipe-glow');
+                    wrap.classList.remove('swiping-left', 'will-delete');
+                    // Show overlay
+                    wrap.classList.add('confirm-delete');
+                    // Reset timer bar animation
+                    const timerBar = wrap.querySelector('.confirm-timer-bar');
+                    if (timerBar) { timerBar.style.animation = 'none'; void timerBar.offsetWidth; timerBar.style.animation = ''; }
+
+                    // Auto-cancel after 4 seconds
+                    const autoTimer = setTimeout(() => cancelActiveConfirm(), 4000);
+                    _activeConfirm = { wrap, card, timer: autoTimer };
+
+                } else if (direction === 'right' && curX >= THRESHOLD) {
+                    doHaptic(12);
+                    card.classList.add('snap-back');
+                    card.style.transform = '';
+                    wrap.classList.remove('swiping-right', 'will-action');
+                    setTimeout(() => onSwipeRight(), 100);
+                } else {
+                    card.classList.add('snap-back');
+                    card.style.transform = '';
+                    card.style.removeProperty('--swipe-glow');
+                    wrap.classList.remove('swiping-left', 'will-delete', 'swiping-right', 'will-action');
+                }
+                curX = 0;
+                direction = null;
+            }
+
+            card.addEventListener('mousedown', e => {
+                if (e.button !== 0) return;
+                if (e.target.closest('.cp-track')) return; // let checkpoint track handle it
+                pointerStart(e.clientX, e.clientY);
+                const onMove = e => pointerMove(e.clientX, e.clientY);
+                const onUp   = () => { pointerEnd(); window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup',   onUp);
+            });
+            card.addEventListener('touchstart', e => {
+                if (e.target.closest('.cp-track')) return; // let checkpoint track scroll
+                const t = e.touches[0]; pointerStart(t.clientX, t.clientY);
+            }, { passive: true });
+            card.addEventListener('touchmove',  e => {
+                if (e.target.closest('.cp-track')) return;
+                const t = e.touches[0]; pointerMove(t.clientX, t.clientY); if (locked) e.preventDefault();
+            }, { passive: false });
+            card.addEventListener('touchend', e => {
+                if (e.target.closest('.cp-track')) return;
+                pointerEnd();
+            }, { passive: true });
+        }
+
+        // ── Bottom Sheet / Action Menu ────────────────────────────
+        let _sheetEntryId = null;
+        let _sheetTab = null;
+
+        function openSheet() {
+            document.getElementById('sheetOverlay').classList.add('open');
+            document.body.classList.add('sheet-open');
+        }
+
+        function closeSheet() {
+            document.getElementById('sheetOverlay').classList.remove('open');
+            document.body.classList.remove('sheet-open');
+            _sheetEntryId = null;
+            _sheetTab = null;
+        }
+
+        // Sheet overlay click-to-close + swipe-down-to-dismiss
+        (function initSheetTouch() {
+            const ov = document.getElementById('sheetOverlay');
+            const sh = document.getElementById('sheetEl');
+            const hd = document.getElementById('sheetHandle');
+
+            // Click/tap overlay background to close
+            ov.addEventListener('click', e => { if (e.target === ov) closeSheet(); });
+            ov.addEventListener('touchend', e => { if (e.target === ov) closeSheet(); }, { passive: true });
+
+            // Prevent touch passthrough on sheet body
+            sh.addEventListener('click', e => e.stopPropagation());
+
+            // Swipe-down on handle to dismiss
+            let sy = null, cy = 0, dragging = false;
+            function sStart(y) { sy = y; cy = 0; dragging = true; sh.style.transition = 'none'; }
+            function sMove(y) { if (!dragging || sy === null) return; cy = Math.max(0, y - sy); sh.style.transform = `translateY(${cy}px)`; }
+            function sEnd() {
+                if (!dragging) return;
+                dragging = false;
+                sh.style.transition = '';
+                if (cy > 80) { sh.style.transform = ''; closeSheet(); }
+                else { sh.style.transform = ''; }
+                sy = null; cy = 0;
+            }
+            hd.addEventListener('touchstart', e => { e.stopPropagation(); sStart(e.touches[0].clientY); }, { passive: true });
+            hd.addEventListener('touchmove', e => { e.stopPropagation(); e.preventDefault(); sMove(e.touches[0].clientY); }, { passive: false });
+            hd.addEventListener('touchend', e => { e.stopPropagation(); sEnd(); }, { passive: true });
+            hd.addEventListener('mousedown', e => {
+                sStart(e.clientY);
+                const m = ev => sMove(ev.clientY);
+                const u = () => { sEnd(); window.removeEventListener('mousemove', m); window.removeEventListener('mouseup', u); };
+                window.addEventListener('mousemove', m);
+                window.addEventListener('mouseup', u);
+            });
+        })();
+
+        // Mobile keyboard: keep input visible above keyboard
+        document.addEventListener('focusin', e => {
+            if (e.target.matches('input[type="text"],input[type="date"],input[type="time"],textarea')) {
+                setTimeout(() => { e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 350);
+            }
+        });
+
+        function openActionSheet(id, tab) {
+            _sheetEntryId = id;
+            _sheetTab = tab;
+            const entry = tab === 'tasks'
+                ? state.entries.find(e => e.id === id)
+                : state.processes.find(p => p.id === id);
+            if (!entry) return;
+
+            document.getElementById('sheetTitle').textContent = 'Actions';
+            const content = document.getElementById('sheetContent');
+            content.innerHTML = '';
+
+            const opts = document.createElement('div');
+            opts.className = 'sheet-options';
+
+            // Option 1: Set Background Color
+            const opt1 = makeSheetOpt('🎨', 'Set Background', 'Choose from palette', () => {
+                showColorPicker(id, tab, 'bg');
+            });
+            opts.appendChild(opt1);
+
+            // Option 2: Set Border Color
+            const opt2 = makeSheetOpt('🖌️', 'Set Border', 'Choose from palette', () => {
+                showColorPicker(id, tab, 'border');
+            });
+            opts.appendChild(opt2);
+
+            // Option 3: Change Time
+            const opt3 = makeSheetOpt('🕐', 'Change Time', 'Edit timestamp + mark as edited', () => {
+                showTimeEditor(id, tab);
+            });
+            opts.appendChild(opt3);
+
+            // Option 4: Change Text
+            const opt4 = makeSheetOpt('✏️', 'Change Text', 'Edit text + mark as edited', () => {
+                showTextEditor(id, tab);
+            });
+            opts.appendChild(opt4);
+
+            // Option 5: Add Checkpoint (processes only)
+            if (tab === 'processes') {
+                const opt5 = makeSheetOpt('➕', 'Add Checkpoint', 'Append a new checkpoint to this process', () => {
+                    addCheckpointToProcess(id);
+                    closeSheet();
+                });
+                opts.appendChild(opt5);
+            }
+
+            content.appendChild(opts);
+            openSheet();
+        }
+
+        function makeSheetOpt(icon, title, desc, onClick) {
+            const opt = document.createElement('div');
+            opt.className = 'sheet-opt';
+            opt.innerHTML = `
+                <div class="sheet-opt-icon" style="background:var(--surface);border:1px solid var(--border);">${icon}</div>
+                <div class="sheet-opt-text">
+                    <div class="sheet-opt-title">${title}</div>
+                    <div class="sheet-opt-desc">${desc}</div>
+                </div>
+            `;
+            opt.addEventListener('click', onClick);
+            return opt;
+        }
+
+        function showColorPicker(id, tab, mode) {
+            const entry = tab === 'tasks'
+                ? state.entries.find(e => e.id === id)
+                : state.processes.find(p => p.id === id);
+            if (!entry) return;
+
+            document.getElementById('sheetTitle').textContent = mode === 'bg' ? 'Background Color' : 'Border Color';
+            const content = document.getElementById('sheetContent');
+            content.innerHTML = '';
+
+            const sub = document.createElement('div');
+            sub.className = 'sheet-sub-title';
+            sub.textContent = 'Pick from palette or choose custom';
+            content.appendChild(sub);
+
+            const swatches = document.createElement('div');
+            swatches.className = 'sheet-colors';
+
+            let selected = mode === 'bg' ? (entry.bgColor || '') : (entry.borderColor || '');
+
+            // "None" option
+            const noneSwatch = document.createElement('div');
+            noneSwatch.className = 'sheet-color-swatch' + (!selected ? ' selected' : '');
+            noneSwatch.style.background = 'var(--surface2)';
+            noneSwatch.style.position = 'relative';
+            noneSwatch.innerHTML = '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-muted);">✕</span>';
+            noneSwatch.addEventListener('click', () => {
+                selected = '';
+                swatches.querySelectorAll('.sheet-color-swatch').forEach(s => s.classList.remove('selected'));
+                noneSwatch.classList.add('selected');
+            });
+            swatches.appendChild(noneSwatch);
+
+            state.palette.forEach(color => {
+                const s = document.createElement('div');
+                s.className = 'sheet-color-swatch' + (selected === color ? ' selected' : '');
+                s.style.background = color;
+                s.addEventListener('click', () => {
+                    selected = color;
+                    swatches.querySelectorAll('.sheet-color-swatch').forEach(sw => sw.classList.remove('selected'));
+                    s.classList.add('selected');
+                });
+                swatches.appendChild(s);
+            });
+
+            content.appendChild(swatches);
+
+            const btnRow = document.createElement('div');
+            btnRow.className = 'sheet-btn-row';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'sheet-btn secondary';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.addEventListener('click', closeSheet);
+
+            const applyBtn = document.createElement('button');
+            applyBtn.className = 'sheet-btn primary';
+            applyBtn.textContent = 'Apply';
+            applyBtn.addEventListener('click', () => {
+                applyColor(id, tab, mode, selected);
+                closeSheet();
+            });
+
+            btnRow.appendChild(cancelBtn);
+            btnRow.appendChild(applyBtn);
+            content.appendChild(btnRow);
+        }
+
+        function applyColor(id, tab, mode, color) {
+            const key = tab === 'tasks' ? 'entries' : 'processes';
+            const items = state[key].map(e => {
+                if (e.id !== id) return e;
+                const updated = { ...e };
+                if (mode === 'bg') updated.bgColor = color;
+                else updated.borderColor = color;
+                return updated;
+            });
+            setState({ [key]: items });
+            save();
+            showToast('Color applied ✓');
+        }
+
+        function showTimeEditor(id, tab) {
+            const entry = tab === 'tasks'
+                ? state.entries.find(e => e.id === id)
+                : state.processes.find(p => p.id === id);
+            if (!entry) return;
+
+            document.getElementById('sheetTitle').textContent = 'Change Time';
+            const content = document.getElementById('sheetContent');
+            content.innerHTML = '';
+
+            const form = document.createElement('div');
+            form.className = 'stage-detail-form';
+
+            const d = new Date(entry.isoDate);
+            const dateInput = document.createElement('input');
+            dateInput.type = 'date';
+            dateInput.value = d.toLocaleDateString('en-CA');
+
+            const timeInput = document.createElement('input');
+            timeInput.type = 'time';
+            timeInput.value = d.toTimeString().slice(0, 5);
+
+            form.appendChild(dateInput);
+            form.appendChild(timeInput);
+            content.appendChild(form);
+
+            const btnRow = document.createElement('div');
+            btnRow.className = 'sheet-btn-row';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'sheet-btn secondary';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.addEventListener('click', closeSheet);
+
+            const applyBtn = document.createElement('button');
+            applyBtn.className = 'sheet-btn primary';
+            applyBtn.textContent = 'Save';
+            applyBtn.addEventListener('click', () => {
+                if (!dateInput.value || !timeInput.value) {
+                    showToast('Set both date and time.', true);
+                    return;
+                }
+                const key = tab === 'tasks' ? 'entries' : 'processes';
+                const items = state[key].map(e => {
+                    if (e.id !== id) return e;
+                    const tags = [...(e.tags || [])];
+                    if (!tags.includes('edited')) tags.push('edited');
+                    return { ...e, isoDate: buildIso(dateInput.value, timeInput.value), tags };
+                });
+                setState({ [key]: items });
+                save();
+                closeSheet();
+                showToast('Time updated ✓');
+            });
+
+            btnRow.appendChild(cancelBtn);
+            btnRow.appendChild(applyBtn);
+            content.appendChild(btnRow);
+        }
+
+        function showTextEditor(id, tab) {
+            const entry = tab === 'tasks'
+                ? state.entries.find(e => e.id === id)
+                : state.processes.find(p => p.id === id);
+            if (!entry) return;
+
+            document.getElementById('sheetTitle').textContent = 'Change Text';
+            const content = document.getElementById('sheetContent');
+            content.innerHTML = '';
+
+            const form = document.createElement('div');
+            form.className = 'stage-detail-form';
+
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.value = entry.text;
+            textInput.placeholder = 'Enter text…';
+
+            form.appendChild(textInput);
+            content.appendChild(form);
+
+            const btnRow = document.createElement('div');
+            btnRow.className = 'sheet-btn-row';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'sheet-btn secondary';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.addEventListener('click', closeSheet);
+
+            const applyBtn = document.createElement('button');
+            applyBtn.className = 'sheet-btn primary';
+            applyBtn.textContent = 'Save';
+            applyBtn.addEventListener('click', () => {
+                const key = tab === 'tasks' ? 'entries' : 'processes';
+                const items = state[key].map(e => {
+                    if (e.id !== id) return e;
+                    const tags = [...(e.tags || [])];
+                    if (!tags.includes('edited')) tags.push('edited');
+                    return { ...e, text: textInput.value.trim(), tags };
+                });
+                setState({ [key]: items });
+                save();
+                closeSheet();
+                showToast('Text updated ✓');
+            });
+
+            btnRow.appendChild(cancelBtn);
+            btnRow.appendChild(applyBtn);
+            content.appendChild(btnRow);
+
+            setTimeout(() => textInput.focus(), 350);
+        }
+
+        // ── Checkpoint detail sheet ────────────────────────────────
+        function openCheckpointDetail(procId, cpIdx) {
+            const proc = state.processes.find(p => p.id === procId);
+            if (!proc) return;
+            const cps = proc.checkpoints || [];
+            const cp = cps[cpIdx];
+            if (!cp) return;
+
+            _sheetEntryId = procId;
+            _sheetTab = 'processes';
+
+            const curCp = proc.currentCheckpoint ?? 0;
+
+            document.getElementById('sheetTitle').textContent = cp.name || `Checkpoint ${cpIdx + 1}`;
+            const content = document.getElementById('sheetContent');
+            content.innerHTML = '';
+
+            // Status indicator
+            const sub = document.createElement('div');
+            sub.className = 'sheet-sub-title';
+            sub.textContent = cpIdx === curCp
+                ? '● Current checkpoint'
+                : cpIdx < curCp ? '✓ Completed' : '○ Upcoming';
+            content.appendChild(sub);
+
+            const form = document.createElement('div');
+            form.className = 'stage-detail-form';
+
+            // Checkpoint name
+            const nameLabel = document.createElement('div');
+            nameLabel.className = 'sheet-sub-title';
+            nameLabel.style.textAlign = 'left';
+            nameLabel.textContent = 'Name';
+            form.appendChild(nameLabel);
+
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.value = cp.name || '';
+            nameInput.placeholder = 'Checkpoint name…';
+            form.appendChild(nameInput);
+
+            // Comment
+            const commentLabel = document.createElement('div');
+            commentLabel.className = 'sheet-sub-title';
+            commentLabel.style.textAlign = 'left';
+            commentLabel.textContent = 'Comment / Note';
+            form.appendChild(commentLabel);
+
+            const textarea = document.createElement('textarea');
+            textarea.value = cp.comment || '';
+            textarea.placeholder = 'Add a note for this checkpoint…';
+            form.appendChild(textarea);
+
+            // Due date
+            const dateLabel = document.createElement('div');
+            dateLabel.className = 'sheet-sub-title';
+            dateLabel.style.textAlign = 'left';
+            dateLabel.textContent = 'Due Date';
+            form.appendChild(dateLabel);
+
+            const dateInput = document.createElement('input');
+            dateInput.type = 'date';
+            dateInput.value = cp.dueDate || '';
+            form.appendChild(dateInput);
+
+            // Notify toggle
+            const notifyRow = document.createElement('div');
+            notifyRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-top:4px;';
+            const notifyLabel = document.createElement('div');
+            notifyLabel.className = 'sheet-sub-title';
+            notifyLabel.style.cssText = 'text-align:left;margin:0;';
+            notifyLabel.textContent = 'Notify at timestamp';
+            const notifyToggle = document.createElement('input');
+            notifyToggle.type = 'checkbox';
+            notifyToggle.checked = !!cp.notify;
+            notifyToggle.style.cssText = 'width:18px;height:18px;accent-color:var(--accent);cursor:pointer;';
+            notifyRow.appendChild(notifyLabel);
+            notifyRow.appendChild(notifyToggle);
+            form.appendChild(notifyRow);
+
+            content.appendChild(form);
+
+            const btnRow = document.createElement('div');
+            btnRow.className = 'sheet-btn-row';
+
+            const jumpBtn = document.createElement('button');
+            jumpBtn.className = 'sheet-btn secondary';
+            jumpBtn.textContent = cpIdx === curCp ? 'Current' : 'Jump here';
+            jumpBtn.disabled = cpIdx === curCp;
+            jumpBtn.style.opacity = cpIdx === curCp ? '0.5' : '1';
+            jumpBtn.addEventListener('click', () => {
+                updateProcessStage(procId, cpIdx);
+                closeSheet();
+                showToast(`Moved to "${cp.name}" ✓`);
+            });
+
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'sheet-btn primary';
+            saveBtn.textContent = 'Save';
+            saveBtn.addEventListener('click', () => {
+                const procs = state.processes.map(p => {
+                    if (p.id !== procId) return p;
+                    const checkpoints = [...p.checkpoints];
+                    checkpoints[cpIdx] = {
+                        ...checkpoints[cpIdx],
+                        name: nameInput.value.trim() || `Checkpoint ${cpIdx + 1}`,
+                        comment: textarea.value.trim(),
+                        dueDate: dateInput.value,
+                        notify: notifyToggle.checked,
+                    };
+                    return { ...p, checkpoints };
+                });
+                setState({ processes: procs });
+                save();
+                closeSheet();
+                showToast('Checkpoint updated ✓');
+
+                // Schedule notification if enabled
+                if (notifyToggle.checked && cp.timestamp) {
+                    scheduleCheckpointNotification(procId, cpIdx);
+                }
+            });
+
+            btnRow.appendChild(jumpBtn);
+            btnRow.appendChild(saveBtn);
+            content.appendChild(btnRow);
+
+            // Delete checkpoint button (only if more than 1 checkpoint)
+            if (cps.length > 1) {
+                const deleteRow = document.createElement('div');
+                deleteRow.style.cssText = 'margin-top:10px;text-align:center;';
+                const delBtn = document.createElement('button');
+                delBtn.className = 'sheet-btn secondary';
+                delBtn.style.cssText = 'color:var(--danger);border-color:var(--danger-border);width:100%;';
+                delBtn.textContent = 'Delete Checkpoint';
+                delBtn.addEventListener('click', () => {
+                    if (!confirm(`Delete checkpoint "${cp.name}"?`)) return;
+                    const procs = state.processes.map(p => {
+                        if (p.id !== procId) return p;
+                        const checkpoints = p.checkpoints.filter((_, i) => i !== cpIdx);
+                        let newCur = p.currentCheckpoint ?? 0;
+                        if (cpIdx < newCur) newCur--;
+                        if (newCur >= checkpoints.length) newCur = checkpoints.length - 1;
+                        return { ...p, checkpoints, currentCheckpoint: Math.max(0, newCur) };
+                    });
+                    setState({ processes: procs });
+                    save();
+                    closeSheet();
+                    showToast('Checkpoint deleted');
+                });
+                deleteRow.appendChild(delBtn);
+                content.appendChild(deleteRow);
+            }
+
+            openSheet();
+        }
+
+        function scheduleCheckpointNotification(procId, cpIdx) {
+            const proc = state.processes.find(p => p.id === procId);
+            if (!proc) return;
+            const cp = (proc.checkpoints || [])[cpIdx];
+            if (!cp || !cp.notify || !cp.timestamp) return;
+            const targetTime = new Date(cp.timestamp).getTime();
+            const delay = targetTime - Date.now();
+            if (delay <= 0) return; // already past
+            if (delay > 24 * 60 * 60 * 1000) return; // too far out for a simple timeout
+            setTimeout(() => {
+                sendTickedNotification(
+                    `Checkpoint: ${cp.name}`,
+                    `Process "${proc.text}" — ${cp.name} is due now.`
+                );
+            }, delay);
+        }
+
+        // ── Timeline renderer ─────────────────────────────────────
+        function renderTimelineView(filtered, today) {
+            timelineView.innerHTML = '';
+            if (filtered.length === 0) return;
+
+            const hasAuto   = filtered.some(e => !e.custom);
+            const hasCustom = filtered.some(e =>  e.custom);
+            if (hasAuto || hasCustom) {
+                const legend = document.createElement('div');
+                legend.className = 'tl-legend';
+                if (hasAuto)   legend.innerHTML += `<span class="tl-legend-item"><span class="tl-legend-dot auto"></span>Auto-logged</span>`;
+                if (hasCustom) legend.innerHTML += `<span class="tl-legend-item"><span class="tl-legend-dot custom"></span>Custom</span>`;
+                timelineView.appendChild(legend);
+            }
+
+            const dayMap  = new Map();
+            const chrono  = [...filtered].sort((a, b) => new Date(a.isoDate) - new Date(b.isoDate));
+            chrono.forEach(e => {
+                const d = isoToDateStr(e.isoDate);
+                if (!dayMap.has(d)) dayMap.set(d, []);
+                dayMap.get(d).push(e);
+            });
+
+            [...dayMap.keys()].sort((a, b) => b.localeCompare(a)).forEach(dateStr => {
+                const entries = dayMap.get(dateStr);
+                const isToday = dateStr === today;
+
+                const dayEl  = document.createElement('div');
+                dayEl.className = 'tl-day' + (isToday ? ' is-today' : '');
+
+                const header = document.createElement('div');
+                header.className = 'tl-day-header';
+                const pill = document.createElement('span');
+                pill.className = 'tl-day-pill' + (isToday ? ' is-today' : '');
+                pill.textContent = formatDayLabel(dateStr);
+                const rule = document.createElement('div');
+                rule.className = 'tl-day-rule';
+                const cnt = document.createElement('span');
+                cnt.className = 'tl-day-count';
+                cnt.textContent = entries.length === 1 ? '1 entry' : `${entries.length} entries`;
+                header.appendChild(pill); header.appendChild(rule); header.appendChild(cnt);
+
+                const track = document.createElement('div');
+                track.className = 'tl-track' + (entries.length <= 1 ? ' single' : '');
+                const row = document.createElement('div');
+                row.className = 'tl-row';
+
+                if (entries.length > 1) {
+                    const spine = document.createElement('div');
+                    spine.className = 'tl-spine';
+                    row.appendChild(spine);
+                }
+
+                entries.forEach(entry => {
+                    const isEntryToday = isoToDateStr(entry.isoDate) === today;
+                    const node = document.createElement('div');
+                    node.className = 'tl-node' + (entry.custom ? ' tl-custom' : ' tl-auto') + (isEntryToday ? ' is-today' : '');
+
+                    const time  = document.createElement('div');
+                    time.className = 'tl-time';
+                    time.textContent = isoToTimeStr(entry.isoDate);
+
+                    const dot   = document.createElement('div');
+                    dot.className = 'tl-dot';
+                    const stem  = document.createElement('div');
+                    stem.className = 'tl-stem';
+                    const card  = document.createElement('div');
+                    card.className = 'tl-card';
+
+                    if (entry.bgColor) card.style.background = entry.bgColor;
+                    if (entry.borderColor) card.style.borderColor = entry.borderColor;
+
+                    const name  = document.createElement('div');
+                    name.className = 'tl-card-name' + (entry.text ? '' : ' no-text');
+                    name.textContent = entry.text || '(no text)';
+                    card.appendChild(name);
+
+                    if (entry.custom) {
+                        const badge = document.createElement('span');
+                        badge.className = 'tl-card-badge';
+                        badge.textContent = '✦ custom';
+                        card.appendChild(badge);
+                    }
+
+                    if (entry.tags && entry.tags.includes('edited')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'tl-card-badge';
+                        badge.style.background = 'var(--edited-dim)';
+                        badge.style.border = '1px solid var(--edited-border)';
+                        badge.style.color = 'var(--edited)';
+                        badge.textContent = '✎ edited';
+                        card.appendChild(badge);
+                    }
+
+                    node.appendChild(time); node.appendChild(dot); node.appendChild(stem); node.appendChild(card);
+                    row.appendChild(node);
+                });
+
+                track.appendChild(row);
+                dayEl.appendChild(header);
+                dayEl.appendChild(track);
+                timelineView.appendChild(dayEl);
+                initDragScroll(track);
+            });
+        }
+
+        function initDragScroll(el) {
+            let isDown = false, startX, scrollLeft;
+            el.addEventListener('mousedown', e => { isDown = true; startX = e.pageX - el.offsetLeft; scrollLeft = el.scrollLeft; });
+            el.addEventListener('mouseleave', () => { isDown = false; });
+            el.addEventListener('mouseup',    () => { isDown = false; });
+            el.addEventListener('mousemove',  e => { if (!isDown) return; e.preventDefault(); el.scrollLeft = scrollLeft - (e.pageX - el.offsetLeft - startX); });
+        }
+
+        // ── Master render ─────────────────────────────────────────
+        function render() {
+            const { activeTab, entries, processes, currentView } = state;
+            const today = todayDateString();
+
+            // Update tab counts
+            document.getElementById('tabTasksCount').textContent = entries.length;
+            document.getElementById('tabProcessesCount').textContent = processes.length;
+
+            // ── Tasks tab rendering ──
+            const tasksFiltered = getSorted(getFiltered('tasks'), 'tasks');
+            const tasksIsFiltering = searchInput.value.trim() || filterDate.value || state.activeTypeFilter !== 'all';
+
+            entryList.style.display   = currentView === 'list'     ? '' : 'none';
+            timelineView.style.display= currentView === 'timeline' ? '' : 'none';
+
+            if (currentView === 'list') {
+                renderListView(tasksFiltered, today);
+            } else {
+                _listKeys.clear();
+                renderTimelineView(tasksFiltered, today);
+            }
+
+            const tasksEmpty = entries.length === 0;
+            const tasksNoResults = !tasksEmpty && tasksFiltered.length === 0;
+            emptyState.classList.toggle('visible', tasksEmpty || tasksNoResults);
+            if (tasksNoResults) {
+                emptyState.querySelector('.empty-icon').textContent = '🔍';
+                emptyState.querySelector('p').textContent = 'No entries match your filters.';
+            } else if (tasksEmpty) {
+                emptyState.querySelector('.empty-icon').textContent = '🕳️';
+                emptyState.querySelector('p').innerHTML = 'No entries yet.<br>Add a note above to get started.';
+            }
+
+            clearBtn.style.display = entries.length > 0 ? '' : 'none';
+            const totalCount = entries.length + processes.length;
+            countBadge.textContent = totalCount === 1 ? '1 entry' : `${totalCount} entries`;
+
+            if (tasksIsFiltering && entries.length > 0) {
+                resultsCount.textContent = `${tasksFiltered.length} of ${entries.length} entries`;
+                resultsCount.classList.add('visible');
+            } else {
+                resultsCount.classList.remove('visible');
+            }
+            filterActiveDot.classList.toggle('visible', !!tasksIsFiltering);
+
+            // ── Processes tab rendering ──
+            const procsFiltered = getSorted(getFiltered('processes'), 'processes');
+            const procsIsFiltering = procSearchInput.value.trim() || procFilterDate.value || state.procActiveTypeFilter !== 'all';
+
+            renderProcessListView(procsFiltered, today);
+
+            const procsEmpty = processes.length === 0;
+            const procsNoResults = !procsEmpty && procsFiltered.length === 0;
+            procEmptyState.classList.toggle('visible', procsEmpty || procsNoResults);
+            if (procsNoResults) {
+                procEmptyState.querySelector('.empty-icon').textContent = '🔍';
+                procEmptyState.querySelector('p').textContent = 'No processes match your filters.';
+            } else if (procsEmpty) {
+                procEmptyState.querySelector('.empty-icon').textContent = '⟳';
+                procEmptyState.querySelector('p').innerHTML = 'No processes yet.<br>Add a process above to track workflow checkpoints.';
+            }
+
+            procClearBtn.style.display = processes.length > 0 ? '' : 'none';
+
+            if (procsIsFiltering && processes.length > 0) {
+                procResultsCount.textContent = `${procsFiltered.length} of ${processes.length} processes`;
+                procResultsCount.classList.add('visible');
+            } else {
+                procResultsCount.classList.remove('visible');
+            }
+            procFilterActiveDot.classList.toggle('visible', !!procsIsFiltering);
+        }
+
+        // ── UI actions ────────────────────────────────────────────
+        function setView(view) {
+            state.currentView = view;
+            document.getElementById('viewListBtn').classList.toggle('active', view === 'list');
+            document.getElementById('viewTimelineBtn').classList.toggle('active', view === 'timeline');
+            document.querySelector('#tasksSortControls').style.opacity       = view === 'list' ? '' : '0.35';
+            document.querySelector('#tasksSortControls').style.pointerEvents = view === 'list' ? '' : 'none';
+            render();
+        }
+
+        function setSort(field, tab) {
+            if (tab === 'tasks') {
+                const newDir = state.sortField === field ? (state.sortDir === 'desc' ? 'asc' : 'desc') : 'desc';
+                state.sortField = field;
+                state.sortDir   = newDir;
+                document.getElementById('sortTimeBtn').classList.toggle('active', field === 'time');
+                document.getElementById('sortTextBtn').classList.toggle('active', field === 'text');
+                const arrow = newDir === 'desc' ? '↓' : '↑';
+                document.getElementById('sortTimeDir').textContent = field === 'time' ? arrow : '↓';
+                document.getElementById('sortTextDir').textContent = field === 'text' ? arrow : '↓';
+            } else {
+                const newDir = state.procSortField === field ? (state.procSortDir === 'desc' ? 'asc' : 'desc') : 'desc';
+                state.procSortField = field;
+                state.procSortDir   = newDir;
+                document.getElementById('procSortTimeBtn').classList.toggle('active', field === 'time');
+                document.getElementById('procSortTextBtn').classList.toggle('active', field === 'text');
+                const arrow = newDir === 'desc' ? '↓' : '↑';
+                document.getElementById('procSortTimeDir').textContent = field === 'time' ? arrow : '↓';
+                document.getElementById('procSortTextDir').textContent = field === 'text' ? arrow : '↓';
+            }
+            render();
+        }
+
+        function toggleCustomPanel() {
+            const open = customPanel.classList.toggle('open');
+            customTriggerBtn.classList.toggle('active', open);
+            if (open) {
+                const now = new Date();
+                document.getElementById('customDate').value = now.toLocaleDateString('en-CA');
+                document.getElementById('customTime').value = now.toTimeString().slice(0, 5);
+            }
+        }
+
+        function toggleFilterPanel(tab) {
+            if (tab === 'tasks') {
+                const panel = document.getElementById('filterPanel');
+                const btn   = document.getElementById('filterToggleBtn');
+                btn.classList.toggle('active', panel.classList.toggle('open'));
+            } else {
+                const panel = document.getElementById('procFilterPanel');
+                const btn   = document.getElementById('procFilterToggleBtn');
+                btn.classList.toggle('active', panel.classList.toggle('open'));
+            }
+        }
+
+        function applyFilters(tab) { render(); }
+
+        function setTypeFilter(type, el, tab) {
+            if (tab === 'tasks') {
+                state.activeTypeFilter = type;
+                const panel = document.getElementById('filterPanel');
+                panel.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            } else {
+                state.procActiveTypeFilter = type;
+                const panel = document.getElementById('procFilterPanel');
+                panel.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            }
+            el.classList.add('active');
+            render();
+        }
+
+        function clearFilters(tab) {
+            if (tab === 'tasks') {
+                searchInput.value  = '';
+                filterDate.value   = '';
+                state.activeTypeFilter = 'all';
+                const panel = document.getElementById('filterPanel');
+                panel.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                panel.querySelector('.filter-chip[data-filter="all"]').classList.add('active');
+            } else {
+                procSearchInput.value  = '';
+                procFilterDate.value   = '';
+                state.procActiveTypeFilter = 'all';
+                const panel = document.getElementById('procFilterPanel');
+                panel.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                panel.querySelector('.filter-chip[data-filter="all"]').classList.add('active');
+            }
+            render();
+        }
+
+        function clearAll(tab) {
+            if (tab === 'tasks') {
+                if (!confirm('Clear all log entries? This cannot be undone.')) return;
+                _listKeys.clear();
+                setState({ entries: [] });
+            } else {
+                if (!confirm('Clear all processes? This cannot be undone.')) return;
+                _procKeys.clear();
+                setState({ processes: [] });
+            }
+            save();
+        }
+
+        // ── Export ─────────────────────────────────────────────────
+        function exportJSON() {
+            if (state.entries.length === 0 && state.processes.length === 0) {
+                showToast('Nothing to export yet.', true);
+                return;
+            }
+            const payload = {
+                app:        'Ticked',
+                version:    SCHEMA_VERSION,
+                exportedAt: new Date().toISOString(),
+                palette:    state.palette,
+                entries:    state.entries,
+                processes:  state.processes,
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = `ticked-export-${new Date().toLocaleDateString('en-CA')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`Exported ${state.entries.length + state.processes.length} items ↑`);
+        }
+
+        // ── Import ─────────────────────────────────────────────────
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const parsed   = JSON.parse(e.target.result);
+                    const envelope = Array.isArray(parsed)
+                        ? { version: 1, entries: parsed }
+                        : { version: parsed.version || 1, entries: parsed.entries || [], processes: parsed.processes || [], palette: parsed.palette };
+                    const migrated = migrate(envelope);
+
+                    // Import entries
+                    const incoming = (migrated.entries || []).filter(e => e.isoDate || e.timestamp);
+                    const existingIds = new Set(state.entries.map(e => e.id));
+                    const newEntries  = incoming.filter(e => !existingIds.has(e.id));
+
+                    const merged = [...state.entries, ...newEntries]
+                        .sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
+
+                    // Import processes
+                    const incomingProcs = (migrated.processes || []);
+                    const existingProcIds = new Set(state.processes.map(p => p.id));
+                    const newProcs = incomingProcs.filter(p => !existingProcIds.has(p.id));
+                    const mergedProcs = [...state.processes, ...newProcs]
+                        .sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
+
+                    // Import palette if present
+                    const newPalette = migrated.palette || state.palette;
+
+                    setState({ entries: merged, processes: mergedProcs, palette: newPalette });
+                    initPalette();
+                    save();
+
+                    const totalNew = newEntries.length + newProcs.length;
+                    const totalDupe = (incoming.length - newEntries.length) + (incomingProcs.length - newProcs.length);
+                    let msg = `Imported ${totalNew} items`;
+                    if (totalDupe > 0) msg += ` (${totalDupe} duplicates skipped)`;
+                    showToast(msg);
+                } catch {
+                    showToast('Import failed — invalid file.', true);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ── Tooltip ───────────────────────────────────────────────
+        function initTooltip() {
+            const qm = document.querySelector('.question-mark');
+            const tip = document.querySelector('.tooltip');
+            let tipVisible = false;
+            function showTip() {
+                const rect = qm.getBoundingClientRect();
+                const tipW = 300, margin = 12;
+                let left = rect.right - tipW;
+                left = Math.max(margin, Math.min(left, window.innerWidth - tipW - margin));
+                tip.style.top  = (rect.bottom + 10) + 'px';
+                tip.style.left = left + 'px';
+                tip.classList.add('visible');
+                tipVisible = true;
+            }
+            function hideTip() { tip.classList.remove('visible'); tipVisible = false; }
+            qm.addEventListener('mouseenter', showTip);
+            qm.addEventListener('mouseleave', hideTip);
+            qm.addEventListener('focus',      showTip);
+            qm.addEventListener('blur',       hideTip);
+            window.addEventListener('scroll', () => { if (tipVisible) showTip(); }, { passive: true });
+        }
+
+        // ── Ko-fi toggle ──────────────────────────────────────────
+        function initKofi() {
+            const hidden = safeStorage.get('kofiHidden') === 'true';
+            const badge  = document.querySelector('.kofi-badge');
+            const btn    = document.getElementById('kofiToggle');
+            badge.style.display = hidden ? 'none' : '';
+            btn.classList.toggle('hidden', hidden);
+        }
+
+        function toggleKofi() {
+            const badge     = document.querySelector('.kofi-badge');
+            const btn       = document.getElementById('kofiToggle');
+            const nowHidden = badge.style.display !== 'none';
+            badge.style.display = nowHidden ? 'none' : '';
+            btn.classList.toggle('hidden', nowHidden);
+            safeStorage.set('kofiHidden', nowHidden);
+        }
+
+        // ── Keyboard ──────────────────────────────────────────────
+        inputText.addEventListener('keypress', e => { if (e.key === 'Enter') addEntry(); });
+        procInputText.addEventListener('keypress', e => { if (e.key === 'Enter') addProcess(); });
+
+        // ── Init ──────────────────────────────────────────────────
+        window.onload = () => { load(); initTooltip(); initKofi(); initPWA(); initReminder(); };
+
+        // ── PWA ───────────────────────────────────────────────────
+        function initPWA() {
+            if ('serviceWorker' in navigator) {
+                // Helper: wait for SW to reach active state before storing ref
+                function waitForActive(reg) {
+                    return new Promise(resolve => {
+                        if (reg.active) { resolve(reg); return; }
+                        const sw = reg.installing || reg.waiting;
+                        if (!sw) { resolve(reg); return; }
+                        sw.addEventListener('statechange', function onState() {
+                            if (sw.state === 'activated') {
+                                sw.removeEventListener('statechange', onState);
+                                resolve(reg);
+                            }
+                        });
+                        setTimeout(() => resolve(reg), 3000);
+                    });
+                }
+
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => waitForActive(reg))
+                    .then(reg => { _swRegistration = reg; })
+                    .catch(() => {});
+
+                // Listen for messages from SW (notification action taps)
+                navigator.serviceWorker.addEventListener('message', e => {
+                    if (e.data && e.data.type === 'ticked-action') {
+                        if (e.data.action === 'log') {
+                            addEntry();
+                            showToast('Logged from notification ✓');
+                        }
+                    }
+                });
+            }
+
+            // Handle #action= hash on load (when opened from notification)
+            if (location.hash.includes('action=log')) {
+                setTimeout(() => {
+                    addEntry();
+                    showToast('Logged from notification ✓');
+                    history.replaceState(null, '', location.pathname);
+                }, 300);
+            }
+        }
+
+        // ── Notification system ──────────────────────────────────
+        let _swRegistration = null;
+        let _reminderInterval = null;
+
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                showToast('Notifications not supported in this browser.', true);
+                return false;
+            }
+            if (Notification.permission === 'granted') return true;
+            if (Notification.permission === 'denied') {
+                showToast('Notifications blocked. Enable in browser settings.', true);
+                return false;
+            }
+            const result = await Notification.requestPermission();
+            if (result === 'granted') {
+                showToast('Notifications enabled ✓');
+                return true;
+            }
+            showToast('Notification permission denied.', true);
+            return false;
+        }
+
+        async function sendTickedNotification(title, body) {
+            const ok = await requestNotificationPermission();
+            if (!ok) return;
+
+            const options = {
+                body: body || 'Tap to log a new entry',
+                icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230d0f14'/%3E%3Crect x='24' y='24' width='464' height='464' rx='64' fill='none' stroke='%2300e5a0' stroke-width='12'/%3E%3Cpath d='M140 256l80 90 152-160' stroke='%2300e5a0' stroke-width='44' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
+                badge: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='16' fill='%230d0f14'/%3E%3Cpath d='M24 48l20 22 28-30' stroke='%2300e5a0' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
+                tag: 'ticked-reminder',
+                renotify: true,
+                requireInteraction: true,  // keep expanded so action buttons stay visible
+                actions: [
+                    { action: 'log', title: '✓ Log Now' },
+                    { action: 'open', title: 'Open App' }
+                ],
+                vibrate: [100, 50, 100],
+            };
+
+            // Try SW registration (required for action buttons on Android)
+            let reg = _swRegistration;
+
+            // Fallback: get registration from navigator.serviceWorker.ready
+            if ((!reg || !reg.active) && 'serviceWorker' in navigator) {
+                try {
+                    reg = await Promise.race([
+                        navigator.serviceWorker.ready,
+                        new Promise((_, reject) => setTimeout(() => reject('timeout'), 2000))
+                    ]);
+                    _swRegistration = reg;
+                } catch(e) { reg = null; }
+            }
+
+            if (reg && reg.active) {
+                try {
+                    await reg.showNotification(title || 'Ticked Reminder', options);
+                    return;
+                } catch(e) { /* fallback below */ }
+            }
+
+            // Last resort: basic Notification (no action buttons)
+            try {
+                delete options.actions; // basic Notification doesn't support actions
+                delete options.requireInteraction;
+                new Notification(title || 'Ticked Reminder', options);
+            } catch(e) {}
+        }
+
+        function toggleReminder() {
+            const btn = document.getElementById('reminderBtn');
+            if (_reminderInterval) {
+                clearInterval(_reminderInterval);
+                _reminderInterval = null;
+                btn.classList.remove('active');
+                btn.title = 'Enable hourly log reminders';
+                showToast('Reminders off');
+                safeStorage.set('tickedReminder', 'off');
+            } else {
+                requestNotificationPermission().then(ok => {
+                    if (!ok) return;
+                    _reminderInterval = setInterval(() => {
+                        sendTickedNotification('Ticked', 'Time to log! Tap "Log Now" to add an entry.');
+                    }, 60 * 60 * 1000); // hourly
+                    btn.classList.add('active');
+                    btn.title = 'Disable hourly log reminders';
+                    showToast('Hourly reminders on — you\'ll get a "Log Now" button in notifications');
+                    safeStorage.set('tickedReminder', 'on');
+                    // Send a test notification after SW is fully active
+                    setTimeout(() => {
+                        sendTickedNotification('Ticked', 'Reminders active! Tap "✓ Log Now" to log instantly.');
+                    }, 2500);
+                });
+            }
+        }
+
+        function initReminder() {
+            if (safeStorage.get('tickedReminder') === 'on' && 'Notification' in window && Notification.permission === 'granted') {
+                _reminderInterval = setInterval(() => {
+                    sendTickedNotification('Ticked', 'Time to log! Tap "Log Now" to add an entry.');
+                }, 60 * 60 * 1000);
+                const btn = document.getElementById('reminderBtn');
+                if (btn) btn.classList.add('active');
+            }
+        }
+
+    </script>
+</body>
+</html>
