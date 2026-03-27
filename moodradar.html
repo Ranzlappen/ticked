@@ -267,10 +267,80 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:12px; h
 .help-close { position:absolute; top:14px; right:16px; background:transparent; border:none; color:var(--muted); font-size:1.1em; cursor:pointer; line-height:1; padding:4px }
 .help-close:hover { color:var(--accent) }
 
-/* ============================================================
-   STATUS + STATS
-   ============================================================ */
-.status-bar { text-align:center; font-size:.78em; letter-spacing:.13em; padding:6px; color:var(--muted); min-height:28px }
+/* Disconnected red tint — applied when logging was active but connection was lost */
+body.disconnected {
+  background:var(--bg);
+  /* Very subtle fixed inset shadow in red — doesn't interfere with any content */
+  box-shadow:inset 0 0 120px rgba(220,30,30,.09);
+  transition:box-shadow 1s ease;
+}
+/* Smooth removal of the tint when reconnected */
+body:not(.disconnected) {
+  box-shadow:none;
+  transition:box-shadow .8s ease;
+}
+
+/* Channel history dropdown */
+.channel-history-dropdown {
+  position:absolute;
+  top:100%;
+  left:0;
+  right:0;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-top:none;
+  border-radius:0 0 8px 8px;
+  z-index:600;
+  display:none;
+  max-height:200px;
+  overflow-y:auto;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+.channel-history-dropdown.open { display:block }
+.channel-history-dropdown::-webkit-scrollbar { width:3px }
+.channel-history-dropdown::-webkit-scrollbar-thumb { background:var(--border) }
+
+.history-item {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:7px 10px;
+  cursor:pointer;
+  font-size:.82em;
+  color:var(--text);
+  transition:background .12s;
+  gap:8px;
+}
+.history-item:hover { background:rgba(0,255,229,.07) }
+.history-item-name {
+  flex:1;
+  color:var(--accent);
+  letter-spacing:.04em;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.history-item-name::before { content:'#'; color:var(--muted); margin-right:2px }
+.history-delete {
+  background:transparent;
+  border:none;
+  color:var(--muted);
+  cursor:pointer;
+  font-size:.9em;
+  padding:2px 5px;
+  border-radius:4px;
+  line-height:1;
+  flex-shrink:0;
+  transition:color .15s, background .15s;
+}
+.history-delete:hover { color:var(--accent2); background:rgba(255,45,120,.1) }
+.history-empty {
+  padding:10px;
+  font-size:.76em;
+  color:var(--muted);
+  text-align:center;
+  letter-spacing:.1em;
+}
 .status-bar.live { color:var(--accent) }
 .status-bar.error { color:var(--accent2) }
 .live-dot { display:inline-block; width:7px; height:7px; background:var(--accent); border-radius:50%; margin-right:7px; animation:blink 1s step-end infinite }
@@ -433,7 +503,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:12px; h
   border-radius:var(--card-radius); padding:var(--card-pad);
   margin-bottom:var(--gap);
 }
-.timeline-wrap { width:100%; height:160px } /* slightly taller */
+.timeline-wrap { width:100%; height:320px } /* doubled from 160px */
 .timeline-controls {
   display:flex; align-items:center; gap:8px;
   margin-bottom:10px; justify-content:flex-end;
@@ -458,6 +528,18 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:12px; h
   background:var(--panel); border:1px solid var(--border);
   border-radius:var(--card-radius); padding:14px;
   max-height:200px; overflow-y:auto;
+}
+/* When resizable, the card itself clips; inner list scrolls */
+.feed-card.resizable {
+  display:flex;
+  flex-direction:column;
+  max-height:none;      /* let the resize handle control height */
+  overflow:hidden;      /* card clips — required for resize to work */
+}
+.feed-card.resizable #feedList {
+  flex:1;
+  overflow-y:auto;      /* list scrolls within the resized card */
+  min-height:0;         /* flex shrink allowed */
 }
 .feed-title { font-family:'Orbitron',sans-serif; font-size:.58em; letter-spacing:.2em; color:var(--muted); margin-bottom:7px; display:flex; align-items:center; gap:4px }
 .feed-item { font-size:.72em; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.04); display:flex; gap:6px; align-items:center; animation:fadeIn .2s ease }
@@ -489,6 +571,64 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:12px; h
 .card-title { font-family:'Orbitron',sans-serif; font-size:clamp(.52em,.6em,1em); letter-spacing:.18em; color:var(--muted); margin-bottom:10px; text-transform:uppercase; display:flex; align-items:center; gap:5px }
 
 /* ============================================================
+   RESIZABLE CARDS
+   Cards marked .resizable use native CSS resize:vertical so the
+   browser renders its own drag handle at the bottom-right corner.
+   overflow:hidden keeps content clipped while resize:vertical
+   still applies (resize only works on elements with overflow
+   other than visible). The handle is deliberately styled to be
+   subtle — the browser's native grip is still accessible.
+   ============================================================ */
+.resizable {
+  resize:vertical;
+  overflow:hidden;      /* required for resize:vertical to work */
+  min-height:80px;      /* prevents accidental collapse */
+  box-sizing:border-box;
+}
+/* Style the native resize handle to match the theme */
+.resizable::-webkit-resizer {
+  /* Tint the native handle with accent colour */
+  background:radial-gradient(circle at 100% 100%, rgba(0,255,229,.35) 30%, transparent 70%);
+  border-radius:0 0 var(--card-radius) 0;
+}
+
+/* Chart cards: allow flex child (chart-wrap) to fill remaining height */
+.chart-card.resizable {
+  align-items:stretch;  /* override center so chart-wrap can be full-width */
+}
+/* When resizable, chart-wrap fills remaining flex space instead of fixed aspect-ratio */
+.chart-card.resizable .chart-wrap {
+  flex:1;
+  max-width:100%;
+  aspect-ratio:unset;   /* drop fixed square — height comes from parent */
+  width:100%;
+}
+
+/* Bubble card: canvas fills 100% of card interior minus padding/title */
+.bubble-card.resizable {
+  display:flex;
+  flex-direction:column;
+}
+.bubble-card.resizable #bubbleCanvas {
+  flex:1;
+  height:auto;          /* fills remaining flex space */
+}
+
+/* Timeline card: make inner timeline-wrap fill the resized card */
+.timeline-card.resizable {
+  display:flex;
+  flex-direction:column;
+}
+/* The header row (title + scale toggles) is fixed height; wrap fills rest */
+.timeline-card.resizable .timeline-wrap {
+  flex:1;
+  height:auto;
+}
+
+/* Feed card: already has overflow-y:auto — resize:vertical is enough */
+/* No extra flex needed; feed scrolls internally */
+
+/* ============================================================
    LIST PRESET — body.preset-list overrides
    In list mode everything stacks single-column, charts are
    wider/shorter, feed is taller. No JS restructuring needed.
@@ -507,7 +647,7 @@ body.preset-list #bubbleCanvas {
 }
 /* Timeline taller in list mode */
 body.preset-list .timeline-wrap {
-  height:180px;
+  height:360px;
 }
 /* Feed taller in list mode */
 body.preset-list .feed-card {
@@ -566,9 +706,14 @@ body.preset-list { --gap:20px }
 
 <!-- CONNECT PANEL -->
 <div class="connect-panel">
-  <div class="input-wrap">
+  <div class="input-wrap" style="position:relative">
     <span class="input-prefix">#</span>
-    <input type="text" id="channelInput" placeholder="channel name" spellcheck="false"/>
+    <input type="text" id="channelInput" placeholder="channel name" spellcheck="false"
+      autocomplete="off"
+      onfocus="openChannelHistory()"
+      oninput="openChannelHistory()"
+      onkeydown="handleChannelKey(event)"/>
+    <div class="channel-history-dropdown" id="channelHistoryDropdown"></div>
   </div>
   <div class="hl-wrap">
     <span>decay</span>
@@ -610,14 +755,14 @@ body.preset-list { --gap:20px }
 
 <!-- PIE + RADAR -->
 <div class="charts-top">
-  <div class="chart-card" id="pieCard">
+  <div class="chart-card resizable" id="pieCard">
     <div class="chart-title card-title">
       MOOD DISTRIBUTION
       <button class="help-btn" onclick="showHelp('mood')" title="How moods are calculated">?</button>
     </div>
     <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
   </div>
-  <div class="chart-card" id="radarCard">
+  <div class="chart-card resizable" id="radarCard">
     <div class="chart-title card-title">
       KEYWORD WEB - TOP TERMS
       <button class="help-btn" onclick="showHelp('radar')" title="How the keyword web works">?</button>
@@ -627,7 +772,7 @@ body.preset-list { --gap:20px }
 </div>
 
 <!-- BUBBLES -->
-<div class="bubble-card">
+<div class="bubble-card resizable" id="bubbleCard">
   <div class="card-title">
     CONSENSUS BUBBLES - SIZE IS FREQUENCY, COLOR IS MOOD
     <button class="help-btn" onclick="showHelp('bubbles')" title="How bubbles work">?</button>
@@ -662,7 +807,7 @@ body.preset-list { --gap:20px }
 <div class="section-divider"></div>
 
 <!-- TIMELINE -->
-<div class="timeline-card">
+<div class="timeline-card resizable" id="timelineCard">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
     <div class="card-title" style="margin-bottom:0">MOOD TIMELINE - 2 MIN ROLLING WINDOW</div>
     <div class="timeline-controls" style="margin-bottom:0">
@@ -682,7 +827,7 @@ body.preset-list { --gap:20px }
   <div class="legend-item"><span class="legend-dot" style="background:#4a6688"></span>Neutral</div>
 </div>
 
-<div class="feed-card">
+<div class="feed-card resizable" id="feedCard">
   <div class="feed-title">
     LIVE FEED
     <button class="help-btn" onclick="showHelp('feed')" title="About the live feed">?</button>
@@ -1638,15 +1783,126 @@ function processingLoop() {
 }
 
 // =============================================================
+//  CHANNEL HISTORY — localStorage persistence
+// =============================================================
+const CHANNEL_HISTORY_KEY = 'moodradar_channels_v1';
+const CHANNEL_HISTORY_MAX = 20;
+
+function loadChannelHistory() {
+  try { return JSON.parse(localStorage.getItem(CHANNEL_HISTORY_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveChannelToHistory(name) {
+  const clean = name.replace(/^#/,'').toLowerCase().trim();
+  if (!clean) return;
+  let hist = loadChannelHistory();
+  hist = hist.filter(h => h !== clean);   // remove duplicate
+  hist.unshift(clean);                    // add to front
+  if (hist.length > CHANNEL_HISTORY_MAX) hist = hist.slice(0, CHANNEL_HISTORY_MAX);
+  try { localStorage.setItem(CHANNEL_HISTORY_KEY, JSON.stringify(hist)); } catch(e) {}
+}
+
+function deleteChannelFromHistory(name) {
+  let hist = loadChannelHistory().filter(h => h !== name);
+  try { localStorage.setItem(CHANNEL_HISTORY_KEY, JSON.stringify(hist)); } catch(e) {}
+  renderChannelHistory();
+}
+
+function renderChannelHistory() {
+  const dropdown = document.getElementById('channelHistoryDropdown');
+  const hist = loadChannelHistory();
+  const filter = sanitize(document.getElementById('channelInput').value.trim().toLowerCase().replace(/^#/,''));
+
+  const filtered = filter ? hist.filter(h => h.startsWith(filter)) : hist;
+
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div class="history-empty">No saved channels</div>';
+    return;
+  }
+
+  dropdown.innerHTML = filtered.map(name =>
+    `<div class="history-item" onmousedown="selectChannel('${esc(name)}')">
+      <span class="history-item-name">${esc(name)}</span>
+      <button class="history-delete" onmousedown="event.stopPropagation();deleteChannelFromHistory('${esc(name)}')" title="Remove">×</button>
+    </div>`
+  ).join('');
+}
+
+function openChannelHistory() {
+  renderChannelHistory();
+  document.getElementById('channelHistoryDropdown').classList.add('open');
+}
+
+function closeChannelHistory() {
+  document.getElementById('channelHistoryDropdown').classList.remove('open');
+}
+
+function selectChannel(name) {
+  document.getElementById('channelInput').value = name;
+  closeChannelHistory();
+}
+
+function handleChannelKey(e) {
+  if (e.key === 'Escape') { closeChannelHistory(); return; }
+  if (e.key === 'Enter')  { closeChannelHistory(); connectChat(); return; }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.input-wrap')) closeChannelHistory();
+});
+
+// =============================================================
+//  CONNECTION STATE — loggingActive flag + reconnect logic
+// =============================================================
+let loggingActive    = false;   // true only when user has intentionally connected
+let reconnectAttempt = 0;
+const MAX_RECONNECT  = 3;
+const RECONNECT_DELAY_MS = 10_000;
+let reconnectTimer   = null;
+
+function setDisconnectedState(shouldReconnect) {
+  if (loggingActive) {
+    document.body.classList.add('disconnected');
+  }
+  if (shouldReconnect && loggingActive && reconnectAttempt < MAX_RECONNECT) {
+    reconnectAttempt++;
+    const attemptNum = reconnectAttempt;
+    setStatus(`Disconnected. Reconnecting in 10s (attempt ${attemptNum}/${MAX_RECONNECT})...`, 'error');
+    reconnectTimer = setTimeout(() => {
+      if (loggingActive) connectChat(true); // true = is a reconnect attempt
+    }, RECONNECT_DELAY_MS);
+  } else if (loggingActive && reconnectAttempt >= MAX_RECONNECT) {
+    setStatus('Reconnect failed after ' + MAX_RECONNECT + ' attempts. Click Connect to retry.', 'error');
+  }
+}
+
+// =============================================================
 //  WEBSOCKET
 // =============================================================
-function connectChat() {
+function connectChat(isReconnect) {
   const raw = sanitize(document.getElementById('channelInput').value.trim().toLowerCase());
   if (!raw) { setStatus('Enter a channel name first.','error'); return; }
-  disconnectChat(); initCharts();
+
+  // Close existing connection cleanly without clearing loggingActive
+  if (ws) { ws.close(); ws = null; }
+  if (rafHandle) { cancelAnimationFrame(rafHandle); rafHandle = null; }
+  msgQueue.length = 0;
+
+  if (!isReconnect) {
+    initCharts();
+    reconnectAttempt = 0;  // reset counter on fresh manual connect
+  }
+
+  loggingActive = true;
+  document.body.classList.remove('disconnected');
+  clearTimeout(reconnectTimer);
+
   const channel = raw.startsWith('#') ? raw : '#'+raw;
   setStatus('Connecting to '+channel+'...','');
   document.getElementById('connectBtn').disabled = true;
+
   ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
   ws.onopen = () => {
     ws.send('CAP REQ :twitch.tv/commands twitch.tv/tags');
@@ -1662,6 +1918,10 @@ function connectChat() {
       if (!line) continue;
       if (line.startsWith('PING')) { ws.send('PONG :tmi.twitch.tv'); continue; }
       if (line.includes('366')||(line.includes('JOIN')&&line.includes(channel))) {
+        // Successful join — reset reconnect counter, save to history
+        reconnectAttempt = 0;
+        document.body.classList.remove('disconnected');
+        saveChannelToHistory(channel);
         setStatus('<span class="live-dot"></span>LIVE - '+channel.replace('#','').toUpperCase(),'live');
         if (!rafHandle) { lastTimelineTs=now; rafHandle=requestAnimationFrame(processingLoop); }
       }
@@ -1678,14 +1938,26 @@ function connectChat() {
       enqueue(user,msgText,now);
     }
   };
-  ws.onerror = ()=>{ setStatus('Connection failed - check channel name.','error'); document.getElementById('connectBtn').disabled=false; };
-  ws.onclose = ()=>{ setStatus('Disconnected.',''); document.getElementById('connectBtn').disabled=false; };
+  ws.onerror = () => {
+    document.getElementById('connectBtn').disabled=false;
+    setDisconnectedState(true);
+  };
+  ws.onclose = () => {
+    document.getElementById('connectBtn').disabled=false;
+    // Only treat as unexpected if loggingActive (not a manual disconnect)
+    setDisconnectedState(loggingActive);
+  };
 }
 
 function disconnectChat() {
+  loggingActive = false;                        // user intentionally stopped
+  clearTimeout(reconnectTimer);
+  reconnectAttempt = 0;
+  document.body.classList.remove('disconnected');
   if (ws) { ws.close(); ws=null; }
   if (rafHandle) { cancelAnimationFrame(rafHandle); rafHandle=null; }
   msgQueue.length=0;
+  setStatus('Disconnected.','');
   document.getElementById('connectBtn').disabled=false;
 }
 
@@ -1720,7 +1992,88 @@ function setStatus(html, cls) {
   el.className='status-bar'+(cls?' '+cls:'');
 }
 
-window.onload = initCharts;
+// =============================================================
+//  RESIZE PERSISTENCE — localStorage save/restore + ResizeObserver
+//
+//  Each resizable card is identified by its element ID.
+//  On resize: debounced save of clientHeight to localStorage.
+//  On load: restore saved heights before initCharts() so charts
+//  render at the correct size from the first frame.
+//
+//  ResizeObserver triggers chart.resize() and resizeBubbleCanvas()
+//  so visuals redraw correctly at the new dimensions.
+// =============================================================
+const RESIZE_STORAGE_KEY = 'moodradar_sizes_v1';
+const RESIZE_DEBOUNCE_MS = 180;
+
+// IDs of all resizable cards
+const RESIZABLE_IDS = ['pieCard','radarCard','bubbleCard','timelineCard','feedCard'];
+
+// --- Save/restore ---
+function saveSizes() {
+  const sizes = {};
+  for (const id of RESIZABLE_IDS) {
+    const el = document.getElementById(id);
+    if (el) sizes[id] = el.clientHeight;
+  }
+  try { localStorage.setItem(RESIZE_STORAGE_KEY, JSON.stringify(sizes)); } catch(e) {}
+}
+
+function restoreSizes() {
+  let sizes;
+  try { sizes = JSON.parse(localStorage.getItem(RESIZE_STORAGE_KEY) || 'null'); } catch(e) {}
+  if (!sizes) return;
+  for (const id of RESIZABLE_IDS) {
+    const el = document.getElementById(id);
+    if (el && sizes[id]) {
+      // Apply as explicit height; min-height CSS prevents collapse
+      el.style.height = sizes[id] + 'px';
+    }
+  }
+}
+
+// --- ResizeObserver: redraw charts when any resizable card changes size ---
+function setupResizeObserver() {
+  if (!window.ResizeObserver) return; // safe degradation for old browsers
+
+  let debounceTimer = null;
+
+  const observer = new ResizeObserver(entries => {
+    let needBubble = false, needPie = false, needRadar = false, needTimeline = false;
+
+    for (const entry of entries) {
+      const id = entry.target.id;
+      if (id === 'bubbleCard')   needBubble   = true;
+      if (id === 'pieCard')      needPie      = true;
+      if (id === 'radarCard')    needRadar    = true;
+      if (id === 'timelineCard') needTimeline = true;
+      // feedCard has no chart to resize — DOM handles it automatically
+    }
+
+    // Flush chart resizes immediately (Chart.js is fast)
+    if (needPie      && pieChart)      pieChart.resize();
+    if (needRadar    && radarChart)    radarChart.resize();
+    if (needTimeline && timelineChart) timelineChart.resize();
+    if (needBubble)                    resizeBubbleCanvas();
+
+    // Debounce the localStorage write (don't write on every animation frame)
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(saveSizes, RESIZE_DEBOUNCE_MS);
+  });
+
+  for (const id of RESIZABLE_IDS) {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  }
+}
+
+window.onload = function() {
+  // Restore saved sizes BEFORE initCharts so canvases measure correctly
+  restoreSizes();
+  initCharts();
+  // Start observing AFTER charts exist so resize() calls are valid
+  setupResizeObserver();
+};
 </script>
 </body>
-</html>
+   </html>
