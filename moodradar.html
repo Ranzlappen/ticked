@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MOOD RADAR - Twitch Chat Pulse</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg:#06060f; --panel:#0d0d1f; --border:#1a1a36;
+  --accent:#00ffe5; --accent2:#ff2d78; --accent3:#ffe600;
+  --text:#d8d8f8; --muted:#4a4a7a;
+  --hype:#00ffe5; --funny:#ffe600; --love:#ff2d78;
+  --toxic:#ff4800; --sad:#9b6ef3; --neutral:#2e3d5e;
+
+  /* Layout rhythm — one place to tune spacing across all sections */
+  --gap:16px;
+  --card-radius:14px;
+  --card-pad:18px;
+
+  /* App container visual frame */
+  --frame-glow: 0 0 0 1px rgba(0,255,229,.06), 0 0 60px rgba(0,255,229,.04);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+
+body {
+  font-family:'Share Tech Mono',monospace;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* Scanline overlay */
+body::before {
+  content:''; position:fixed; inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,229,.011) 2px,rgba(0,255,229,.011) 4px);
+  pointer-events:none; z-index:999;
+}
+
+/* Background grid */
+body::after {
+  content:''; position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(0,255,229,.028) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,255,229,.028) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none; z-index:0;
+  animation:gridScroll 25s linear infinite;
+}
+@keyframes gridScroll { to { background-position:48px 48px } }
+
+/* ============================================================
+   APP CONTAINER — cleaner visual frame, better rhythm
+   ============================================================ */
+.app {
+  position:relative; z-index:1;
+  max-width:1340px; margin:0 auto;
+  padding:24px 14px 64px;
+  /* Subtle inner-border frame to visually contain the dashboard */
+  background:linear-gradient(180deg, rgba(0,255,229,.018) 0%, transparent 120px);
+  border-left:1px solid rgba(0,255,229,.06);
+  border-right:1px solid rgba(0,255,229,.06);
+  min-height:100vh;
+}
+@media(min-width:480px) { .app { padding:30px 20px 64px } }
+
+/* Thin top accent line on the container */
+.app::before {
+  content:''; display:block;
+  height:2px; margin:-30px -20px 28px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  opacity:.4;
+}
+@media(max-width:479px) { .app::before { margin:-24px -14px 22px } }
+
+/* ============================================================
+   HEADER — flex row containing title block + settings button
+   ============================================================ */
+header {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  margin-bottom:22px;
+  /* Prevent the settings button from pushing title off-center
+     by using a symmetrical padding trick: the button's width is
+     mirrored on the left as invisible space */
+  position:relative;
+}
+
+/* Title + subtitle stacked, centered in available space */
+.header-center {
+  text-align:center;
+  flex:1;               /* grows to fill space */
+  min-width:0;          /* allows text to shrink/wrap safely */
+}
+
+.title {
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(1.7rem,5vw,3.4rem);
+  font-weight:900; letter-spacing:.1em;
+  background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3),var(--accent));
+  background-size:300% 100%;
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  animation:titleShift 6s linear infinite;
+}
+@keyframes titleShift { to { background-position:-300% 0 } }
+
+.subtitle {
+  color:var(--muted); font-size:.76em;
+  letter-spacing:.22em; margin-top:5px;
+}
+
+/* ============================================================
+   SETTINGS MENU — inline with the title row, icon-only button
+   ============================================================ */
+.settings-wrap {
+  /* No longer absolute — it's a natural flex item in the header row */
+  position:relative;
+  flex-shrink:0;
+}
+
+.settings-btn {
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--muted);
+  /* Square-ish, icon-only: removed letter-spacing and white-space */
+  padding:7px 8px;
+  cursor:pointer;
+  transition:color .2s,border-color .2s,background .2s;
+  display:flex; align-items:center; justify-content:center;
+}
+.settings-btn:hover { color:var(--accent); border-color:var(--accent); background:rgba(0,255,229,.05) }
+.settings-btn svg { width:15px; height:15px; fill:currentColor; flex-shrink:0; display:block }
+
+.settings-dropdown {
+  position:absolute;
+  top:calc(100% + 6px); right:0;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:6px;
+  min-width:160px;
+  z-index:500;
+  display:none;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+}
+.settings-dropdown.open { display:block }
+
+.settings-section-label {
+  font-family:'Orbitron',sans-serif;
+  font-size:.55em; letter-spacing:.2em;
+  color:var(--muted);
+  padding:6px 10px 4px;
+  text-transform:uppercase;
+}
+
+.preset-btn {
+  display:flex; align-items:center; gap:8px;
+  width:100%; background:transparent; border:none;
+  color:var(--text); font-family:'Share Tech Mono',monospace;
+  font-size:.78em; letter-spacing:.06em;
+  padding:8px 10px; border-radius:6px;
+  cursor:pointer; transition:background .15s,color .15s;
+  text-align:left;
+}
+.preset-btn:hover { background:rgba(0,255,229,.07); color:var(--accent) }
+.preset-btn.active { color:var(--accent) }
+.preset-btn .preset-icon {
+  width:24px; height:18px; border-radius:3px;
+  border:1px solid currentColor; opacity:.6; flex-shrink:0;
+  position:relative;
+}
+/* Dashboard icon — two-column grid visual */
+.preset-btn[data-preset="dashboard"] .preset-icon::before,
+.preset-btn[data-preset="dashboard"] .preset-icon::after {
+  content:''; position:absolute;
+  top:3px; bottom:3px; width:8px;
+  background:currentColor; border-radius:1px; opacity:.5;
+}
+.preset-btn[data-preset="dashboard"] .preset-icon::before { left:3px }
+.preset-btn[data-preset="dashboard"] .preset-icon::after  { right:3px }
+/* List icon — stacked rows visual */
+.preset-btn[data-preset="list"] .preset-icon::before {
+  content:''; position:absolute;
+  left:3px; right:3px;
+  top:3px; height:3px;
+  background:currentColor; border-radius:1px; opacity:.5;
+  box-shadow:0 5px 0 currentColor, 0 10px 0 currentColor;
+}
+
+/* ============================================================
+   CONNECT PANEL
+   ============================================================ */
+.connect-panel {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:12px; padding:14px 18px;
+  display:flex; flex-wrap:wrap; align-items:center;
+  gap:10px; justify-content:center;
+  margin-bottom:var(--gap);
+}
+.input-wrap { position:relative; display:flex; align-items:center }
+.input-prefix { position:absolute; left:12px; color:var(--accent); pointer-events:none }
+input[type=text] {
+  background:#080814; border:1px solid var(--border); border-radius:8px;
+  color:var(--text); font-family:'Share Tech Mono',monospace; font-size:1em;
+  padding:9px 13px 9px 28px; width:200px; outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 10px rgba(0,255,229,.2) }
+.hl-wrap { display:flex; align-items:center; gap:7px; font-size:.76em; color:var(--muted) }
+input[type=range] { -webkit-appearance:none; width:95px; height:4px; background:var(--border); border-radius:2px; outline:none }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:var(--accent); cursor:pointer }
+#hlVal { color:var(--accent); min-width:26px }
+.btn {
+  font-family:'Orbitron',sans-serif; font-size:.68em; font-weight:700;
+  letter-spacing:.08em; padding:9px 18px; border-radius:8px;
+  border:none; cursor:pointer; transition:all .2s; text-transform:uppercase;
+}
+.btn-connect { background:var(--accent); color:#000; box-shadow:0 0 15px rgba(0,255,229,.3) }
+.btn-connect:hover { box-shadow:0 0 24px rgba(0,255,229,.6); transform:translateY(-1px) }
+.btn-connect:disabled { opacity:.4; cursor:not-allowed; transform:none }
+.btn-disconnect { background:transparent; color:var(--muted); border:1px solid var(--border) }
+.btn-disconnect:hover { border-color:var(--accent2); color:var(--accent2) }
+.bot-toggle-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none }
+.bot-toggle-wrap input[type=checkbox] { width:14px; height:14px; accent-color:var(--accent); cursor:pointer }
+.bot-toggle-label { font-size:.72em; color:var(--muted); letter-spacing:.1em }
+
+/* ============================================================
+   HELP BUTTON + MODAL
+   ============================================================ */
+.help-btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; border-radius:50%;
+  border:1px solid var(--muted); background:transparent;
+  color:var(--muted); font-size:.6em; cursor:pointer;
+  line-height:1; vertical-align:middle; margin-left:4px;
+  transition:color .2s,border-color .2s;
+  font-family:'Share Tech Mono',monospace; flex-shrink:0;
+}
+.help-btn:hover { color:var(--accent); border-color:var(--accent) }
+
+.help-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.72); z-index:2000;
+  align-items:center; justify-content:center; padding:16px;
+}
+.help-overlay.open { display:flex }
+.help-modal {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--card-radius); padding:24px;
+  max-width:480px; width:100%; position:relative;
+  max-height:80vh; overflow-y:auto;
+}
+.help-modal h3 { font-family:'Orbitron',sans-serif; font-size:.8em; letter-spacing:.2em; color:var(--accent); margin-bottom:14px }
+.help-modal p,.help-modal li { font-size:.8em; color:#9898c8; line-height:1.7; margin-bottom:8px }
+.help-modal ul { padding-left:16px; margin-bottom:8px }
+.help-modal li { margin-bottom:4px }
+.help-modal strong { color:var(--text) }
+.help-close { position:absolute; top:14px; right:16px; background:transparent; border:none; color:var(--muted); font-size:1.1em; cursor:pointer; line-height:1; padding:4px }
+.help-close:hover { color:var(--accent) }
+
+/* ============================================================
+   STATUS + STATS
+   ============================================================ */
+.status-bar { text-align:center; font-size:.78em; letter-spacing:.13em; padding:6px; color:var(--muted); min-height:28px }
+.status-bar.live { color:var(--accent) }
+.status-bar.error { color:var(--accent2) }
+.live-dot { display:inline-block; width:7px; height:7px; background:var(--accent); border-radius:50%; margin-right:7px; animation:blink 1s step-end infinite }
+@keyframes blink { 50% { opacity:0 } }
+
+.stats-row { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:12px }
+.stat-box { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:9px 14px; text-align:center; min-width:80px }
+.stat-val { font-family:'Orbitron',sans-serif; font-size:1.4em; font-weight:700; color:var(--accent) }
+.stat-label { font-size:.6em; letter-spacing:.15em; color:var(--muted); margin-top:2px }
+
+.throughput-bar-wrap { display:flex; align-items:center; gap:9px; font-size:.66em; color:var(--muted); margin-bottom:14px; justify-content:center }
+.tbar { flex:1; max-width:260px; height:5px; background:var(--border); border-radius:3px; overflow:hidden }
+.tbar-fill { height:100%; background:var(--accent); border-radius:3px; transition:width .3s,background .3s; width:0% }
+
+/* ============================================================
+   DOMINANT MOOD + SHIFT ALERT
+   ============================================================ */
+.dominant-mood {
+  text-align:center; margin-bottom:8px;
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(1rem,2.4vw,1.8rem); font-weight:700; letter-spacing:.17em;
+  opacity:0; transition:opacity .4s,color .5s,text-shadow .5s;
+}
+.dominant-mood.visible { opacity:1 }
+.shift-alert {
+  text-align:center; font-size:.76em; letter-spacing:.17em;
+  min-height:20px; margin-bottom:14px; color:var(--accent3);
+  opacity:0; transition:opacity .3s;
+}
+.shift-alert.show { opacity:1 }
+
+/* ============================================================
+   SECTION DIVIDERS — subtle rhythm between logical groups
+   ============================================================ */
+.section-divider {
+  height:1px; margin:4px 0 var(--gap);
+  background:linear-gradient(90deg,transparent,rgba(0,255,229,.08),transparent);
+}
+
+/* ============================================================
+   CHARTS GRID — DASHBOARD preset (default)
+   ============================================================ */
+.charts-top {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:var(--gap); margin-bottom:var(--gap);
+}
+@media(max-width:660px) { .charts-top { grid-template-columns:1fr } }
+
+.chart-card {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--card-radius); padding:var(--card-pad);
+  display:flex; flex-direction:column; align-items:center;
+  transition:border-color .5s,box-shadow .5s;
+}
+.chart-card.flush { border-color:var(--accent); box-shadow:0 0 26px rgba(0,255,229,.13) }
+.chart-title {
+  font-family:'Orbitron',sans-serif; font-size:.6em; letter-spacing:.2em;
+  color:var(--muted); margin-bottom:12px; align-self:flex-start;
+  display:flex; align-items:center; gap:4px;
+}
+.chart-wrap { width:100%; max-width:400px; aspect-ratio:1; position:relative }
+
+/* ============================================================
+   BUBBLE CARD
+   ============================================================ */
+.bubble-card {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--card-radius); padding:var(--card-pad);
+  margin-bottom:var(--gap);
+}
+#bubbleCanvas { width:100%; height:260px; display:block; cursor:default; border-radius:8px }
+
+/* ============================================================
+   APPROVAL METER — enlarged, more prominent
+   ============================================================ */
+.approval-card {
+  background:var(--panel);
+  /* Stronger border tint to visually distinguish this section */
+  border:1px solid rgba(0,255,229,.18);
+  border-radius:var(--card-radius);
+  padding:20px var(--card-pad);
+  margin-bottom:var(--gap);
+  position:relative;
+  /* Subtle outer glow to draw the eye */
+  box-shadow:0 0 0 1px rgba(0,255,229,.04), inset 0 1px 0 rgba(0,255,229,.06);
+}
+.approval-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:8px }
+.approval-label-left {
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(.6em,.78em,1em); /* larger than before */
+  letter-spacing:.12em; color:#ff4800; text-transform:uppercase; flex:1; font-weight:700;
+}
+.approval-label-center {
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(.56em,.66em,1em);
+  letter-spacing:.15em; color:var(--muted); text-align:center; flex:2;
+  display:flex; align-items:center; justify-content:center; gap:4px;
+}
+.approval-label-right {
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(.6em,.78em,1em); /* larger than before */
+  letter-spacing:.12em; color:#00ffe5; text-align:right; text-transform:uppercase; flex:1; font-weight:700;
+}
+
+/* Track wrap: taller (64px vs 48px) */
+.approval-track-wrap { position:relative; height:64px; display:flex; align-items:center; margin:0 6px }
+
+/* Track: thicker (14px vs 8px), stronger glow */
+.approval-track {
+  position:absolute; left:0; right:0; height:14px; border-radius:7px;
+  background:linear-gradient(90deg,#ff4800 0%,#ff6600 25%,#ff8800 38%,#444466 50%,#00aa88 62%,#00dd99 75%,#00ffe5 100%);
+  box-shadow:0 0 12px rgba(0,0,0,.6), inset 0 2px 4px rgba(0,0,0,.5);
+}
+/* Center tick mark — taller and more visible */
+.approval-track::before {
+  content:''; position:absolute;
+  left:50%; top:-10px; bottom:-10px;
+  width:2px; background:rgba(255,255,255,.28);
+  transform:translateX(-50%);
+}
+
+/* Thumb: 36px (vs 26px), heavier border and glow */
+.approval-thumb {
+  position:absolute; top:50%; transform:translate(-50%,-50%);
+  width:36px; height:36px; border-radius:50%;
+  border:4px solid #fff; background:#0d0d1f;
+  transition:left .55s cubic-bezier(.25,.8,.25,1),box-shadow .55s;
+  cursor:default; z-index:2;
+}
+.approval-thumb::after {
+  content:''; position:absolute; inset:5px;
+  border-radius:50%; background:currentColor; opacity:.92;
+}
+
+/* Ticks: taller (10px vs 6px) */
+.approval-ticks { position:absolute; left:0; right:0; top:50%; display:flex; justify-content:space-between; pointer-events:none }
+.approval-tick { width:2px; height:10px; background:rgba(255,255,255,.15); margin-top:-5px; border-radius:1px }
+
+/* Score: larger font */
+.approval-score {
+  text-align:center; margin-top:12px;
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(1.4em,1.8em,2.4em); /* bump from 1.4em */
+  font-weight:700; letter-spacing:.1em;
+  transition:color .55s,text-shadow .55s;
+}
+.approval-verdict {
+  text-align:center; font-size:clamp(.66em,.76em,1em); /* bump from .7em */
+  letter-spacing:.18em; color:var(--muted);
+  margin-top:4px; min-height:18px; transition:color .4s;
+}
+.approval-mini { display:flex; gap:2px; justify-content:center; margin-top:14px; height:28px; align-items:flex-end; flex-wrap:nowrap; overflow:hidden }
+.approval-mini-bar { flex:1; max-width:8px; border-radius:2px 2px 0 0; min-height:3px; transition:height .3s,background .3s }
+
+/* ============================================================
+   TIMELINE CARD
+   ============================================================ */
+.timeline-card {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--card-radius); padding:var(--card-pad);
+  margin-bottom:var(--gap);
+}
+.timeline-wrap { width:100%; height:160px } /* slightly taller */
+.timeline-controls {
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:10px; justify-content:flex-end;
+}
+.scale-toggle {
+  font-family:'Share Tech Mono',monospace; font-size:.68em;
+  letter-spacing:.08em; padding:3px 10px; border-radius:5px;
+  border:1px solid var(--border); background:transparent;
+  color:var(--muted); cursor:pointer; transition:all .2s;
+}
+.scale-toggle:hover { border-color:var(--accent); color:var(--accent) }
+.scale-toggle.active { background:rgba(0,255,229,.1); border-color:var(--accent); color:var(--accent) }
+
+/* ============================================================
+   LEGEND + FEED
+   ============================================================ */
+.legend-row { display:flex; flex-wrap:wrap; justify-content:center; gap:11px; margin-bottom:14px }
+.legend-item { display:flex; align-items:center; gap:5px; font-size:.68em; color:var(--muted) }
+.legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0 }
+
+.feed-card {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--card-radius); padding:14px;
+  max-height:200px; overflow-y:auto;
+}
+.feed-title { font-family:'Orbitron',sans-serif; font-size:.58em; letter-spacing:.2em; color:var(--muted); margin-bottom:7px; display:flex; align-items:center; gap:4px }
+.feed-item { font-size:.72em; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.04); display:flex; gap:6px; align-items:center; animation:fadeIn .2s ease }
+@keyframes fadeIn { from { opacity:0; transform:translateY(3px) } }
+.feed-user { color:var(--accent); min-width:66px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex-shrink:0 }
+.feed-msg { color:#6a6a8e; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.feed-meta { display:flex; align-items:center; gap:5px; flex-shrink:0 }
+.feed-mood { font-size:.68em; padding:1px 4px; border-radius:4px; white-space:nowrap }
+.feed-apv { display:flex; align-items:center; gap:3px }
+.feed-apv-bar { width:28px; height:4px; border-radius:2px; background:var(--border); overflow:hidden; flex-shrink:0 }
+.feed-apv-fill { height:100%; border-radius:2px; transition:width .3s }
+.feed-apv-num { font-size:.65em; color:var(--muted); min-width:24px; text-align:right }
+.mood-hype    { background:rgba(0,255,229,.12);  color:var(--hype) }
+.mood-funny   { background:rgba(255,230,0,.12);  color:var(--funny) }
+.mood-love    { background:rgba(255,45,120,.12); color:var(--love) }
+.mood-toxic   { background:rgba(255,72,0,.12);   color:var(--toxic) }
+.mood-sad     { background:rgba(155,110,243,.18);color:var(--sad) }
+.mood-neutral { background:rgba(46,61,94,.35);   color:#4a6688 }
+.feed-card::-webkit-scrollbar { width:3px }
+.feed-card::-webkit-scrollbar-thumb { background:var(--border) }
+.feed-bot { opacity:.35 }
+.feed-bot .feed-user { color:var(--muted) }
+.mood-bot { background:rgba(255,72,0,.1); color:#ff6622; font-size:.65em; letter-spacing:.05em }
+
+/* bubble tooltip */
+#bubbleTip { position:fixed; background:#0d0d1f; border:1px solid #1a1a36; border-radius:6px; padding:5px 10px; font-size:.72em; color:var(--text); pointer-events:none; opacity:0; transition:opacity .15s; z-index:1000; white-space:nowrap }
+
+/* Section card title */
+.card-title { font-family:'Orbitron',sans-serif; font-size:clamp(.52em,.6em,1em); letter-spacing:.18em; color:var(--muted); margin-bottom:10px; text-transform:uppercase; display:flex; align-items:center; gap:5px }
+
+/* ============================================================
+   LIST PRESET — body.preset-list overrides
+   In list mode everything stacks single-column, charts are
+   wider/shorter, feed is taller. No JS restructuring needed.
+   ============================================================ */
+body.preset-list .charts-top {
+  grid-template-columns:1fr;
+}
+body.preset-list .chart-wrap {
+  max-width:100%;
+  aspect-ratio:unset;
+  height:240px; /* fixed height instead of square */
+}
+/* In list mode the bubble canvas is taller */
+body.preset-list #bubbleCanvas {
+  height:200px;
+}
+/* Timeline taller in list mode */
+body.preset-list .timeline-wrap {
+  height:180px;
+}
+/* Feed taller in list mode */
+body.preset-list .feed-card {
+  max-height:320px;
+}
+/* In list mode, stat boxes use all available width */
+body.preset-list .stats-row {
+  gap:6px;
+}
+body.preset-list .stat-box {
+  flex:1; min-width:70px;
+}
+/* Spacing between all cards is slightly increased in list mode */
+body.preset-list { --gap:20px }
+</style>
+</head>
+<body>
+<div id="bubbleTip"></div>
+
+<!-- Help modal -->
+<div class="help-overlay" id="helpOverlay" onclick="if(event.target===this)closeHelp()">
+  <div class="help-modal">
+    <button class="help-close" onclick="closeHelp()">x</button>
+    <h3 id="helpTitle">HOW IT WORKS</h3>
+    <div id="helpBody"></div>
+  </div>
+</div>
+
+<div class="app">
+
+<!-- ====================================================
+     HEADER + SETTINGS MENU
+     ==================================================== -->
+<header>
+  <div class="header-center">
+    <div class="title">MOOD RADAR</div>
+    <div class="subtitle">High Throughput - Time Weighted - Live Twitch Consensus</div>
+  </div>
+
+  <!-- Settings toggle — inline with title row, icon only -->
+  <div class="settings-wrap">
+    <button class="settings-btn" id="settingsBtn" onclick="toggleSettings()" aria-label="Appearance settings" title="Layout presets">
+      <svg viewBox="0 0 16 16"><path d="M8 10.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm5.85-1.85-.01-.07a5.6 5.6 0 0 0 0-1.16l.01-.07 1.1-.95a.4.4 0 0 0 .08-.5l-1.05-1.82a.4.4 0 0 0-.49-.17l-1.29.52-.1-.06a5.7 5.7 0 0 0-1-.58l-.08-.03-.2-1.37A.4.4 0 0 0 10.4 2H8.6a.4.4 0 0 0-.4.33l-.2 1.37-.08.03a5.7 5.7 0 0 0-1 .58l-.1.06-1.29-.52a.4.4 0 0 0-.49.17L4 5.84a.4.4 0 0 0 .08.5l1.1.95-.01.07a5.6 5.6 0 0 0 0 1.16l.01.07-1.1.95a.4.4 0 0 0-.08.5L5.05 11.9a.4.4 0 0 0 .49.17l1.29-.52.1.06c.31.22.64.41 1 .58l.08.03.2 1.37c.05.19.22.33.4.33h1.8c.18 0 .35-.14.4-.33l.2-1.37.08-.03c.36-.17.69-.36 1-.58l.1-.06 1.29.52a.4.4 0 0 0 .49-.17l1.05-1.82a.4.4 0 0 0-.08-.5l-1.1-.95z"/></svg>
+    </button>
+    <div class="settings-dropdown" id="settingsDropdown">
+      <div class="settings-section-label">APPEARANCE PRESET</div>
+      <button class="preset-btn active" data-preset="dashboard" onclick="applyPreset('dashboard')">
+        <span class="preset-icon"></span>Dashboard
+      </button>
+      <button class="preset-btn" data-preset="list" onclick="applyPreset('list')">
+        <span class="preset-icon"></span>List
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- CONNECT PANEL -->
+<div class="connect-panel">
+  <div class="input-wrap">
+    <span class="input-prefix">#</span>
+    <input type="text" id="channelInput" placeholder="channel name" spellcheck="false"/>
+  </div>
+  <div class="hl-wrap">
+    <span>decay</span>
+    <input type="range" id="hlSlider" min="1" max="60" value="10" step="1" oninput="updateHalfLife(this.value)"/>
+    <span id="hlVal">10s</span>
+    <button class="help-btn" onclick="showHelp('decay')" title="What is decay?">?</button>
+  </div>
+  <label class="bot-toggle-wrap" title="Filter detected bot messages from all scoring">
+    <input type="checkbox" id="botToggle" checked onchange="botFilterEnabled = this.checked"/>
+    <span class="bot-toggle-label">Filter bots</span>
+  </label>
+  <button class="btn btn-connect" id="connectBtn" onclick="connectChat()">Connect</button>
+  <button class="btn btn-disconnect" onclick="disconnectChat()">Disconnect</button>
+</div>
+
+<div id="statusBar" class="status-bar">Enter a channel name and connect</div>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="stat-val" id="statMessages">0</div><div class="stat-label">Total</div></div>
+  <div class="stat-box"><div class="stat-val" id="statRate">0</div><div class="stat-label">/ min</div></div>
+  <div class="stat-box"><div class="stat-val" id="statQueue">0</div><div class="stat-label">Queue</div></div>
+  <div class="stat-box"><div class="stat-val" id="statUsers">0</div><div class="stat-label">Users</div></div>
+  <div class="stat-box"><div class="stat-val" id="statDropped">0</div><div class="stat-label">Dropped</div></div>
+  <div class="stat-box" style="border-color:#ff480055"><div class="stat-val" id="statBotMsgs" style="color:#ff6622">0</div><div class="stat-label">Bot msgs</div></div>
+  <div class="stat-box" style="border-color:#ff480055"><div class="stat-val" id="statBotUsers" style="color:#ff6622">0</div><div class="stat-label">Bot users</div></div>
+</div>
+
+<div class="throughput-bar-wrap">
+  <span>THROUGHPUT</span>
+  <div class="tbar"><div class="tbar-fill" id="tbarFill"></div></div>
+  <span id="tbarLabel">0 msg/s</span>
+</div>
+
+<div class="dominant-mood" id="dominantMood">-</div>
+<div class="shift-alert" id="shiftAlert"></div>
+
+<!-- Subtle divider between status group and charts -->
+<div class="section-divider"></div>
+
+<!-- PIE + RADAR -->
+<div class="charts-top">
+  <div class="chart-card" id="pieCard">
+    <div class="chart-title card-title">
+      MOOD DISTRIBUTION
+      <button class="help-btn" onclick="showHelp('mood')" title="How moods are calculated">?</button>
+    </div>
+    <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+  </div>
+  <div class="chart-card" id="radarCard">
+    <div class="chart-title card-title">
+      KEYWORD WEB - TOP TERMS
+      <button class="help-btn" onclick="showHelp('radar')" title="How the keyword web works">?</button>
+    </div>
+    <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+  </div>
+</div>
+
+<!-- BUBBLES -->
+<div class="bubble-card">
+  <div class="card-title">
+    CONSENSUS BUBBLES - SIZE IS FREQUENCY, COLOR IS MOOD
+    <button class="help-btn" onclick="showHelp('bubbles')" title="How bubbles work">?</button>
+  </div>
+  <canvas id="bubbleCanvas"></canvas>
+</div>
+
+<!-- Divider before approval meter -->
+<div class="section-divider"></div>
+
+<!-- APPROVAL METER -->
+<div class="approval-card" id="approvalCard">
+  <div class="approval-header">
+    <div class="approval-label-left">DISSENT</div>
+    <div class="approval-label-center">
+      APPROVAL METER
+      <button class="help-btn" onclick="showHelp('approval')" title="How approval is measured">?</button>
+    </div>
+    <div class="approval-label-right">APPROVAL</div>
+  </div>
+  <div class="approval-track-wrap">
+    <div class="approval-track"></div>
+    <div class="approval-ticks" id="approvalTicks"></div>
+    <div class="approval-thumb" id="approvalThumb" style="left:50%"></div>
+  </div>
+  <div class="approval-score" id="approvalScore">-</div>
+  <div class="approval-verdict" id="approvalVerdict">waiting for messages</div>
+  <div class="approval-mini" id="approvalMini"></div>
+</div>
+
+<!-- Divider before timeline -->
+<div class="section-divider"></div>
+
+<!-- TIMELINE -->
+<div class="timeline-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+    <div class="card-title" style="margin-bottom:0">MOOD TIMELINE - 2 MIN ROLLING WINDOW</div>
+    <div class="timeline-controls" style="margin-bottom:0">
+      <button class="scale-toggle active" id="scaleLinearBtn" onclick="setTimelineScale('linear')">LINEAR</button>
+      <button class="scale-toggle" id="scaleLogBtn" onclick="setTimelineScale('log')">LOG</button>
+    </div>
+  </div>
+  <div class="timeline-wrap"><canvas id="timelineChart"></canvas></div>
+</div>
+
+<div class="legend-row">
+  <div class="legend-item"><span class="legend-dot" style="background:var(--hype)"></span>Hype</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--funny)"></span>Funny</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--love)"></span>Love</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--toxic)"></span>Toxic</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--sad)"></span>Sad</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#4a6688"></span>Neutral</div>
+</div>
+
+<div class="feed-card">
+  <div class="feed-title">
+    LIVE FEED
+    <button class="help-btn" onclick="showHelp('feed')" title="About the live feed">?</button>
+  </div>
+  <div id="feedList"></div>
+</div>
+
+</div><!-- .app -->
+
+<script>
+// =============================================================
+//  SETTINGS — preset and settings dropdown
+// =============================================================
+let currentPreset = 'dashboard';
+
+function toggleSettings() {
+  document.getElementById('settingsDropdown').classList.toggle('open');
+}
+
+function applyPreset(preset) {
+  currentPreset = preset;
+  if (preset === 'list') {
+    document.body.classList.add('preset-list');
+  } else {
+    document.body.classList.remove('preset-list');
+  }
+  // Update active state on buttons
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === preset);
+  });
+  document.getElementById('settingsDropdown').classList.remove('open');
+
+  // Resize bubble canvas after layout reflows
+  setTimeout(resizeBubbleCanvas, 50);
+  // Resize charts
+  if (pieChart)      pieChart.resize();
+  if (radarChart)    radarChart.resize();
+  if (timelineChart) timelineChart.resize();
+}
+
+// Close settings dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.settings-wrap')) {
+    document.getElementById('settingsDropdown').classList.remove('open');
+  }
+});
+
+// =============================================================
+//  HELP MODAL CONTENT
+// =============================================================
+const HELP_CONTENT = {
+  decay: {
+    title: 'DECAY HALF-LIFE',
+    body: `<p>The decay slider controls how quickly old messages lose their influence on the charts.</p>
+<ul>
+  <li><strong>Low (1-5s)</strong> - Only the last few seconds matter. Charts react instantly to spikes but are volatile.</li>
+  <li><strong>Medium (20-30s)</strong> - Balanced view. Recent messages dominate but older context lingers.</li>
+  <li><strong>High (60s)</strong> - Smooth, slow-moving charts that show broader trends over the full window.</li>
+</ul>
+<p>Technically this is the EWMA (exponential weighted moving average) half-life: a message this many seconds old has half the weight of a brand-new message.</p>`
+  },
+  mood: {
+    title: 'MOOD DISTRIBUTION',
+    body: `<p>Every chat message is classified into one of six moods using a keyword and emote dictionary:</p>
+<ul>
+  <li><strong>Hype</strong> - Excitement, celebration (PogChamp, LES GO, BANGER, GOAT)</li>
+  <li><strong>Funny</strong> - Laughter and sarcasm (KEKW, OMEGALUL, LUL, Kappa)</li>
+  <li><strong>Love</strong> - Affection and positivity (PogHeart, wholesome, ILY)</li>
+  <li><strong>Toxic</strong> - Negativity and aggression (COPE, ratio, trash, MALDING)</li>
+  <li><strong>Sad</strong> - Sadness and disappointment (Sadge, RIP, PepeHands, oof)</li>
+  <li><strong>Neutral</strong> - No strong signal detected</li>
+</ul>
+<p>Message length affects scoring. Longer messages with clear sentiment get higher weight. Very short messages contribute less.</p>`
+  },
+  radar: {
+    title: 'LIVE KEYWORD WEB',
+    body: `<p>The spiderweb chart shows the top 8 most-used sentiment keywords in the current time window.</p>
+<p>Each axis is a real term from chat. The size of each spoke shows how dominant that term is relative to the others right now. As chat evolves, axes change entirely.</p>`
+  },
+  bubbles: {
+    title: 'CONSENSUS BUBBLES',
+    body: `<p>Each bubble represents a keyword or phrase appearing in chat.</p>
+<ul>
+  <li><strong>Size</strong> - Proportional to how frequently the term has appeared (time-weighted)</li>
+  <li><strong>Color</strong> - Matches the mood of that keyword</li>
+  <li><strong>Position</strong> - Bubbles gravitate toward center but repel each other to avoid overlap</li>
+</ul>
+<p>Hover over any bubble to see the exact term and its mood.</p>`
+  },
+  approval: {
+    title: 'APPROVAL METER',
+    body: `<p>Independently tracks whether chat is agreeing or pushing back, separate from overall mood.</p>
+<p>Approval signals: facts, based, exactly, so true, preach, frfr, no cap, W take</p>
+<p>Dissent signals: ratio, cap, wrong, nah, cope, bad take, L take, disagree</p>
+<p>The slider position and score (+/-50) reflect the weighted balance right now.</p>`
+  },
+  feed: {
+    title: 'LIVE FEED',
+    body: `<p>Shows incoming messages in real time (1 in 5 shown to avoid DOM overload on fast chats).</p>
+<ul>
+  <li><strong>Mood tag</strong> - The detected emotional category of the message</li>
+  <li><strong>Approval bar</strong> - Small colored bar: cyan = approving, orange = dissenting</li>
+  <li><strong>BOT tag</strong> - Messages flagged as likely automated are shown dimmed and excluded from all scoring</li>
+</ul>`
+  }
+};
+
+function showHelp(key) {
+  const h = HELP_CONTENT[key];
+  if (!h) return;
+  document.getElementById('helpTitle').textContent = h.title;
+  document.getElementById('helpBody').innerHTML = h.body;
+  document.getElementById('helpOverlay').classList.add('open');
+}
+function closeHelp() { document.getElementById('helpOverlay').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeHelp(); document.getElementById('settingsDropdown').classList.remove('open'); } });
+
+// =============================================================
+//  SANITIZATION
+// =============================================================
+function sanitize(s) {
+  if (typeof s !== 'string') return '';
+  return s.replace(/[\uFFFD\u200B\u200C\u200D\uFEFF]/g, '').replace(/\s{2,}/g, ' ').trim();
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// =============================================================
+//  CONSTANTS & STATE
+// =============================================================
+const MOODS = ['hype','funny','love','toxic','sad','neutral'];
+const MOOD_COLORS = {hype:'#00ffe5',funny:'#ffe600',love:'#ff2d78',toxic:'#ff4800',sad:'#9b6ef3',neutral:'#2e3d5e'};
+
+let HALF_LIFE_MS = 10_000;
+const WINDOW_MS  = 120_000;
+const QUEUE_CAP  = 5000;
+
+const scoredMessages = [];
+const keywordStore   = new Map();
+const approvalStore  = [];
+const msgQueue       = [];
+let droppedMessages  = 0;
+
+let ws = null;
+let totalMessages = 0;
+const uniqueUsers   = new Set();
+const msgTimestamps = [];
+const tsThroughput  = [];
+let prevDominant = null;
+let chartsReady  = false;
+let rafHandle    = null;
+let frameIdx     = 0;
+const TIMELINE_POINTS   = 24;
+const TIMELINE_INTERVAL = 5000;
+let lastTimelineTs = 0;
+
+// =============================================================
+//  SENTIMENT DATA
+// =============================================================
+const RAW = {
+  hype:[
+    ['poggers',2,'PogChamp'],['pogchamp',2,'PogChamp'],['pog ',1,'Pog'],
+    ['pogg',1,'Pog'],['pago',1,'PogO'],['pogo',1,'PogO'],
+    ['letsgo',2,'LETS GO'],['letsgoo',2,'LETS GO'],['lesgo',2,'LES GO'],
+    ['ez ',1,'EZ'],['gg',1,'GG'],['based',2,'BASED'],['goat',2,'GOAT'],
+    ['fire',1,'fire'],['banger',2,'BANGER'],['clutch',2,'CLUTCH'],
+    ['monkaw',2,'monkaW'],['ratjam',1,'ratJAM'],['yooo',1,'YOOO'],
+    ['omgclap',2,'CLAP'],['hype',1,'HYPE'],['insane',1,'INSANE'],
+    ['incredible',1,'INCREDIBLE'],['crazy',1,'CRAZY'],['goated',2,'GOATED'],
+    ['gigachad',3,'GIGACHAD'],['pausechamp',2,'PauseChamp'],['5head',2,'5Head'],
+    ['clap',1,'CLAP'],['w ',1,'W'],['ww',1,'WW'],['lgooo',1,'LES GO'],
+  ],
+  funny:[
+    ['omegalul',3,'OMEGALUL'],['kekw',2,'KEKW'],['lul ',1,'LUL'],
+    ['lmao',1,'LMAO'],['lmfao',2,'LMFAO'],['haha',1,'haha'],
+    ['kappa',1,'Kappa'],['rofl',1,'ROFL'],['xd',1,'XD'],
+    ['lol ',1,'lol'],['copium',1,'COPIUM'],['dead',2,'dead'],
+    ['bruh',1,'bruh'],['4head',2,'4Head'],['clown',1,'clown'],
+    ['skill issue',2,'skill issue'],['pepejam',2,'PepeJAM'],
+    ['hilarious',1,'hilarious'],['residentsleeper',2,'ResidentSleeper'],
+    ['biblethump',1,'BibleThump'],['pepehands',1,'PepeHands'],
+  ],
+  love:[
+    ['<3',2,'love'],['love',1,'love'],['wholesome',2,'wholesome'],
+    ['king',1,'KING'],['queen',1,'QUEEN'],['beststreamer',2,'best streamer'],
+    ['bestchat',2,'best chat'],['cute',1,'cute'],[' ily ',2,'ILY'],
+    ['pogheart',2,'PogHeart'],['pepeloveyou',2,'love'],['beautiful',1,'beautiful'],
+    ['amazing',1,'amazing'],['perfect',1,'perfect'],['goated',1,'GOATED'],
+    ['respect',2,'RESPECT'],['legend',2,'LEGEND'],['w streamer',2,'W streamer'],
+  ],
+  toxic:[
+    ['trash',2,'trash'],['hate',2,'HATE'],['booo',1,'booo'],
+    ['malding',2,'MALDING'],['mald',1,'mald'],['cope',1,'COPE'],
+    ['cringe',2,'cringe'],['rekt',1,'REKT'],
+    ['ez clap',2,'EZ clap'],['noob',1,'noob'],['boring',1,'boring'],
+    ['peperage',2,'PepeRage'],['monkamad',2,'MonkaMad'],['loser',1,'loser'],
+    ['ratio',1,'RATIO'],['down bad',1,'down bad'],['terrible',1,'terrible'],
+    ['l streamer',2,'L streamer'],['trash streamer',3,'trash streamer'],
+    ['monkas',1,'monkaS'],['caught',1,'caught'],['diffed',2,'diffed'],
+  ],
+  sad:[
+    ['sadge',2,'Sadge'],['feelsbadman',2,'FeelsBad'],['rip',1,'RIP'],
+    ['pepesad',2,'PepeSad'],['oof',1,'oof'],['prayge',1,'Prayge'],
+    ['f in chat',2,'F in chat'],['peepocry',2,'PeepoCry'],
+    ['sadchamp',2,'SadChamp'],['pepehands',2,'PepeHands'],['noo',1,'nooo'],
+    ['unfortunate',1,'unfortunate'],['disappointing',1,'disappointing'],
+    ['biblethump',2,'BibleThump'],['crying',1,'crying'],['rip streamer',2,'RIP'],
+  ]
+};
+
+const TERM_MAP = new Map();
+for (const [mood, arr] of Object.entries(RAW)) {
+  for (const [term, w, label] of arr) {
+    if (!TERM_MAP.has(term) || TERM_MAP.get(term).weight < w)
+      TERM_MAP.set(term, { mood, weight:w, label });
+  }
+}
+const TERM_KEYS = [...TERM_MAP.keys()];
+
+// =============================================================
+//  APPROVAL / DISSENT TERMS
+// =============================================================
+const APPROVAL_TERMS = new Map([
+  ['facts',+2.5],['true',+1.5],['exactly',+2.0],['real',+1.5],
+  ['based',+2.0],['correct',+2.0],['yes',+1.5],['yep',+1.5],['yup',+1.5],
+  ['agreed',+2.5],['agree',+2.0],['this',+1.0],['100',+2.0],
+  ['fr ',+1.5],['frfr',+2.0],['no cap',+2.0],['nocap',+2.0],
+  ['preach',+2.5],['w take',+2.5],['gg',+1.0],['letsgo',+2.0],
+  ['poggers',+1.5],['pogchamp',+1.5],['pog ',+1.0],['ez',+1.0],
+  ['goated',+2.0],['goat',+1.5],['banger',+2.0],['king',+1.5],
+  ['queen',+1.5],['love this',+2.5],['love it',+2.5],[' ily ',+1.5],
+  ['wholesome',+2.0],['perfect',+2.0],['amazing',+1.5],['genius',+2.5],
+  ['smart',+1.5],['smart take',+2.5],['true that',+2.5],['clap',+1.5],
+  ['respect',+2.0],['fire',+1.5],['valid',+2.0],['say it',+2.0],
+  ['so true',+2.5],['gigachad',+2.0],['5head',+1.5],['w streamer',+3.0],
+  ['no',-1.5],['nope',-1.5],['nah',-2.0],['wrong',-2.0],['false',-2.0],
+  ['cap',-2.0],['ratio',-2.5],['l take',-2.5],['bad take',-2.5],
+  ['disagree',-2.5],['cope',-2.0],['copium',-2.0],['malding',-2.0],
+  ['mald',-1.5],['booo',-2.0],['cringe',-2.0],['trash',-2.0],
+  ['terrible',-2.0],['horrible',-2.5],['awful',-2.5],['garbage',-2.5],
+  ['shut up',-2.5],['stop',-1.5],['boring',-2.0],['skill issue',-2.0],
+  ['noob',-1.5],['loser',-1.5],['rekt',-1.5],['ez clap',-1.5],
+  ['lol no',-2.0],['actually no',-2.5],['bro what',-2.0],
+  ['l streamer',-3.0],['trash streamer',-3.0],
+]);
+const APPROVAL_KEYS = [...APPROVAL_TERMS.keys()];
+
+// =============================================================
+//  BOT DETECTION
+// =============================================================
+const BOT_THRESHOLD = 60;
+const KNOWN_BOTS = new Set([
+  'nightbot','streamelements','fossabot','moobot','streamlabs','streamlobby',
+  'soundalerts','pretzelrocks','wizebot','coebot','ohbot','ankhbot',
+  'phantombot','deepbot','botisimo','commanderroot','electricallongboard',
+  'streamholics','sery_bot','kofistreambot','streamcaptainbot','p0lizei_',
+  'slooobot','logviewer','bot_zeigt_bilder','stoveybot','roflgator',
+  'starstreambot','titlechange_bot','repost_bot','v_and_k','00ragzy00',
+  'pokemoncommunitygame','buttsbot','drapsnatt','unmodurated','stay_hydrated_bot',
+  'streamstatusbot','hnlbot','fursuit_cam_bot','leppunen','mirrobot','scripter_',
+  'notestreambot','toplistbot','streamcraftbot','0ax2','0x00000',
+]);
+
+function usernameScore(user) {
+  if (KNOWN_BOTS.has(user)) return 100;
+  let s = 0;
+  if (/bot$/i.test(user)) s += 35;
+  if (/streambot/i.test(user)) s += 40;
+  if (/^bot/i.test(user)) s += 25;
+  const num = user.match(/\d+$/);
+  if (num) { if (num[0].length >= 6) s += 25; else if (num[0].length >= 4) s += 10; }
+  if (user.length <= 5 && /\d/.test(user)) s += 10;
+  if (user.length >= 16 && /^[a-z0-9]+$/.test(user)) s += 15;
+  return Math.min(s, 80);
+}
+
+const userProfiles = new Map();
+const USER_PROFILE_WINDOW = 60_000;
+
+function hashStr(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 0x01000193) >>> 0; }
+  return h;
+}
+
+function messageScore(msg, lower) {
+  let s = 0;
+  if (msg.startsWith('!')) s += 20;
+  if (/https?:\/\//i.test(msg)) s += 15;
+  const words = lower.split(/\s+/);
+  if (words.length >= 3) {
+    const rep = 1 - new Set(words).size / words.length;
+    if (rep > 0.7) s += 20; else if (rep > 0.5) s += 10;
+  }
+  if (msg.length > 200) s += 15;
+  if (msg.length > 400) s += 20;
+  const an = (msg.match(/[a-zA-Z0-9]/g)||[]).length;
+  if (msg.length > 5 && an / msg.length < 0.2) s += 15;
+  return s;
+}
+
+function detectBot(user, msg, ts) {
+  const lower = msg.toLowerCase();
+  let score = usernameScore(user);
+  if (score >= 100) return { botScore:100, isBot:true };
+  score += messageScore(msg, lower);
+  if (!userProfiles.has(user)) userProfiles.set(user, { msgs:[],lengths:[],flagCount:0 });
+  const p = userProfiles.get(user);
+  while (p.msgs.length && ts - p.msgs[0].ts > USER_PROFILE_WINDOW) p.msgs.shift();
+  p.msgs.push({ ts, hash:hashStr(lower.trim()) });
+  const rate = p.msgs.length / (USER_PROFILE_WINDOW / 60_000);
+  if (rate > 30) score += 30; else if (rate > 15) score += 15; else if (rate > 8) score += 5;
+  if (p.msgs.length >= 3) {
+    const hashes = p.msgs.slice(-10).map(m => m.hash);
+    const rep = 1 - new Set(hashes).size / hashes.length;
+    if (rep > 0.8) score += 30; else if (rep > 0.5) score += 15; else if (rep > 0.3) score += 5;
+  }
+  p.lengths.push(msg.length);
+  if (p.lengths.length > 20) p.lengths.shift();
+  if (p.lengths.length >= 5) {
+    const mean = p.lengths.reduce((a,b)=>a+b,0) / p.lengths.length;
+    const sd = Math.sqrt(p.lengths.reduce((a,b)=>a+(b-mean)**2,0) / p.lengths.length);
+    if (mean > 10 && sd < 2) score += 20; else if (mean > 10 && sd < 5) score += 8;
+  }
+  if (score >= BOT_THRESHOLD) {
+    p.flagCount++;
+    if (p.flagCount >= 5) score = Math.min(score + 20, 100);
+  }
+  return { botScore:Math.min(score,100), isBot:score >= BOT_THRESHOLD };
+}
+
+let botMessagesFiltered = 0;
+let botUsersDetected    = new Set();
+let botFilterEnabled    = true;
+let approvalDisplayVal  = 50;
+let approvalHistory     = Array(40).fill(50);
+
+// =============================================================
+//  CLASSIFICATION — length weighting + strength cap
+// =============================================================
+function classifyMessage(msg) {
+  const lower = msg.toLowerCase();
+  const scores = {hype:0,funny:0,love:0,toxic:0,sad:0};
+  const hits = [];
+
+  for (let i = 0; i < TERM_KEYS.length; i++) {
+    const term = TERM_KEYS[i];
+    if (lower.includes(term)) {
+      const { mood, weight, label } = TERM_MAP.get(term);
+      scores[mood] += weight;
+      hits.push({ label, mood, weight });
+    }
+  }
+
+  const capR = (msg.match(/[A-Z]/g)||[]).length / (msg.length||1);
+  if (capR > 0.65 && msg.length > 5) scores.toxic += 0.6;
+
+  let best = 'neutral', bestS = 0;
+  for (const [m, s] of Object.entries(scores)) if (s > bestS) { bestS = s; best = m; }
+
+  const wordCount = lower.split(/\s+/).filter(w => w.length > 0).length;
+  let lengthMult;
+  if      (wordCount <= 1)  lengthMult = 0.5;
+  else if (wordCount <= 3)  lengthMult = 0.75;
+  else if (wordCount <= 7)  lengthMult = 1.0;
+  else if (wordCount <= 15) lengthMult = 1.2;
+  else                      lengthMult = 1.35;
+
+  const strength = Math.max(0.3, Math.min(bestS, 4.0) * lengthMult);
+
+  let approvalVote = 0;
+  for (let i = 0; i < APPROVAL_KEYS.length; i++) {
+    if (lower.includes(APPROVAL_KEYS[i])) approvalVote += APPROVAL_TERMS.get(APPROVAL_KEYS[i]);
+  }
+  approvalVote *= lengthMult;
+  if (capR > 0.65 && msg.length > 4) approvalVote *= 1.4;
+
+  return { mood:best, strength, hits, approvalVote };
+}
+
+// =============================================================
+//  EWMA SCORING
+// =============================================================
+function expWeight(ageMs) { return Math.exp(-ageMs * 0.693147 / HALF_LIFE_MS); }
+
+function pruneWindow(now) {
+  while (scoredMessages.length && now - scoredMessages[0].ts > WINDOW_MS) scoredMessages.shift();
+}
+
+function computeWeightedMoods(now) {
+  pruneWindow(now);
+  const totals = {hype:0,funny:0,love:0,toxic:0,sad:0,neutral:0};
+  let sumW = 0;
+  for (const { ts, mood, strength } of scoredMessages) {
+    const w = expWeight(now - ts) * strength;
+    totals[mood] += w; sumW += w;
+  }
+  if (sumW === 0) return null;
+  const pct = {};
+  for (const k of MOODS) pct[k] = totals[k] / sumW * 100;
+  return pct;
+}
+
+function computeKeywordWeights(now) {
+  const cutoff = now - WINDOW_MS;
+  for (const [k, arr] of keywordStore) {
+    while (arr.length && arr[0].ts < cutoff) arr.shift();
+    if (arr.length === 0) keywordStore.delete(k);
+  }
+  const result = [];
+  for (const [label, arr] of keywordStore) {
+    let score = 0;
+    const moodTotals = {};
+    for (const { ts, w, mood:m } of arr) {
+      const ew = expWeight(now - ts) * w;
+      score += ew;
+      moodTotals[m] = (moodTotals[m]||0) + ew;
+    }
+    let bestM = 'neutral', bestV = 0;
+    for (const [m,v] of Object.entries(moodTotals)) if (v > bestV) { bestV = v; bestM = m; }
+    result.push({ label, score, mood:bestM });
+  }
+  result.sort((a,b) => b.score - a.score);
+  return result;
+}
+
+function computeApproval(now) {
+  const cutoff = now - WINDOW_MS;
+  while (approvalStore.length && approvalStore[0].ts < cutoff) approvalStore.shift();
+  if (approvalStore.length === 0) return null;
+  let sumPos = 0, sumNeg = 0, sumW = 0;
+  for (const { ts, vote } of approvalStore) {
+    const w = expWeight(now - ts);
+    if (vote > 0) sumPos += vote * w; else sumNeg += Math.abs(vote) * w;
+    sumW += w;
+  }
+  if (sumW === 0) return null;
+  const total = sumPos + sumNeg || 0.001;
+  return 50 + (sumPos - sumNeg) / total * 50;
+}
+
+function approvalVerdict(score) {
+  if (score > 88) return ['OVERWHELMING APPROVAL','#00ffe5'];
+  if (score > 74) return ['STRONG APPROVAL','#00ddcc'];
+  if (score > 62) return ['LEANING APPROVAL','#00bb99'];
+  if (score > 54) return ['MILD APPROVAL','#44aa88'];
+  if (score > 46) return ['MIXED - DIVIDED CHAT','#8888aa'];
+  if (score > 38) return ['MILD DISSENT','#cc7755'];
+  if (score > 26) return ['LEANING DISSENT','#ee5533'];
+  if (score > 14) return ['STRONG DISSENT','#ff3311'];
+  return ['OVERWHELMING REJECTION','#ff4800'];
+}
+
+function enqueue(user, msg, ts) {
+  if (msgQueue.length >= QUEUE_CAP) { msgQueue.shift(); droppedMessages++; }
+  msgQueue.push({ user, msg, ts });
+}
+
+// =============================================================
+//  CHARTS
+// =============================================================
+let pieChart, radarChart, timelineChart;
+let timelineScaleMode = 'linear'; // 'linear' | 'log'
+
+const pieLabelPlugin = {
+  id: 'pieLabels',
+  afterDraw(chart) {
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    const data = chart.data.datasets[0].data;
+    const labels = chart.data.labels;
+    const total = data.reduce((a,b)=>a+b,0) || 1;
+    ctx.save();
+    meta.data.forEach((arc, i) => {
+      const pct = data[i] / total * 100;
+      if (pct < 4) return;
+      const { x, y } = arc.tooltipPosition();
+      ctx.font = `bold ${pct > 15 ? 13 : 10}px 'Orbitron', sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(0,0,0,0.85)';
+      ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 4;
+      if (pct > 12) {
+        ctx.fillText(labels[i], x, y - 7);
+        ctx.font = `${pct > 15 ? 11 : 9}px 'Share Tech Mono', monospace`;
+        ctx.fillText(pct.toFixed(0) + '%', x, y + 7);
+      } else {
+        ctx.fillText(pct.toFixed(0) + '%', x, y);
+      }
+      ctx.shadowBlur = 0;
+    });
+    ctx.restore();
+  }
+};
+
+function initCharts() {
+  if (chartsReady) return;
+  chartsReady = true;
+  Chart.defaults.color = '#4a4a7a';
+  Chart.defaults.font.family = 'Share Tech Mono';
+
+  pieChart = new Chart(document.getElementById('pieChart'), {
+    type: 'pie',
+    plugins: [pieLabelPlugin],
+    data: {
+      labels: MOODS.map(m => m.toUpperCase()),
+      datasets:[{ data:[0,0,0,0,0,100], backgroundColor:MOODS.map(m=>MOOD_COLORS[m]), borderColor:'#06060f', borderWidth:3, hoverOffset:10 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:true,
+      animation:{duration:350, easing:'easeOutCubic'},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed.toFixed(1)}%`}, backgroundColor:'#0d0d1f', borderColor:'#1a1a36', borderWidth:1}
+      }
+    }
+  });
+
+  radarChart = new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels:['-','-','-','-','-','-','-','-'],
+      datasets:[{ label:'Term Weight', data:[0,0,0,0,0,0,0,0], fill:true,
+        backgroundColor:'rgba(0,255,229,.09)', borderColor:'#00ffe5', borderWidth:2.5,
+        pointBackgroundColor:'#00ffe5', pointBorderColor:'#06060f', pointRadius:4, pointHoverRadius:7 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      animation:{duration:400, easing:'easeOutCubic'},
+      scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'rgba(255,255,255,.055)'},angleLines:{color:'rgba(255,255,255,.065)'},pointLabels:{color:'#7a7aaa',font:{family:'Share Tech Mono',size:10,weight:'700'}}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` "${c.chart.data.labels[c.dataIndex]}": ${c.parsed.r.toFixed(0)}`}, backgroundColor:'#0d0d1f', borderColor:'#1a1a36', borderWidth:1}}
+    }
+  });
+
+  // Approval tick marks
+  const tickContainer = document.getElementById('approvalTicks');
+  for (let i = 0; i < 9; i++) {
+    const t = document.createElement('div');
+    t.className = 'approval-tick';
+    tickContainer.appendChild(t);
+  }
+
+  // Approval mini bars
+  const miniContainer = document.getElementById('approvalMini');
+  for (let i = 0; i < 40; i++) {
+    const b = document.createElement('div');
+    b.className = 'approval-mini-bar';
+    b.style.height = '3px';
+    b.style.background = '#333355';
+    miniContainer.appendChild(b);
+  }
+
+  // Timeline chart
+  const moodsForTL = MOODS.filter(m => m !== 'neutral');
+  timelineChart = new Chart(document.getElementById('timelineChart'), {
+    type:'line',
+    data:{
+      labels:Array(TIMELINE_POINTS).fill(''),
+      datasets:moodsForTL.map(m => ({
+        label:m.toUpperCase(), data:Array(TIMELINE_POINTS).fill(null),
+        borderColor:MOOD_COLORS[m], backgroundColor:'transparent',
+        borderWidth:2, pointRadius:0, tension:0.45, fill:false
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#2e2e58',maxRotation:0,font:{size:8}}},
+        y:{
+          type:'linear', min:0, max:100,
+          grid:{color:'rgba(255,255,255,.04)'},
+          ticks:{color:'#2e2e58',font:{size:8},callback:v=>v+'%'}
+        }
+      },
+      plugins:{
+        legend:{display:true,position:'top',labels:{color:'#4a4a7a',font:{size:9,family:'Orbitron'},boxWidth:10,padding:7}},
+        tooltip:{backgroundColor:'#0d0d1f',borderColor:'#1a1a36',borderWidth:1}
+      }
+    }
+  });
+
+  initBubbles();
+}
+
+// =============================================================
+//  TIMELINE SCALE TOGGLE
+//  Log scale: floor data at 0.5 to avoid log(0)=-inf.
+//  Linear scale: data pushed as-is, y from 0-100.
+// =============================================================
+function setTimelineScale(mode) {
+  if (!timelineChart) return;
+  timelineScaleMode = mode;
+
+  document.getElementById('scaleLinearBtn').classList.toggle('active', mode === 'linear');
+  document.getElementById('scaleLogBtn').classList.toggle('active', mode === 'log');
+
+  if (mode === 'log') {
+    timelineChart.options.scales.y = {
+      type: 'logarithmic',
+      min: 0.5,    // floor — prevents -Infinity at zero
+      max: 100,
+      grid: { color:'rgba(255,255,255,.04)' },
+      ticks: {
+        color:'#2e2e58', font:{ size:8 },
+        // Show clean tick labels: 0.5 shows as <1, others as-is
+        callback(v) {
+          if (v === 0.5) return '<1%';
+          if ([1,2,5,10,20,50,100].includes(v)) return v + '%';
+          return null;
+        }
+      }
+    };
+  } else {
+    timelineChart.options.scales.y = {
+      type: 'linear', min:0, max:100,
+      grid: { color:'rgba(255,255,255,.04)' },
+      ticks: { color:'#2e2e58', font:{ size:8 }, callback: v => v + '%' }
+    };
+  }
+  timelineChart.update();
+}
+
+// =============================================================
+//  BUBBLE PHYSICS ENGINE — spring gravity
+// =============================================================
+const bubCanvas = document.getElementById('bubbleCanvas');
+const bubCtx    = bubCanvas.getContext('2d');
+let bubbles      = [];
+let hoveredBubble = null;
+const tip = document.getElementById('bubbleTip');
+
+function resizeBubbleCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  bubCanvas.width  = bubCanvas.offsetWidth * dpr;
+  bubCanvas.height = bubCanvas.offsetHeight * dpr;
+  bubCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function initBubbles() {
+  resizeBubbleCanvas();
+  window.addEventListener('resize', resizeBubbleCanvas);
+  bubCanvas.addEventListener('mousemove', onBubbleHover);
+  bubCanvas.addEventListener('mouseleave', () => { hoveredBubble = null; tip.style.opacity = '0'; });
+  bubAnimLoop();
+}
+
+function onBubbleHover(e) {
+  const rect = bubCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  hoveredBubble = null; tip.style.opacity = '0';
+  for (const b of bubbles) {
+    const dx = mx - b.x, dy = my - b.y;
+    if (dx*dx + dy*dy < b.r*b.r) {
+      hoveredBubble = b;
+      tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY - 14) + 'px';
+      tip.style.opacity = '1';
+      tip.textContent = sanitize(b.label) + ' - ' + b.mood;
+      break;
+    }
+  }
+}
+
+function updateBubbles(kwList) {
+  const W = bubCanvas.offsetWidth, H = bubCanvas.offsetHeight;
+  if (!W || !H) return;
+  const top = kwList.slice(0, 22);
+  const maxScore = top[0]?.score || 1;
+  const existing = new Map(bubbles.map(b => [b.label, b]));
+  const next = [];
+  for (const { label, score, mood } of top) {
+    const targetR = 16 + (score / maxScore) * 55;
+    if (existing.has(label)) {
+      const b = existing.get(label);
+      b.targetR = targetR; b.mood = mood; b.score = score;
+      next.push(b);
+    } else {
+      const angle = Math.random() * Math.PI * 2;
+      const sr = Math.min(W, H) * 0.15;
+      next.push({ label, mood, score,
+        x:W/2 + Math.cos(angle)*sr, y:H/2 + Math.sin(angle)*sr,
+        vx:(Math.random()-0.5)*0.4, vy:(Math.random()-0.5)*0.4,
+        r:targetR*0.3, targetR });
+    }
+  }
+  bubbles = next;
+}
+
+function bubAnimLoop() {
+  requestAnimationFrame(bubAnimLoop);
+  const W = bubCanvas.offsetWidth, H = bubCanvas.offsetHeight;
+  if (!W || !H) return;
+  bubCtx.clearRect(0, 0, W, H);
+  const cx = W/2, cy = H/2;
+  const SPRING_K = 0.004;
+
+  for (const b of bubbles) {
+    b.r += (b.targetR - b.r) * 0.05;
+    const dx = cx - b.x, dy = cy - b.y;
+    b.vx += dx * SPRING_K; b.vy += dy * SPRING_K;
+    b.vx += (Math.random()-0.5)*0.015; b.vy += (Math.random()-0.5)*0.015;
+    b.vx *= 0.90; b.vy *= 0.90;
+    const spd = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
+    if (spd > 1.5) { b.vx = b.vx/spd*1.5; b.vy = b.vy/spd*1.5; }
+    b.x += b.vx; b.y += b.vy;
+    const pad = 2;
+    if (b.x-b.r<pad)    { b.x=b.r+pad;     b.vx= Math.abs(b.vx)*0.3; }
+    if (b.x+b.r>W-pad)  { b.x=W-b.r-pad;   b.vx=-Math.abs(b.vx)*0.3; }
+    if (b.y-b.r<pad)    { b.y=b.r+pad;     b.vy= Math.abs(b.vy)*0.3; }
+    if (b.y+b.r>H-pad)  { b.y=H-b.r-pad;   b.vy=-Math.abs(b.vy)*0.3; }
+  }
+
+  for (let pass = 0; pass < 3; pass++) {
+    for (let i = 0; i < bubbles.length; i++) {
+      for (let j = i+1; j < bubbles.length; j++) {
+        const a = bubbles[i], b = bubbles[j];
+        const dx = b.x-a.x, dy = b.y-a.y;
+        const distSq = dx*dx+dy*dy;
+        const minD = a.r+b.r+2;
+        if (distSq < minD*minD) {
+          const dist = Math.sqrt(distSq)||0.001;
+          const overlap = (minD-dist)*0.5;
+          const nx = dx/dist, ny = dy/dist;
+          a.x -= nx*overlap; a.y -= ny*overlap;
+          b.x += nx*overlap; b.y += ny*overlap;
+          const relV = (b.vx-a.vx)*nx + (b.vy-a.vy)*ny;
+          if (relV < 0) {
+            a.vx -= nx*relV*0.25; a.vy -= ny*relV*0.25;
+            b.vx += nx*relV*0.25; b.vy += ny*relV*0.25;
+          }
+        }
+      }
+    }
+  }
+
+  for (const b of bubbles) {
+    const col = MOOD_COLORS[b.mood]||'#2e3d5e';
+    const isHov = b === hoveredBubble;
+    bubCtx.beginPath();
+    bubCtx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+    bubCtx.fillStyle = hexAlpha(col, isHov?0.52:0.28);
+    bubCtx.fill();
+    if (isHov) { bubCtx.shadowColor=col; bubCtx.shadowBlur=16; }
+    bubCtx.strokeStyle = hexAlpha(col, isHov?1.0:0.65);
+    bubCtx.lineWidth = isHov?2.5:1.5;
+    bubCtx.stroke();
+    bubCtx.shadowBlur = 0;
+    if (b.r < 12) continue;
+    const fontSize = Math.max(9, Math.min(b.r*0.36, 13));
+    bubCtx.font = `bold ${fontSize}px 'Share Tech Mono', monospace`;
+    bubCtx.textAlign = 'center'; bubCtx.textBaseline = 'middle';
+    bubCtx.fillStyle = isHov?'#fff':'rgba(255,255,255,0.88)';
+    const txt = b.label.length>11 ? b.label.slice(0,10)+'.' : b.label;
+    bubCtx.fillText(txt, b.x, b.y, b.r*1.75);
+  }
+}
+
+// =============================================================
+//  VISUALS UPDATE
+// =============================================================
+function updateVisuals() {
+  if (!chartsReady) return;
+  const now = Date.now();
+  const pct = computeWeightedMoods(now);
+  const dominant = getDominant(pct);
+  const col = MOOD_COLORS[dominant];
+
+  if (pct) { pieChart.data.datasets[0].data = MOODS.map(m=>pct[m]); pieChart.update('none'); }
+
+  const kwList = computeKeywordWeights(now);
+  const top8 = kwList.slice(0,8);
+  if (top8.length >= 3) {
+    const maxKW = top8[0].score||1;
+    radarChart.data.labels = top8.map(k=>k.label);
+    radarChart.data.datasets[0].data = top8.map(k=>Math.round(k.score/maxKW*100));
+    const rc = MOOD_COLORS[top8[0]?.mood||dominant];
+    radarChart.data.datasets[0].borderColor = rc;
+    radarChart.data.datasets[0].backgroundColor = hexAlpha(rc,0.1);
+    radarChart.data.datasets[0].pointBackgroundColor = rc;
+    radarChart.update('none');
+  }
+
+  updateBubbles(kwList.slice(0,28).map((k,i)=>({...k,count:i+1})));
+
+  const domEl = document.getElementById('dominantMood');
+  domEl.textContent = dominant.toUpperCase() + ' DOMINANT';
+  domEl.style.color = col;
+  domEl.style.textShadow = `0 0 26px ${hexAlpha(col,.45)}`;
+  domEl.classList.add('visible');
+
+  if (prevDominant && prevDominant !== dominant) {
+    const alertEl = document.getElementById('shiftAlert');
+    alertEl.textContent = 'MOOD SHIFT - ' + prevDominant.toUpperCase() + ' TO ' + dominant.toUpperCase();
+    alertEl.classList.add('show');
+    clearTimeout(alertEl._t);
+    alertEl._t = setTimeout(() => alertEl.classList.remove('show'), 5000);
+    ['pieCard','radarCard'].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.add('flush');
+      clearTimeout(el._ft);
+      el._ft = setTimeout(() => el.classList.remove('flush'), 1800);
+    });
+  }
+  prevDominant = dominant;
+
+  const approvalRaw = computeApproval(now);
+  if (approvalRaw !== null) {
+    approvalDisplayVal += (approvalRaw - approvalDisplayVal) * 0.18;
+    const val = approvalDisplayVal;
+    const pctV = Math.max(2, Math.min(98, val));
+    const thumb = document.getElementById('approvalThumb');
+    thumb.style.left = pctV + '%';
+    let thumbCol;
+    if (val >= 50) { const t=(val-50)/50; thumbCol=lerpColor('#8888aa','#00ffe5',t); }
+    else           { const t=(50-val)/50; thumbCol=lerpColor('#8888aa','#ff4800',t); }
+    thumb.style.background = '#0d0d1f';
+    thumb.style.color = thumbCol;
+    thumb.style.borderColor = thumbCol;
+    thumb.style.boxShadow = `0 0 22px ${thumbCol}99, 0 0 8px ${thumbCol}55`;
+    const signedScore = Math.round(val - 50);
+    const scoreEl = document.getElementById('approvalScore');
+    scoreEl.textContent = (signedScore >= 0 ? '+' : '') + signedScore;
+    scoreEl.style.color = thumbCol;
+    scoreEl.style.textShadow = `0 0 24px ${thumbCol}88`;
+    const [vText,vCol] = approvalVerdict(val);
+    const verdictEl = document.getElementById('approvalVerdict');
+    verdictEl.textContent = vText; verdictEl.style.color = vCol;
+    approvalHistory.push(val);
+    if (approvalHistory.length > 40) approvalHistory.shift();
+    const bars = document.getElementById('approvalMini').children;
+    for (let i = 0; i < bars.length; i++) {
+      const v = approvalHistory[i]??50;
+      const h = Math.max(3, Math.abs(v-50)/50*28);
+      let bc;
+      if (v>=50) { const t=(v-50)/50; bc=lerpColor('#555577','#00ffe5',t); }
+      else       { const t=(50-v)/50; bc=lerpColor('#555577','#ff4800',t); }
+      bars[i].style.height = h+'px'; bars[i].style.background = bc;
+    }
+  }
+
+  const now2 = Date.now();
+  document.getElementById('statMessages').textContent = fmtNum(totalMessages);
+  document.getElementById('statUsers').textContent    = fmtNum(uniqueUsers.size);
+  document.getElementById('statQueue').textContent    = msgQueue.length;
+  document.getElementById('statDropped').textContent  = droppedMessages;
+  document.getElementById('statBotMsgs').textContent  = fmtNum(botMessagesFiltered);
+  document.getElementById('statBotUsers').textContent = fmtNum(botUsersDetected.size);
+  const cut60 = now2-60000;
+  while (msgTimestamps.length && msgTimestamps[0]<cut60) msgTimestamps.shift();
+  document.getElementById('statRate').textContent = msgTimestamps.length;
+  const cut3 = now2-3000;
+  while (tsThroughput.length && tsThroughput[0]<cut3) tsThroughput.shift();
+  const mps = (tsThroughput.length/3).toFixed(1);
+  const bp = Math.min(100, tsThroughput.length/3/50*100);
+  const fill = document.getElementById('tbarFill');
+  fill.style.width = bp+'%';
+  fill.style.background = bp>80?'#ff4800':bp>50?'#ffe600':'#00ffe5';
+  document.getElementById('tbarLabel').textContent = mps+' msg/s';
+}
+
+function pushTimelineSnapshot() {
+  const pct = computeWeightedMoods(Date.now());
+  const label = new Date().toLocaleTimeString([],{minute:'2-digit',second:'2-digit'});
+  timelineChart.data.labels.push(label); timelineChart.data.labels.shift();
+  MOODS.filter(m=>m!=='neutral').forEach((m,i)=>{
+    // In log mode, floor values at 0.5 to avoid log(0).
+    // In linear mode push 0 as usual.
+    let val = pct ? Math.round(pct[m]) : 0;
+    if (timelineScaleMode === 'log' && val < 0.5) val = 0.5;
+    timelineChart.data.datasets[i].data.push(val);
+    timelineChart.data.datasets[i].data.shift();
+  });
+  timelineChart.update('none');
+}
+
+// =============================================================
+//  FEED
+// =============================================================
+const feedPending = [];
+let feedRafId = null;
+
+function addFeedItem(user, msg, mood, botScore, approvalVote) {
+  feedPending.push({ user, msg, mood, botScore:botScore||0, approvalVote:approvalVote||0 });
+  if (!feedRafId) feedRafId = requestAnimationFrame(flushFeed);
+}
+
+function flushFeed() {
+  feedRafId = null;
+  const list = document.getElementById('feedList');
+  const frag = document.createDocumentFragment();
+  for (const { user, msg, mood, botScore, approvalVote } of feedPending.splice(0,25)) {
+    const el = document.createElement('div');
+    const isBot = mood === 'bot';
+    el.className = 'feed-item' + (isBot?' feed-bot':'');
+    const safeUser = sanitize(user);
+    const safeMsg  = sanitize(msg.length>55 ? msg.slice(0,55)+'...' : msg);
+    const moodTag = isBot
+      ? `<span class="feed-mood mood-bot">BOT ${botScore}</span>`
+      : `<span class="feed-mood mood-${mood}">${mood}</span>`;
+    let apvTag = '';
+    if (!isBot) {
+      const apvPct = Math.round(Math.min(100, Math.max(0, (approvalVote+8)/16*100)));
+      let apvColor;
+      if (approvalVote>1) apvColor='#00ffe5';
+      else if (approvalVote<-1) apvColor='#ff4800';
+      else apvColor='#4a4a7a';
+      const apvNum = approvalVote>0 ? '+'+approvalVote.toFixed(1) : approvalVote.toFixed(1);
+      apvTag = `<span class="feed-apv"><span class="feed-apv-bar"><span class="feed-apv-fill" style="width:${apvPct}%;background:${apvColor}"></span></span><span class="feed-apv-num" style="color:${apvColor}">${apvNum}</span></span>`;
+    }
+    el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${esc(safeMsg)}</span><span class="feed-meta">${moodTag}${apvTag}</span>`;
+    frag.prepend(el);
+  }
+  list.prepend(frag);
+  while (list.children.length > 60) list.removeChild(list.lastChild);
+}
+
+// =============================================================
+//  MAIN PROCESSING LOOP
+// =============================================================
+function processingLoop() {
+  rafHandle = requestAnimationFrame(processingLoop);
+  frameIdx++;
+  const now = Date.now();
+  const burst = msgQueue.length>500?400:msgQueue.length>100?200:120;
+  const n = Math.min(msgQueue.length, burst);
+
+  for (let i = 0; i < n; i++) {
+    const { user, msg, ts } = msgQueue.shift();
+    if (botFilterEnabled) {
+      const { botScore, isBot } = detectBot(user, msg, ts);
+      if (isBot) {
+        botMessagesFiltered++;
+        botUsersDetected.add(user);
+        if (i%5===0) addFeedItem(user, msg, 'bot', botScore, 0);
+        continue;
+      }
+    }
+    const { mood, strength, hits, approvalVote } = classifyMessage(msg);
+    scoredMessages.push({ ts, mood, strength });
+    uniqueUsers.add(user);
+    totalMessages++;
+    msgTimestamps.push(ts);
+    if (approvalVote !== 0) approvalStore.push({ ts, vote:approvalVote });
+    for (const { label, mood:m, weight } of hits) {
+      if (!keywordStore.has(label)) keywordStore.set(label, []);
+      keywordStore.get(label).push({ ts, w:weight, mood:m });
+    }
+    if (i%5===0) addFeedItem(user, msg, mood, 0, approvalVote);
+  }
+
+  if (frameIdx%8===0) updateVisuals();
+  if (now-lastTimelineTs >= TIMELINE_INTERVAL) { pushTimelineSnapshot(); lastTimelineTs=now; }
+}
+
+// =============================================================
+//  WEBSOCKET
+// =============================================================
+function connectChat() {
+  const raw = sanitize(document.getElementById('channelInput').value.trim().toLowerCase());
+  if (!raw) { setStatus('Enter a channel name first.','error'); return; }
+  disconnectChat(); initCharts();
+  const channel = raw.startsWith('#') ? raw : '#'+raw;
+  setStatus('Connecting to '+channel+'...','');
+  document.getElementById('connectBtn').disabled = true;
+  ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+  ws.onopen = () => {
+    ws.send('CAP REQ :twitch.tv/commands twitch.tv/tags');
+    ws.send('PASS SCHMOOPIIE');
+    ws.send('NICK justinfan'+(Math.random()*80000+1000|0));
+    ws.send('JOIN '+channel);
+  };
+  ws.onmessage = (event) => {
+    const now = Date.now();
+    const lines = event.data.split('\r\n');
+    for (let i=0; i<lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+      if (line.startsWith('PING')) { ws.send('PONG :tmi.twitch.tv'); continue; }
+      if (line.includes('366')||(line.includes('JOIN')&&line.includes(channel))) {
+        setStatus('<span class="live-dot"></span>LIVE - '+channel.replace('#','').toUpperCase(),'live');
+        if (!rafHandle) { lastTimelineTs=now; rafHandle=requestAnimationFrame(processingLoop); }
+      }
+      if (!line.includes('PRIVMSG')) continue;
+      const privIdx=line.indexOf('PRIVMSG'), colonIdx=line.indexOf(':',privIdx);
+      if (colonIdx<0) continue;
+      const msgText=line.slice(colonIdx+1);
+      const atStart=line.charCodeAt(0)===64;
+      const userStart=atStart?line.indexOf(' :')+2:1;
+      const bangIdx=line.indexOf('!',userStart);
+      if (bangIdx<0) continue;
+      const user=line.slice(userStart,bangIdx);
+      tsThroughput.push(now);
+      enqueue(user,msgText,now);
+    }
+  };
+  ws.onerror = ()=>{ setStatus('Connection failed - check channel name.','error'); document.getElementById('connectBtn').disabled=false; };
+  ws.onclose = ()=>{ setStatus('Disconnected.',''); document.getElementById('connectBtn').disabled=false; };
+}
+
+function disconnectChat() {
+  if (ws) { ws.close(); ws=null; }
+  if (rafHandle) { cancelAnimationFrame(rafHandle); rafHandle=null; }
+  msgQueue.length=0;
+  document.getElementById('connectBtn').disabled=false;
+}
+
+function updateHalfLife(v) {
+  HALF_LIFE_MS=parseInt(v)*1000;
+  document.getElementById('hlVal').textContent=v+'s';
+}
+
+// =============================================================
+//  UTILS
+// =============================================================
+function getDominant(pct) {
+  if (!pct) return 'neutral';
+  let best='neutral', bestV=0;
+  for (const m of MOODS) if (m!=='neutral'&&pct[m]>bestV) { bestV=pct[m]; best=m; }
+  return best;
+}
+function hexAlpha(hex, a) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function lerpColor(hexA, hexB, t) {
+  const ra=parseInt(hexA.slice(1,3),16), ga=parseInt(hexA.slice(3,5),16), ba=parseInt(hexA.slice(5,7),16);
+  const rb=parseInt(hexB.slice(1,3),16), gb=parseInt(hexB.slice(3,5),16), bb=parseInt(hexB.slice(5,7),16);
+  const r=Math.round(ra+(rb-ra)*t), g=Math.round(ga+(gb-ga)*t), b=Math.round(ba+(bb-ba)*t);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+function fmtNum(n) { return n>=1000?(n/1000).toFixed(1)+'k':n; }
+function setStatus(html, cls) {
+  const el=document.getElementById('statusBar');
+  el.innerHTML=html;
+  el.className='status-bar'+(cls?' '+cls:'');
+}
+
+window.onload = initCharts;
+</script>
+</body>
+</html>
