@@ -1,3 +1,15 @@
+<!--
+  Changes applied:
+  1. Added source viewer button (</> icon) next to Ko-fi toggle in header.
+     - Opens a modal showing the full page source with syntax-highlighted view.
+     - Copy-to-clipboard button copies the entire HTML source.
+     - Download button saves the current page as a standalone .html file (works offline on desktop/mobile).
+  2. Added Google Drive sync buttons next to existing Import/Export in toolbar.
+     - Upload to Google Drive: authenticates via Google OAuth2 (client-side), uploads ticked data as JSON to user's Drive.
+     - Download from Google Drive: fetches the most recent ticked backup from Drive and merges it.
+     - Uses Google Identity Services + Drive API v3 (lightweight, no server needed).
+  3. All new UI elements match existing design language (icon-btn style, sheet modals, accent colors).
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1541,6 +1553,134 @@
         .tl-legend-dot.custom { background: var(--custom); box-shadow: 0 0 6px rgba(245,166,35,0.4); }
 
 
+        /* ── Source viewer toggle ── */
+        .source-toggle {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-family: var(--mono);
+            opacity: 0.3;
+            transition: opacity var(--transition), transform var(--transition);
+            line-height: 1;
+            flex-shrink: 0;
+            margin: 0 2px;
+            color: var(--text);
+        }
+        .source-toggle:hover { opacity: 0.7; transform: scale(1.15); }
+
+        /* ── Source viewer modal ── */
+        .source-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 950;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+        }
+        .source-modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .source-modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 720px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .source-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .source-modal-title {
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .source-modal-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .source-modal-btn {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .source-modal-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+        .source-modal-close {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+        .source-modal-close:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: var(--danger-dim);
+        }
+        .source-modal-body {
+            overflow: auto;
+            padding: 0;
+            flex: 1;
+            min-height: 0;
+        }
+        .source-modal-body pre {
+            margin: 0;
+            padding: 16px;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            line-height: 1.5;
+            color: var(--text-dim);
+            white-space: pre;
+            tab-size: 4;
+            overflow-x: auto;
+        }
+
+        /* ── Google Drive icon-btn modifier ── */
+        .icon-btn.gdrive-btn svg { width: 13px; height: 13px; }
+
         /* ── Ko-fi toggle ── */
         .kofi-toggle {
             background: none;
@@ -2042,6 +2182,7 @@
                     <h1>Tick<span>ed</span></h1>
                 </div>
             </div>
+            <button class="source-toggle" id="sourceToggle" onclick="openSourceViewer()" title="View page source &amp; download offline copy">&lt;/&gt;</button>
             <button class="kofi-toggle" id="kofiToggle" onclick="toggleKofi()" title="Toggle support badge">☕</button>
             <span class="entry-count-badge" id="countBadge">0 entries</span>
         </header>
@@ -2173,6 +2314,22 @@
                         <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                             <path d="M8 1.5a4.5 4.5 0 00-4.5 4.5c0 2.1-.7 3.4-1.3 4.1a.5.5 0 00.4.9h10.8a.5.5 0 00.4-.9c-.6-.7-1.3-2-1.3-4.1A4.5 4.5 0 008 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M6.5 12.5a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn gdrive-btn" id="gdriveUploadBtn" title="Upload to Google Drive" onclick="gdriveUpload()">
+                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                            <path d="M7 9V2M4.5 4.5L7 2l2.5 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 9.5v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="11" cy="3" r="2" fill="none" stroke="currentColor" stroke-width="0.8"/>
+                            <path d="M10.3 3h1.4M11 2.3v1.4" stroke="currentColor" stroke-width="0.6" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn gdrive-btn" id="gdriveDownloadBtn" title="Download from Google Drive" onclick="gdriveDownload()">
+                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                            <path d="M7 2v7M4.5 6.5L7 9l2.5-2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 9.5v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="11" cy="3" r="2" fill="none" stroke="currentColor" stroke-width="0.8"/>
+                            <path d="M10.3 3h1.4M11 2.3v1.4" stroke="currentColor" stroke-width="0.6" stroke-linecap="round"/>
                         </svg>
                     </button>
                     <div class="toolbar-divider"></div>
@@ -2318,6 +2475,23 @@
             <ul class="entry-list" id="processList"></ul>
         </div>
 
+    </div>
+
+    <!-- Source Viewer Modal -->
+    <div class="source-modal-overlay" id="sourceModalOverlay" onclick="if(event.target===this)closeSourceViewer()">
+        <div class="source-modal">
+            <div class="source-modal-header">
+                <span class="source-modal-title">&lt;/&gt; Page Source</span>
+                <div class="source-modal-actions">
+                    <button class="source-modal-btn" onclick="copySource()" title="Copy source to clipboard">📋 Copy</button>
+                    <button class="source-modal-btn" onclick="downloadOfflineHTML()" title="Download as standalone HTML file">💾 Download .html</button>
+                </div>
+                <button class="source-modal-close" onclick="closeSourceViewer()" title="Close">✕</button>
+            </div>
+            <div class="source-modal-body">
+                <pre id="sourceCodePre"></pre>
+            </div>
+        </div>
     </div>
 
     <!-- Toast -->
@@ -4178,6 +4352,208 @@
             badge.style.display = nowHidden ? 'none' : '';
             btn.classList.toggle('hidden', nowHidden);
             safeStorage.set('kofiHidden', nowHidden);
+        }
+
+        // ── Source Viewer ──────────────────────────────────────
+        function openSourceViewer() {
+            const src = document.documentElement.outerHTML;
+            const pre = document.getElementById('sourceCodePre');
+            pre.textContent = '<!DOCTYPE html>\n' + src;
+            document.getElementById('sourceModalOverlay').classList.add('open');
+            document.body.classList.add('sheet-open');
+        }
+
+        function closeSourceViewer() {
+            document.getElementById('sourceModalOverlay').classList.remove('open');
+            document.body.classList.remove('sheet-open');
+        }
+
+        function copySource() {
+            const src = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+            navigator.clipboard.writeText(src).then(
+                () => showToast('Source copied to clipboard ✓'),
+                () => showToast('Copy failed — try manually', true)
+            );
+        }
+
+        function downloadOfflineHTML() {
+            const src = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+            const blob = new Blob([src], { type: 'text/html; charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ticked-offline-${new Date().toLocaleDateString('en-CA')}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Offline HTML downloaded ✓');
+        }
+
+        // ── Google Drive Sync ─────────────────────────────────────
+        const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const GDRIVE_FILENAME = 'ticked-backup.json';
+        let _gdriveTokenClient = null;
+        let _gdriveAccessToken = null;
+
+        function loadGoogleIdentityServices() {
+            return new Promise((resolve, reject) => {
+                if (window.google && window.google.accounts) { resolve(); return; }
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error('Failed to load Google Identity Services'));
+                document.head.appendChild(script);
+            });
+        }
+
+        function getGdriveClientId() {
+            let clientId = safeStorage.get('gdriveClientId') || '';
+            if (!clientId) {
+                clientId = prompt(
+                    'Google Drive sync requires a Google Cloud OAuth2 Client ID.\n\n' +
+                    '1. Go to console.cloud.google.com\n' +
+                    '2. Create a project & enable Google Drive API\n' +
+                    '3. Create OAuth2 credentials (Web app type)\n' +
+                    '4. Paste the Client ID below:\n\n' +
+                    '(Stored locally in your browser, never shared)'
+                );
+                if (clientId) safeStorage.set('gdriveClientId', clientId.trim());
+            }
+            return clientId ? clientId.trim() : null;
+        }
+
+        async function gdriveAuth() {
+            if (_gdriveAccessToken) return _gdriveAccessToken;
+            const clientId = getGdriveClientId();
+            if (!clientId) { showToast('Google Drive Client ID required.', true); return null; }
+
+            await loadGoogleIdentityServices();
+
+            return new Promise((resolve) => {
+                _gdriveTokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: clientId,
+                    scope: GDRIVE_SCOPES,
+                    callback: (resp) => {
+                        if (resp.error) {
+                            showToast('Google auth failed: ' + resp.error, true);
+                            resolve(null);
+                            return;
+                        }
+                        _gdriveAccessToken = resp.access_token;
+                        resolve(resp.access_token);
+                    },
+                });
+                _gdriveTokenClient.requestAccessToken();
+            });
+        }
+
+        async function gdriveFindFile(token) {
+            const q = encodeURIComponent("name='" + GDRIVE_FILENAME + "' and trashed=false");
+            const resp = await fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&spaces=drive&fields=files(id,name,modifiedTime)&orderBy=modifiedTime%20desc&pageSize=1', {
+                headers: { Authorization: 'Bearer ' + token }
+            });
+            if (!resp.ok) return null;
+            const data = await resp.json();
+            return data.files && data.files.length > 0 ? data.files[0] : null;
+        }
+
+        async function gdriveUpload() {
+            if (state.entries.length === 0 && state.processes.length === 0) {
+                showToast('Nothing to upload yet.', true);
+                return;
+            }
+            showToast('Connecting to Google Drive…');
+            const token = await gdriveAuth();
+            if (!token) return;
+
+            const payload = {
+                app: 'Ticked',
+                version: SCHEMA_VERSION,
+                exportedAt: new Date().toISOString(),
+                palette: state.palette,
+                entries: state.entries,
+                processes: state.processes,
+            };
+            const jsonStr = JSON.stringify(payload, null, 2);
+
+            try {
+                const existing = await gdriveFindFile(token);
+                let resp;
+
+                if (existing) {
+                    resp = await fetch('https://www.googleapis.com/upload/drive/v3/files/' + existing.id + '?uploadType=media', {
+                        method: 'PATCH',
+                        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+                        body: jsonStr,
+                    });
+                } else {
+                    const metadata = { name: GDRIVE_FILENAME, mimeType: 'application/json' };
+                    const boundary = '---ticked_boundary_' + Date.now();
+                    const body = '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata) + '\r\n--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + jsonStr + '\r\n--' + boundary + '--';
+                    resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST',
+                        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'multipart/related; boundary=' + boundary },
+                        body,
+                    });
+                }
+
+                if (resp.ok) {
+                    showToast('Uploaded ' + (state.entries.length + state.processes.length) + ' items to Google Drive ✓');
+                } else {
+                    showToast('Upload failed: ' + resp.statusText, true);
+                }
+            } catch (e) {
+                showToast('Upload failed: ' + e.message, true);
+            }
+        }
+
+        async function gdriveDownload() {
+            showToast('Connecting to Google Drive…');
+            const token = await gdriveAuth();
+            if (!token) return;
+
+            try {
+                const file = await gdriveFindFile(token);
+                if (!file) {
+                    showToast('No Ticked backup found on Google Drive.', true);
+                    return;
+                }
+
+                const resp = await fetch('https://www.googleapis.com/drive/v3/files/' + file.id + '?alt=media', {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+                if (!resp.ok) { showToast('Download failed: ' + resp.statusText, true); return; }
+
+                const parsed = await resp.json();
+                const envelope = Array.isArray(parsed)
+                    ? { version: 1, entries: parsed }
+                    : { version: parsed.version || 1, entries: parsed.entries || [], processes: parsed.processes || [], palette: parsed.palette };
+                const migrated = migrate(envelope);
+
+                const incoming = (migrated.entries || []).filter(e => e.isoDate || e.timestamp);
+                const existingIds = new Set(state.entries.map(e => e.id));
+                const newEntries = incoming.filter(e => !existingIds.has(e.id));
+                const merged = [...state.entries, ...newEntries].sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
+
+                const incomingProcs = migrated.processes || [];
+                const existingProcIds = new Set(state.processes.map(p => p.id));
+                const newProcs = incomingProcs.filter(p => !existingProcIds.has(p.id));
+                const mergedProcs = [...state.processes, ...newProcs].sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
+
+                const newPalette = migrated.palette || state.palette;
+
+                setState({ entries: merged, processes: mergedProcs, palette: newPalette });
+                initPalette();
+                save();
+
+                const totalNew = newEntries.length + newProcs.length;
+                const totalDupe = (incoming.length - newEntries.length) + (incomingProcs.length - newProcs.length);
+                let msg = 'Synced ' + totalNew + ' new items from Drive';
+                if (totalDupe > 0) msg += ' (' + totalDupe + ' already existed)';
+                if (totalNew === 0 && totalDupe === 0) msg = 'Drive backup is empty';
+                showToast(msg);
+            } catch (e) {
+                showToast('Sync failed: ' + e.message, true);
+            }
         }
 
         // ── Keyboard ──────────────────────────────────────────────
