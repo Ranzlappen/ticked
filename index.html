@@ -2518,7 +2518,7 @@
 
         const STORAGE_KEY    = 'ticked_store';
         const SCHEMA_VERSION = 5;
-        const DEFAULT_PALETTE = ['#1e3a5f', '#1a3d2e', '#2d1f5e', '#4a3210', '#4a1520'];
+        const DEFAULT_PALETTE = ['#05004d', '#002e0d', '#2b0026', '#363506', '#3b0000'];
 
         // ── Safe localStorage wrapper ─────────────────────────────
         const safeStorage = {
@@ -4338,7 +4338,7 @@
 
         // ── Ko-fi toggle ──────────────────────────────────────────
         function initKofi() {
-            const hidden = safeStorage.get('kofiHidden') === 'true';
+            const hidden = safeStorage.get('kofiHidden') !== 'false';
             const badge  = document.querySelector('.kofi-badge');
             const btn    = document.getElementById('kofiToggle');
             badge.style.display = hidden ? 'none' : '';
