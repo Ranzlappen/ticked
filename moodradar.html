@@ -529,18 +529,6 @@ body:not(.disconnected) {
   border-radius:var(--card-radius); padding:14px;
   max-height:200px; overflow-y:auto;
 }
-/* When resizable, the card itself clips; inner list scrolls */
-.feed-card.resizable {
-  display:flex;
-  flex-direction:column;
-  max-height:none;      /* let the resize handle control height */
-  overflow:hidden;      /* card clips — required for resize to work */
-}
-.feed-card.resizable #feedList {
-  flex:1;
-  overflow-y:auto;      /* list scrolls within the resized card */
-  min-height:0;         /* flex shrink allowed */
-}
 .feed-title { font-family:'Orbitron',sans-serif; font-size:.58em; letter-spacing:.2em; color:var(--muted); margin-bottom:7px; display:flex; align-items:center; gap:4px }
 .feed-item { font-size:.72em; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.04); display:flex; gap:6px; align-items:center; animation:fadeIn .2s ease }
 @keyframes fadeIn { from { opacity:0; transform:translateY(3px) } }
@@ -571,37 +559,70 @@ body:not(.disconnected) {
 .card-title { font-family:'Orbitron',sans-serif; font-size:clamp(.52em,.6em,1em); letter-spacing:.18em; color:var(--muted); margin-bottom:10px; text-transform:uppercase; display:flex; align-items:center; gap:5px }
 
 /* ============================================================
-   RESIZABLE CARDS
-   Cards marked .resizable use native CSS resize:vertical so the
-   browser renders its own drag handle at the bottom-right corner.
-   overflow:hidden keeps content clipped while resize:vertical
-   still applies (resize only works on elements with overflow
-   other than visible). The handle is deliberately styled to be
-   subtle — the browser's native grip is still accessible.
+   RESIZABLE CARDS — custom JS drag handle replaces native resizer.
+   Cards marked .resizable have overflow:hidden (clips content at
+   the card boundary) and a .resize-handle child injected by JS.
    ============================================================ */
 .resizable {
-  resize:vertical;
-  overflow:hidden;      /* required for resize:vertical to work */
-  min-height:80px;      /* prevents accidental collapse */
+  overflow:hidden;
+  min-height:80px;
   box-sizing:border-box;
+  position:relative; /* needed so handle can be absolute inside */
 }
-/* Style the native resize handle to match the theme */
-.resizable::-webkit-resizer {
-  /* Tint the native handle with accent colour */
-  background:radial-gradient(circle at 100% 100%, rgba(0,255,229,.35) 30%, transparent 70%);
+
+/* Custom resize handle — large enough to grab comfortably */
+.resize-handle {
+  position:absolute;
+  bottom:0; right:0;
+  width:22px; height:22px;
+  cursor:ns-resize;
+  z-index:10;
+  /* Visible diagonal grip lines */
+  background:
+    linear-gradient(
+      135deg,
+      transparent 30%,
+      rgba(0,255,229,.22) 30%, rgba(0,255,229,.22) 38%,
+      transparent 38%,
+      transparent 52%,
+      rgba(0,255,229,.22) 52%, rgba(0,255,229,.22) 60%,
+      transparent 60%,
+      transparent 74%,
+      rgba(0,255,229,.22) 74%, rgba(0,255,229,.22) 82%,
+      transparent 82%
+    );
   border-radius:0 0 var(--card-radius) 0;
+  transition:background .2s;
+}
+.resize-handle:hover {
+  background:
+    linear-gradient(
+      135deg,
+      transparent 30%,
+      rgba(0,255,229,.55) 30%, rgba(0,255,229,.55) 38%,
+      transparent 38%,
+      transparent 52%,
+      rgba(0,255,229,.55) 52%, rgba(0,255,229,.55) 60%,
+      transparent 60%,
+      transparent 74%,
+      rgba(0,255,229,.55) 74%, rgba(0,255,229,.55) 82%,
+      transparent 82%
+    );
 }
 
 /* Chart cards: allow flex child (chart-wrap) to fill remaining height */
 .chart-card.resizable {
-  align-items:stretch;  /* override center so chart-wrap can be full-width */
+  align-items:stretch;
+  display:flex;
+  flex-direction:column;
 }
-/* When resizable, chart-wrap fills remaining flex space instead of fixed aspect-ratio */
+/* chart-wrap fills remaining flex space */
 .chart-card.resizable .chart-wrap {
   flex:1;
   max-width:100%;
-  aspect-ratio:unset;   /* drop fixed square — height comes from parent */
+  aspect-ratio:unset;
   width:100%;
+  min-height:0;
 }
 
 /* Bubble card: canvas fills 100% of card interior minus padding/title */
@@ -611,7 +632,7 @@ body:not(.disconnected) {
 }
 .bubble-card.resizable #bubbleCanvas {
   flex:1;
-  height:auto;          /* fills remaining flex space */
+  height:auto;
 }
 
 /* Timeline card: make inner timeline-wrap fill the resized card */
@@ -619,14 +640,22 @@ body:not(.disconnected) {
   display:flex;
   flex-direction:column;
 }
-/* The header row (title + scale toggles) is fixed height; wrap fills rest */
 .timeline-card.resizable .timeline-wrap {
   flex:1;
   height:auto;
 }
 
-/* Feed card: already has overflow-y:auto — resize:vertical is enough */
-/* No extra flex needed; feed scrolls internally */
+/* Feed card: inner list scrolls within the resized boundary */
+.feed-card.resizable {
+  display:flex;
+  flex-direction:column;
+  max-height:none;
+}
+.feed-card.resizable #feedList {
+  flex:1;
+  overflow-y:auto;
+  min-height:0;
+}
 
 /* ============================================================
    LIST PRESET — body.preset-list overrides
@@ -700,6 +729,13 @@ body.preset-list { --gap:20px }
       <button class="preset-btn" data-preset="list" onclick="applyPreset('list')">
         <span class="preset-icon"></span>List
       </button>
+      <div class="settings-section-label" style="margin-top:6px">LABEL SIZE</div>
+      <div style="display:flex;align-items:center;gap:8px;padding:4px 10px 8px">
+        <input type="range" id="labelScaleSlider" min="0.8" max="2.5" step="0.1"
+          style="flex:1;width:auto"
+          oninput="updateLabelScale(this.value)"/>
+        <span id="labelScaleVal" style="font-size:.72em;color:var(--accent);min-width:28px;text-align:right"></span>
+      </div>
     </div>
   </div>
 </header>
@@ -1288,6 +1324,24 @@ function enqueue(user, msg, ts) {
 }
 
 // =============================================================
+//  LABEL SCALE — controls font size for pie slices and bubbles
+//  Range 0.8–2.5, default 1.4. Persisted to localStorage.
+// =============================================================
+const LABEL_SCALE_KEY = 'moodradar_labelscale_v1';
+let labelScale = (() => {
+  try { const v = parseFloat(localStorage.getItem(LABEL_SCALE_KEY)); return isNaN(v) ? 1.4 : Math.min(2.5, Math.max(0.8, v)); }
+  catch(e) { return 1.4; }
+})();
+
+function updateLabelScale(v) {
+  labelScale = Math.min(2.5, Math.max(0.8, parseFloat(v)));
+  document.getElementById('labelScaleVal').textContent = labelScale.toFixed(1) + 'x';
+  try { localStorage.setItem(LABEL_SCALE_KEY, labelScale); } catch(e) {}
+  // Pie redraws on next update cycle; bubble redraws on next animation frame
+  if (pieChart) pieChart.update('none');
+}
+
+// =============================================================
 //  CHARTS
 // =============================================================
 let pieChart, radarChart, timelineChart;
@@ -1306,14 +1360,18 @@ const pieLabelPlugin = {
       const pct = data[i] / total * 100;
       if (pct < 4) return;
       const { x, y } = arc.tooltipPosition();
-      ctx.font = `bold ${pct > 15 ? 13 : 10}px 'Orbitron', sans-serif`;
+      // Apply labelScale to font sizes
+      const bigFont   = Math.round((pct > 15 ? 13 : 10) * labelScale);
+      const smallFont = Math.round((pct > 15 ? 11 :  9) * labelScale);
+      ctx.font = `bold ${bigFont}px 'Orbitron', sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = 'rgba(0,0,0,0.85)';
       ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 4;
+      const offset = Math.round(7 * labelScale);
       if (pct > 12) {
-        ctx.fillText(labels[i], x, y - 7);
-        ctx.font = `${pct > 15 ? 11 : 9}px 'Share Tech Mono', monospace`;
-        ctx.fillText(pct.toFixed(0) + '%', x, y + 7);
+        ctx.fillText(labels[i], x, y - offset);
+        ctx.font = `${smallFont}px 'Share Tech Mono', monospace`;
+        ctx.fillText(pct.toFixed(0) + '%', x, y + offset);
       } else {
         ctx.fillText(pct.toFixed(0) + '%', x, y);
       }
@@ -1337,7 +1395,7 @@ function initCharts() {
       datasets:[{ data:[0,0,0,0,0,100], backgroundColor:MOODS.map(m=>MOOD_COLORS[m]), borderColor:'#06060f', borderWidth:3, hoverOffset:10 }]
     },
     options: {
-      responsive:true, maintainAspectRatio:true,
+      responsive:true, maintainAspectRatio:false,
       animation:{duration:350, easing:'easeOutCubic'},
       plugins:{
         legend:{display:false},
@@ -1355,7 +1413,7 @@ function initCharts() {
         pointBackgroundColor:'#00ffe5', pointBorderColor:'#06060f', pointRadius:4, pointHoverRadius:7 }]
     },
     options:{
-      responsive:true, maintainAspectRatio:true,
+      responsive:true, maintainAspectRatio:false,
       animation:{duration:400, easing:'easeOutCubic'},
       scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'rgba(255,255,255,.055)'},angleLines:{color:'rgba(255,255,255,.065)'},pointLabels:{color:'#7a7aaa',font:{family:'Share Tech Mono',size:10,weight:'700'}}}},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` "${c.chart.data.labels[c.dataIndex]}": ${c.parsed.r.toFixed(0)}`}, backgroundColor:'#0d0d1f', borderColor:'#1a1a36', borderWidth:1}}
@@ -1576,8 +1634,9 @@ function bubAnimLoop() {
     bubCtx.stroke();
     bubCtx.shadowBlur = 0;
     if (b.r < 12) continue;
-    const fontSize = Math.max(9, Math.min(b.r*0.36, 13));
-    bubCtx.font = `bold ${fontSize}px 'Share Tech Mono', monospace`;
+    // Apply labelScale; base range 9–20px (was 9–13px)
+    const fontSize = Math.max(9, Math.min(b.r * 0.42 * labelScale, 20 * labelScale));
+    bubCtx.font = `bold ${Math.round(fontSize)}px 'Share Tech Mono', monospace`;
     bubCtx.textAlign = 'center'; bubCtx.textBaseline = 'middle';
     bubCtx.fillStyle = isHov?'#fff':'rgba(255,255,255,0.88)';
     const txt = b.label.length>11 ? b.label.slice(0,10)+'.' : b.label;
@@ -1993,28 +2052,23 @@ function setStatus(html, cls) {
 }
 
 // =============================================================
-//  RESIZE PERSISTENCE — localStorage save/restore + ResizeObserver
+//  RESIZE SYSTEM — custom drag handles + ResizeObserver + localStorage
 //
-//  Each resizable card is identified by its element ID.
-//  On resize: debounced save of clientHeight to localStorage.
-//  On load: restore saved heights before initCharts() so charts
-//  render at the correct size from the first frame.
-//
-//  ResizeObserver triggers chart.resize() and resizeBubbleCanvas()
-//  so visuals redraw correctly at the new dimensions.
+//  Each resizable card gets a .resize-handle div injected at its
+//  bottom-right. Dragging it updates the card's height directly.
+//  ResizeObserver watches the card and calls chart.resize() so
+//  all housed visuals redraw correctly at the new dimensions.
+//  Heights are saved to localStorage and restored on page load.
 // =============================================================
 const RESIZE_STORAGE_KEY = 'moodradar_sizes_v1';
 const RESIZE_DEBOUNCE_MS = 180;
-
-// IDs of all resizable cards
 const RESIZABLE_IDS = ['pieCard','radarCard','bubbleCard','timelineCard','feedCard'];
 
-// --- Save/restore ---
 function saveSizes() {
   const sizes = {};
   for (const id of RESIZABLE_IDS) {
     const el = document.getElementById(id);
-    if (el) sizes[id] = el.clientHeight;
+    if (el) sizes[id] = el.offsetHeight;
   }
   try { localStorage.setItem(RESIZE_STORAGE_KEY, JSON.stringify(sizes)); } catch(e) {}
 }
@@ -2025,55 +2079,98 @@ function restoreSizes() {
   if (!sizes) return;
   for (const id of RESIZABLE_IDS) {
     const el = document.getElementById(id);
-    if (el && sizes[id]) {
-      // Apply as explicit height; min-height CSS prevents collapse
-      el.style.height = sizes[id] + 'px';
-    }
+    if (el && sizes[id]) el.style.height = sizes[id] + 'px';
   }
 }
 
-// --- ResizeObserver: redraw charts when any resizable card changes size ---
-function setupResizeObserver() {
-  if (!window.ResizeObserver) return; // safe degradation for old browsers
+function notifyChartResize(cardId) {
+  if (cardId === 'pieCard'      && pieChart)      pieChart.resize();
+  if (cardId === 'radarCard'    && radarChart)     radarChart.resize();
+  if (cardId === 'timelineCard' && timelineChart)  timelineChart.resize();
+  if (cardId === 'bubbleCard')                     resizeBubbleCanvas();
+}
 
+function addResizeHandle(el) {
+  const handle = document.createElement('div');
+  handle.className = 'resize-handle';
+  handle.title = 'Drag to resize';
+  el.appendChild(handle);
+
+  let startY = 0, startH = 0;
   let debounceTimer = null;
 
-  const observer = new ResizeObserver(entries => {
-    let needBubble = false, needPie = false, needRadar = false, needTimeline = false;
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault();
+    startY = e.clientY;
+    startH = el.offsetHeight;
 
-    for (const entry of entries) {
-      const id = entry.target.id;
-      if (id === 'bubbleCard')   needBubble   = true;
-      if (id === 'pieCard')      needPie      = true;
-      if (id === 'radarCard')    needRadar    = true;
-      if (id === 'timelineCard') needTimeline = true;
-      // feedCard has no chart to resize — DOM handles it automatically
+    function onMove(e) {
+      const newH = Math.max(80, startH + (e.clientY - startY));
+      el.style.height = newH + 'px';
+      notifyChartResize(el.id);
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(saveSizes, RESIZE_DEBOUNCE_MS);
     }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      saveSizes();
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
 
-    // Flush chart resizes immediately (Chart.js is fast)
-    if (needPie      && pieChart)      pieChart.resize();
-    if (needRadar    && radarChart)    radarChart.resize();
-    if (needTimeline && timelineChart) timelineChart.resize();
-    if (needBubble)                    resizeBubbleCanvas();
+  // Touch support
+  handle.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    startY = touch.clientY;
+    startH = el.offsetHeight;
 
-    // Debounce the localStorage write (don't write on every animation frame)
+    function onMove(e) {
+      const t = e.touches[0];
+      const newH = Math.max(80, startH + (t.clientY - startY));
+      el.style.height = newH + 'px';
+      notifyChartResize(el.id);
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(saveSizes, RESIZE_DEBOUNCE_MS);
+    }
+    function onEnd() {
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+      saveSizes();
+    }
+    el.addEventListener('touchmove', onMove, { passive:false });
+    el.addEventListener('touchend', onEnd);
+  }, { passive:false });
+}
+
+function setupResizeObserver() {
+  if (!window.ResizeObserver) return;
+  let debounceTimer = null;
+  const observer = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      notifyChartResize(entry.target.id);
+    }
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(saveSizes, RESIZE_DEBOUNCE_MS);
   });
-
   for (const id of RESIZABLE_IDS) {
     const el = document.getElementById(id);
-    if (el) observer.observe(el);
+    if (el) { addResizeHandle(el); observer.observe(el); }
   }
 }
 
 window.onload = function() {
-  // Restore saved sizes BEFORE initCharts so canvases measure correctly
+  // Init label scale slider with saved/default value
+  const slider = document.getElementById('labelScaleSlider');
+  if (slider) slider.value = labelScale;
+  document.getElementById('labelScaleVal').textContent = labelScale.toFixed(1) + 'x';
+
   restoreSizes();
   initCharts();
-  // Start observing AFTER charts exist so resize() calls are valid
   setupResizeObserver();
 };
 </script>
 </body>
-   </html>
+</html>
