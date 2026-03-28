@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Connections</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05080F; --s1:#0A0F1C; --s2:#0E1525; --border:#172235;
+  --text:#7A9BB8; --muted:#2E4460; --hi:#C8A84B; --white:#CAE0F5;
+  --sidebar:265px; --info:310px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;display:flex;flex-direction:column;}
+
+/*  HEADER  */
+#hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.6rem 1.2rem;border-bottom:1px solid var(--border);
+  background:var(--s1);flex-shrink:0;gap:1rem;z-index:50;
+}
+#hdr h1{font-family:'Cinzel',serif;font-size:1rem;font-weight:600;color:var(--white);letter-spacing:.1em;white-space:nowrap;}
+.hdr-tag{font-size:.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.18em;white-space:nowrap;}
+.hdr-meta{display:flex;align-items:center;gap:1.2rem;font-size:.52rem;color:var(--muted);flex-shrink:0;}
+.hdr-stat span{color:var(--text);}
+.dot{width:5px;height:5px;border-radius:50%;background:#3DE87A;box-shadow:0 0 6px #3DE87A;animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/*  MAIN GRID  */
+#app{flex:1;display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:0;overflow:hidden;position:relative;}
+
+/*  SIDEBAR  */
+#sidebar{
+  background:var(--s1);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;z-index:40;
+}
+.sb-scroll{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.sb-sec{padding:.8rem 1rem;border-bottom:1px solid var(--border);}
+.sb-ttl{
+  font-family:'Cinzel',serif;font-size:.5rem;font-weight:600;
+  color:var(--hi);letter-spacing:.22em;text-transform:uppercase;
+  margin-bottom:.6rem;display:flex;align-items:center;gap:.5rem;
+}
+.sb-ttl::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* Sphere grid */
+.sph-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.sph-chip{
+  display:flex;align-items:center;gap:.35rem;padding:5px 7px;
+  border-radius:4px;border:1px solid transparent;cursor:pointer;
+  font-size:.6rem;color:var(--text);user-select:none;
+  transition:background .15s,border-color .15s,opacity .2s;
+}
+.sph-chip:hover{background:rgba(255,255,255,.04);}
+.sph-chip.off{opacity:.22;}
+.sph-chip.on{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.03);}
+.sph-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sph-lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Layer rows */
+.lyr-row{
+  display:flex;align-items:center;gap:.5rem;padding:5px 6px;
+  border-radius:5px;cursor:pointer;margin-bottom:2px;
+  transition:background .15s;user-select:none;
+}
+.lyr-row:hover{background:rgba(255,255,255,.03);}
+.lyr-icon{font-style:normal;font-size:.72rem;width:16px;text-align:center;flex-shrink:0;}
+.lyr-name{flex:1;font-size:.65rem;color:var(--text);}
+.lyr-count{font-size:.52rem;color:var(--muted);}
+
+/* Toggle switch */
+.tog{width:30px;height:16px;border-radius:9px;background:var(--muted);position:relative;flex-shrink:0;transition:background .2s;cursor:pointer;}
+.tog.on{background:var(--tc,#888);}
+.tog::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.5);}
+.tog.on::after{left:16px;}
+
+/* Stats row */
+.sb-stats{padding:.65rem 1rem;font-size:.52rem;display:flex;justify-content:space-between;color:var(--muted);}
+.sb-stats span{color:var(--text);}
+
+/*  MAP  */
+#map{position:relative;overflow:hidden;background:#04070E;}
+#map-svg{width:100%;height:100%;display:block;cursor:grab;}
+#map-svg:active{cursor:grabbing;}
+.sphere-bg{fill:#060C18;}
+.graticule{fill:none;stroke:#0B1525;stroke-width:.5;}
+.border-mesh{fill:none;stroke:#142030;stroke-width:.4;}
+.cpath{transition:fill-opacity .18s;}
+.cpath:hover{fill-opacity:.45 !important;}
+
+/* Arcs */
+.arc{fill:none;stroke-linecap:round;pointer-events:none;transition:opacity .25s;}
+@keyframes dash-flow{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+.arc.sel{animation:dash-flow 3s linear infinite;}
+
+/* Nodes */
+.node{cursor:pointer;}
+.nd-halo,.nd-ring{pointer-events:none;}
+.nd-core{transition:r .15s ease;}
+.node:hover .nd-core{r:7.5;}
+.nd-label{
+  font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:500;
+  fill:rgba(202,224,245,.75);pointer-events:none;text-anchor:middle;
+}
+
+/*  RIGHT INFO PANEL  */
+#info{
+  position:fixed;top:0;right:0;bottom:0;width:var(--info);
+  background:var(--s2);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:60;
+  transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  padding-top:0;
+}
+#info.open{transform:translateX(0);}
+#info-hdr{
+  padding:.9rem 1rem .7rem;border-bottom:1px solid var(--border);flex-shrink:0;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;
+}
+#info-close{
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  font-size:.9rem;line-height:1;padding:2px;flex-shrink:0;
+  transition:color .15s;
+}
+#info-close:hover{color:var(--white);}
+.info-name{font-family:'Cinzel',serif;font-size:.95rem;color:var(--white);}
+.info-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.25rem;
+}
+.info-badge-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.info-desc{
+  padding:.75rem 1rem;font-size:.6rem;line-height:1.7;
+  color:var(--text);border-bottom:1px solid var(--border);flex-shrink:0;
+}
+#info-conns{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;padding:.5rem 1rem;}
+.conn-grp-hdr{
+  font-size:.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;
+  padding:.5rem 0 .3rem;display:flex;align-items:center;gap:.4rem;
+}
+.conn-grp-hdr::after{content:'';flex:1;height:1px;background:var(--border);}
+.conn-row{
+  display:flex;align-items:center;gap:6px;padding:3px 0;font-size:.58rem;
+}
+.conn-pip{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.conn-name{flex:1;color:var(--white);}
+.conn-bar-bg{width:48px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;flex-shrink:0;}
+.conn-bar-fg{height:100%;border-radius:2px;}
+.conn-pct{font-size:.5rem;color:var(--muted);min-width:22px;text-align:right;}
+.no-conn{font-size:.58rem;color:var(--muted);padding:.75rem 0;text-align:center;}
+
+/*  TOOLTIP  */
+#tip{
+  position:fixed;background:var(--s2);border:1px solid var(--border);
+  padding:.4rem .65rem;border-radius:4px;font-size:.6rem;
+  pointer-events:none;opacity:0;transition:opacity .1s;z-index:9999;
+  line-height:1.55;max-width:160px;
+}
+#tip.show{opacity:1;}
+
+/*  MOBILE BOTTOM SHEET  */
+#sheet{
+  display:none;position:fixed;left:0;right:0;bottom:0;
+  background:var(--s1);border-top:2px solid var(--border);
+  z-index:70;flex-direction:column;
+  transition:height .3s cubic-bezier(.4,0,.2,1);
+  height:64px;
+}
+#sheet-handle{
+  padding:.55rem 0 .3rem;display:flex;flex-direction:column;
+  align-items:center;gap:.35rem;cursor:pointer;flex-shrink:0;
+}
+.handle-bar{width:36px;height:3px;border-radius:2px;background:var(--muted);}
+#sheet-tabs{
+  display:flex;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.sh-tab{
+  flex:1;padding:.5rem;font-size:.58rem;text-align:center;
+  cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;
+  transition:color .15s,border-color .15s;
+}
+.sh-tab.on{color:var(--hi);border-color:var(--hi);}
+#sheet-body{flex:1;overflow-y:auto;padding:.75rem 1rem;}
+
+/*  RESPONSIVE  */
+@media(max-width:768px){
+  #app{grid-template-columns:1fr;}
+  #sidebar{display:none;}
+  #info{display:none;}
+  #sheet{display:flex;}
+  #map{height:100%;}
+  .hdr-meta{display:none;}
+}
+@media(max-width:400px){
+  #hdr h1{font-size:.85rem;}
+  .hdr-tag{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div style="display:flex;align-items:baseline;gap:.8rem;">
+    <h1>Global Connections</h1>
+    <span class="hdr-tag">Civilisational Alignments</span>
+  </div>
+  <div class="hdr-meta">
+    <div style="display:flex;align-items:center;gap:.4rem;"><div class="dot"></div><span id="stat-arcs">—</span> links</div>
+    <div class="hdr-stat"><span id="stat-nodes">—</span> nodes</div>
+  </div>
+</div>
+
+<div id="app">
+  <div id="sidebar">
+    <div class="sb-scroll">
+
+      <div class="sb-sec">
+        <div class="sb-ttl">Spheres</div>
+        <div class="sph-grid" id="sph-leg"></div>
+      </div>
+
+      <div class="sb-sec">
+        <div class="sb-ttl">Layers</div>
+        <div id="lyr-list"></div>
+      </div>
+
+    </div>
+    <div class="sb-stats">
+      <div>Links: <span id="sb-arc-count">—</span></div>
+      <div>Selected: <span id="sb-sel">none</span></div>
+    </div>
+  </div>
+
+  <div id="map"><svg id="map-svg"></svg></div>
+</div>
+
+<!-- Right panel -->
+<div id="info">
+  <div id="info-hdr">
+    <div>
+      <div class="info-name" id="inf-name"></div>
+      <div class="info-badge"><div class="info-badge-dot" id="inf-dot"></div><span id="inf-sphere"></span></div>
+    </div>
+    <button id="info-close" title="Close"></button>
+  </div>
+  <div class="info-desc" id="inf-desc"></div>
+  <div id="info-conns"></div>
+</div>
+
+<!-- Mobile bottom sheet -->
+<div id="sheet">
+  <div id="sheet-handle"><div class="handle-bar"></div></div>
+  <div id="sheet-tabs" style="display:none;">
+    <div class="sh-tab on" data-tab="filters">Layers & Spheres</div>
+    <div class="sh-tab" data-tab="info">Country Info</div>
+  </div>
+  <div id="sheet-body" style="display:none;"></div>
+</div>
+
+<div id="tip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+// 
+// DATA
+// 
+
+const SPHERES = {
+  western:    {label:'Western',           color:'#4A90D9'},
+  latin:      {label:'Latin American',    color:'#E05C5C'},
+  eastasia:   {label:'East Asian',        color:'#36C9A0'},
+  southasia:  {label:'South Asian',       color:'#9B6EE8'},
+  middleeast: {label:'Middle East',       color:'#E8963C'},
+  africa:     {label:'Sub-Saharan Africa',color:'#38B8D8'},
+  oceania:    {label:'Oceania',           color:'#72C84C'}
+};
+
+const LAYERS = {
+  culture:   {label:'Culture',   icon:'', color:'#F0A82C'},
+  religion:  {label:'Religion',  icon:'',  color:'#A85CF0'},
+  politics:  {label:'Politics',  icon:'',  color:'#2CC8F0'},
+  economics: {label:'Economics', icon:'',  color:'#F04058'},
+  media:     {label:'Media',     icon:'',  color:'#50E878'},
+  military:  {label:'Military',  icon:'',  color:'#1CE8C8'}
+};
+
+const NODES = [
+  // Western (16)
+  {id:'usa',         label:'USA',          sphere:'western',    lon:-98,  lat:38,  desc:'Global superpower; dominant in tech, finance, military, and pop culture.'},
+  {id:'uk',          label:'UK',           sphere:'western',    lon:-2,   lat:54,  desc:'Post-imperial power; global finance hub and Five Eyes anchor.'},
+  {id:'france',      label:'France',       sphere:'western',    lon:2,    lat:46,  desc:'European cultural leader; permanent UNSC seat and large global diaspora.'},
+  {id:'germany',     label:'Germany',      sphere:'western',    lon:10,   lat:51,  desc:'Economic engine of the EU; largest European economy.'},
+  {id:'italy',       label:'Italy',        sphere:'western',    lon:12,   lat:42,  desc:'G7 member; cultural powerhouse in art, fashion, and cuisine.'},
+  {id:'spain',       label:'Spain',        sphere:'western',    lon:-4,   lat:40,  desc:'Gateway between Europe and Latin America; NATO and EU member.'},
+  {id:'canada',      label:'Canada',       sphere:'western',    lon:-96,  lat:56,  desc:'G7 member; Anglosphere anchor with strong multicultural identity.'},
+  {id:'netherlands', label:'Netherlands',  sphere:'western',    lon:5,    lat:52,  desc:'Major trading hub; home to Shell and ASML; key EU partner.'},
+  {id:'sweden',      label:'Sweden',       sphere:'western',    lon:18,   lat:62,  desc:'Nordic welfare model; NATO member since 2024; tech innovator.'},
+  {id:'norway',      label:'Norway',       sphere:'western',    lon:10,   lat:62,  desc:'Major oil exporter; largest sovereign wealth fund in the world.'},
+  {id:'poland',      label:'Poland',       sphere:'western',    lon:20,   lat:52,  desc:'Largest Eastern EU economy; key NATO eastern flank.'},
+  {id:'portugal',    label:'Portugal',     sphere:'western',    lon:-8,   lat:39,  desc:'Lusophone hub; historical maritime empire with global diaspora.'},
+  {id:'greece',      label:'Greece',       sphere:'western',    lon:22,   lat:39,  desc:'NATO and EU member; strategic Eastern Mediterranean position.'},
+  {id:'ukraine',     label:'Ukraine',      sphere:'western',    lon:32,   lat:49,  desc:'Largest European country by area; pivotal Eastern European state.'},
+  {id:'israel',      label:'Israel',       sphere:'western',    lon:35,   lat:31,  desc:'Tech hub and US strategic ally; nuclear-capable regional power.'},
+  {id:'russia',      label:'Russia',       sphere:'western',    lon:90,   lat:62,  desc:'Vast Eurasian state; permanent UNSC seat; major energy exporter.'},
+  // Latin American (11)
+  {id:'brazil',      label:'Brazil',       sphere:'latin',      lon:-52,  lat:-10, desc:'Largest Latin American economy; agricultural superpower and BRICS member.'},
+  {id:'mexico',      label:'Mexico',       sphere:'latin',      lon:-102, lat:23,  desc:'USMCA partner; 2nd largest Spanish-speaking economy.'},
+  {id:'argentina',   label:'Argentina',    sphere:'latin',      lon:-64,  lat:-34, desc:'Southern Cone leader; major agricultural exporter.'},
+  {id:'colombia',    label:'Colombia',     sphere:'latin',      lon:-74,  lat:4,   desc:'Pacific and Atlantic access; major US security partner in Latin America.'},
+  {id:'chile',       label:'Chile',        sphere:'latin',      lon:-71,  lat:-35, desc:'Copper giant; stable open economy with strong Pacific ties.'},
+  {id:'peru',        label:'Peru',         sphere:'latin',      lon:-76,  lat:-9,  desc:'Andean nation; major mining producer; growing Pacific trade hub.'},
+  {id:'venezuela',   label:'Venezuela',    sphere:'latin',      lon:-66,  lat:8,   desc:'Vast oil reserves; politically isolated from Western sphere.'},
+  {id:'ecuador',     label:'Ecuador',      sphere:'latin',      lon:-78,  lat:-2,  desc:'OPEC member; dollarised economy; Pacific coast exporter.'},
+  {id:'cuba',        label:'Cuba',         sphere:'latin',      lon:-79,  lat:22,  desc:'Socialist state; historically tied to Russia and leftist movements.'},
+  {id:'uruguay',     label:'Uruguay',      sphere:'latin',      lon:-56,  lat:-33, desc:'Most stable democracy in Latin America; strong rule of law.'},
+  {id:'bolivia',     label:'Bolivia',      sphere:'latin',      lon:-65,  lat:-17, desc:'Largest lithium reserves; landlocked Andean state.'},
+  // East Asian (9)
+  {id:'china',       label:'China',        sphere:'eastasia',   lon:104,  lat:35,  desc:'Rising superpower; Belt & Road initiator; world factory and tech rival.'},
+  {id:'japan',       label:'Japan',        sphere:'eastasia',   lon:138,  lat:36,  desc:'Technology leader; 3rd largest economy; pacifist constitution.'},
+  {id:'southkorea',  label:'S. Korea',     sphere:'eastasia',   lon:128,  lat:36,  desc:'Tech giant; K-wave cultural export powerhouse; US treaty ally.'},
+  {id:'vietnam',     label:'Vietnam',      sphere:'eastasia',   lon:108,  lat:16,  desc:'Fast-growing manufacturing hub; China Plus One beneficiary.'},
+  {id:'thailand',    label:'Thailand',     sphere:'eastasia',   lon:101,  lat:15,  desc:'ASEAN hub; major auto manufacturing and tourism destination.'},
+  {id:'malaysia',    label:'Malaysia',     sphere:'eastasia',   lon:109,  lat:4,   desc:'Upper-middle income ASEAN economy; strong Chinese diaspora.'},
+  {id:'philippines', label:'Philippines',  sphere:'eastasia',   lon:122,  lat:13,  desc:'Large English-speaking archipelago; key US strategic asset.'},
+  {id:'singapore',   label:'Singapore',    sphere:'eastasia',   lon:104,  lat:1,   desc:'Global finance and trade hub; highest GDP per capita in Asia.'},
+  {id:'indonesia',   label:'Indonesia',    sphere:'eastasia',   lon:118,  lat:-5,  desc:'Largest Muslim-majority nation; 4th most populous country.'},
+  // South Asian (5)
+  {id:'india',       label:'India',        sphere:'southasia',  lon:78,   lat:22,  desc:"World's most populous democracy; fast-growing tech and services hub."},
+  {id:'pakistan',    label:'Pakistan',     sphere:'southasia',  lon:69,   lat:30,  desc:'Nuclear-armed state; China ally; strategic South Asian pivot point.'},
+  {id:'bangladesh',  label:'Bangladesh',   sphere:'southasia',  lon:90,   lat:24,  desc:'Global garment manufacturing powerhouse; fast-growing economy.'},
+  {id:'srilanka',    label:'Sri Lanka',    sphere:'southasia',  lon:81,   lat:8,   desc:'Indian Ocean island; strategic location between East and West.'},
+  {id:'nepal',       label:'Nepal',        sphere:'southasia',  lon:84,   lat:28,  desc:'Himalayan buffer state between India and China.'},
+  // Middle East (11)
+  {id:'saudi',       label:'Saudi Arabia', sphere:'middleeast', lon:45,   lat:24,  desc:"Oil superpower; custodian of Islam's holiest sites; Vision 2030 reformer."},
+  {id:'iran',        label:'Iran',         sphere:'middleeast', lon:54,   lat:33,  desc:'Shia Islamic Republic; regional power and nuclear threshold state.'},
+  {id:'turkey',      label:'Turkey',       sphere:'middleeast', lon:35,   lat:39,  desc:'NATO member bridging Europe and Asia; Turkic world leader.'},
+  {id:'egypt',       label:'Egypt',        sphere:'middleeast', lon:30,   lat:27,  desc:'Cultural heart of Arab world; controls the Suez Canal.'},
+  {id:'iraq',        label:'Iraq',         sphere:'middleeast', lon:44,   lat:33,  desc:'Major oil producer; contested arena of US, Iran, and Turkey.'},
+  {id:'uae',         label:'UAE',          sphere:'middleeast', lon:54,   lat:24,  desc:'Regional finance hub; Abraham Accords signatory; global city-state model.'},
+  {id:'jordan',      label:'Jordan',       sphere:'middleeast', lon:37,   lat:31,  desc:'Stable Hashemite monarchy; key US and Israeli partner in Levant.'},
+  {id:'qatar',       label:'Qatar',        sphere:'middleeast', lon:51,   lat:25,  desc:'Largest LNG exporter; Al Jazeera headquarters; 2022 World Cup host.'},
+  {id:'syria',       label:'Syria',        sphere:'middleeast', lon:38,   lat:35,  desc:'Post-civil war state; geopolitical chessboard of great powers.'},
+  {id:'morocco',     label:'Morocco',      sphere:'middleeast', lon:-6,   lat:32,  desc:'Arab-African bridge; Abraham Accords; major phosphate exporter.'},
+  {id:'algeria',     label:'Algeria',      sphere:'middleeast', lon:3,    lat:28,  desc:'North African powerhouse; major gas exporter to Europe.'},
+  // Sub-Saharan Africa (10)
+  {id:'nigeria',     label:'Nigeria',      sphere:'africa',     lon:8,    lat:9,   desc:"Africa's most populous nation; largest economy; Nollywood film hub."},
+  {id:'southafrica', label:'S. Africa',    sphere:'africa',     lon:25,   lat:-29, desc:'Most industrialised African economy; BRICS member; G20 participant.'},
+  {id:'ethiopia',    label:'Ethiopia',     sphere:'africa',     lon:40,   lat:9,   desc:"Africa's 2nd most populous; AU headquarters; Blue Nile dam builder."},
+  {id:'kenya',       label:'Kenya',        sphere:'africa',     lon:38,   lat:0,   desc:'East African tech hub; gateway to interior Africa; US security partner.'},
+  {id:'ghana',       label:'Ghana',        sphere:'africa',     lon:-1,   lat:8,   desc:'Stable West African democracy; gold and cocoa exporter.'},
+  {id:'tanzania',    label:'Tanzania',     sphere:'africa',     lon:35,   lat:-6,  desc:'Resource-rich East African state; Swahili cultural hub.'},
+  {id:'angola',      label:'Angola',       sphere:'africa',     lon:17,   lat:-12, desc:'Major oil producer; significant Chinese investment destination.'},
+  {id:'senegal',     label:'Senegal',      sphere:'africa',     lon:-14,  lat:14,  desc:'Stable Francophone West Africa anchor; peacekeeping contributor.'},
+  {id:'drcongo',     label:'DR Congo',     sphere:'africa',     lon:25,   lat:-4,  desc:'Vast mineral wealth including cobalt; largest Francophone country.'},
+  {id:'mozambique',  label:'Mozambique',   sphere:'africa',     lon:35,   lat:-18, desc:'LNG-rich coastal state; Portuguese-speaking African economy.'},
+  // Oceania (3)
+  {id:'australia',   label:'Australia',    sphere:'oceania',    lon:133,  lat:-25, desc:'AUKUS partner; major commodity exporter; Five Eyes member.'},
+  {id:'newzealand',  label:'New Zealand',  sphere:'oceania',    lon:172,  lat:-42, desc:'Five Eyes member; progressive Pacific democracy.'},
+  {id:'papuang',     label:'PNG',          sphere:'oceania',    lon:144,  lat:-7,  desc:'Resource-rich Pacific island; contested China-US strategic space.'}
+];
+
+// ISO numeric  sphere key (for country fill colouring)
+const ISO_SPHERE = {
+  840:'western',826:'western',250:'western',276:'western',380:'western',
+  724:'western',124:'western',528:'western',752:'western',578:'western',
+  616:'western',620:'western',300:'western',804:'western',376:'western',
+  643:'western',40:'western',56:'western',208:'western',246:'western',
+  348:'western',703:'western',191:'western',705:'western',756:'western',
+  // latin
+  76:'latin',484:'latin',32:'latin',170:'latin',152:'latin',
+  604:'latin',862:'latin',218:'latin',192:'latin',858:'latin',68:'latin',
+  320:'latin',340:'latin',222:'latin',214:'latin',332:'latin',388:'latin',
+  780:'latin',591:'latin',
+  // eastasia
+  156:'eastasia',392:'eastasia',410:'eastasia',704:'eastasia',764:'eastasia',
+  458:'eastasia',608:'eastasia',702:'eastasia',360:'eastasia',
+  116:'eastasia',418:'eastasia',104:'eastasia',116:'eastasia',
+  // southasia
+  356:'southasia',586:'southasia',50:'southasia',144:'southasia',524:'southasia',
+  64:'southasia',
+  // middleeast
+  682:'middleeast',364:'middleeast',792:'middleeast',818:'middleeast',
+  368:'middleeast',784:'middleeast',400:'middleeast',634:'middleeast',
+  760:'middleeast',504:'middleeast',12:'middleeast',422:'middleeast',
+  275:'middleeast',48:'middleeast',414:'middleeast',887:'middleeast',512:'middleeast',
+  // africa
+  566:'africa',710:'africa',231:'africa',404:'africa',288:'africa',
+  834:'africa',24:'africa',686:'africa',180:'africa',508:'africa',
+  800:'africa',716:'africa',516:'africa',426:'africa',748:'africa',
+  646:'africa',108:'africa',174:'africa',266:'africa',624:'africa',
+  562:'africa',466:'africa',694:'africa',324:'africa',204:'africa',
+  120:'africa',140:'africa',706:'africa',270:'africa',
+  // oceania
+  36:'oceania',554:'oceania',598:'oceania',242:'oceania',
+  548:'oceania',90:'oceania',776:'oceania',882:'oceania'
+};
+
+//  Connection generator 
+const nodeMap = Object.fromEntries(NODES.map(n=>[n.id,n]));
+
+function buildConnections(){
+  let seed=12345;
+  function rng(){seed=(seed*1664525+1013904223)&0x7FFFFFFF;return seed/0x7FFFFFFF;}
+  function j(base,range=12){return Math.min(99,Math.max(20,Math.round(base+(rng()-.5)*range*2)));}
+
+  const C={culture:[],religion:[],politics:[],economics:[],media:[],military:[]};
+  const seen={};
+
+  function add(layer,a,b,base,range=12){
+    if(!nodeMap[a]||!nodeMap[b]||a===b) return;
+    const k=[a,b].sort().join('|')+':'+layer;
+    if(seen[k]) return;
+    seen[k]=1;
+    C[layer].push([a,b,j(base,range)]);
+  }
+
+  function group(layer,ids,base,range=12){
+    for(let i=0;i<ids.length;i++)
+      for(let j2=i+1;j2<ids.length;j2++)
+        add(layer,ids[i],ids[j2],base,range);
+  }
+
+  const W=['usa','uk','france','germany','italy','spain','canada','netherlands','sweden','norway','poland','portugal','greece','ukraine','israel','russia'];
+  const LA=['brazil','mexico','argentina','colombia','chile','peru','venezuela','ecuador','cuba','uruguay','bolivia'];
+  const EA=['china','japan','southkorea','vietnam','thailand','malaysia','philippines','singapore','indonesia'];
+  const SA=['india','pakistan','bangladesh','srilanka','nepal'];
+  const ME=['saudi','iran','turkey','egypt','iraq','uae','jordan','qatar','syria','morocco','algeria'];
+  const AF=['nigeria','southafrica','ethiopia','kenya','ghana','tanzania','angola','senegal','drcongo','mozambique'];
+  const OC=['australia','newzealand','papuang'];
+
+  //  CULTURE 
+  group('culture',['usa','uk','canada','australia','newzealand'],90,7);          // Anglosphere core
+  group('culture',['france','belgium','switzerland','canada','monaco'],78,10);   // Francophone high culture
+  group('culture',['spain','mexico','argentina','colombia','chile','peru','venezuela','ecuador','cuba','uruguay','bolivia'],82,9); // Hispanophone
+  group('culture',['brazil','portugal','angola','mozambique'],72,12);            // Lusophone
+  group('culture',['china','japan','southkorea','vietnam'],63,14);               // Confucian East Asia
+  group('culture',['india','nepal','srilanka','bangladesh'],70,11);              // South Asian
+  group('culture',['saudi','egypt','iraq','jordan','uae','qatar','syria','morocco','algeria'],76,10); // Arab world
+  group('culture',['germany','austria','switzerland'],80,8);                     // Germanic
+  group('culture',['sweden','norway'],87,5);                                     // Nordic
+  group('culture',['nigeria','ghana','senegal','drcongo'],58,14);                // West Africa
+  group('culture',['kenya','ethiopia','tanzania','mozambique'],60,13);           // East/Southern Africa
+  group('culture',['thailand','malaysia','singapore','vietnam','indonesia','philippines'],62,13); // Southeast Asia
+  group('culture',['russia','ukraine','poland'],58,17);                          // Slavic
+  group('culture',['france','morocco','algeria','senegal','drcongo'],65,12);     // Francophone Africa
+  group('culture',['iran','iraq','afghanistan'],64,15);                          // Persian sphere
+  group('culture',['turkey','iran','iraq'],52,16);                               // Mideast crossroads
+  group('culture',['southkorea','japan'],70,10);                                 // NE Asia
+  add('culture','india','uk',68,10);
+  add('culture','india','usa',63,12);
+  add('culture','india','iran',56,14);
+  add('culture','egypt','turkey',58,14);
+  add('culture','nigeria','uk',55,14);
+  add('culture','philippines','usa',68,10);
+  add('culture','singapore','uk',60,12);
+  add('culture','australia','usa',82,8);
+  add('culture','newzealand','uk',80,8);
+  add('culture','israel','usa',70,10);
+  add('culture','france','uk',65,12);
+  add('culture','japan','usa',68,12);
+  add('culture','southafrica','uk',62,12);
+
+  //  RELIGION 
+  group('religion',['usa','uk','germany','sweden','norway','netherlands','canada','australia','newzealand'],78,11); // Protestant
+  group('religion',['france','spain','italy','portugal','brazil','mexico','argentina','colombia','chile','peru','venezuela','ecuador','cuba','uruguay','bolivia','philippines','poland'],80,9); // Catholic
+  group('religion',['russia','greece','ukraine','ethiopia'],78,12);              // Orthodox
+  group('religion',['saudi','egypt','turkey','pakistan','bangladesh','indonesia','malaysia','nigeria','morocco','senegal','iraq','jordan','uae','qatar','syria','algeria'],82,9); // Sunni Islam
+  group('religion',['iran','iraq','syria'],80,11);                               // Shia
+  group('religion',['india','nepal','srilanka'],80,9);                           // Hindu
+  group('religion',['thailand','vietnam','srilanka','japan','southkorea'],63,14);// Buddhist
+  add('religion','israel','usa',75,9);
+  add('religion','israel','uk',60,12);
+  add('religion','nigeria','ghana',70,11);
+  add('religion','kenya','ethiopia',65,13);
+  add('religion','kenya','tanzania',65,12);
+  add('religion','southafrica','nigeria',60,13);
+  add('religion','india','pakistan',36,14);  // Shared history, tension
+  add('religion','india','saudi',44,14);     // Large Indian Muslim diaspora
+  add('religion','iran','turkey',50,16);
+  add('religion','malaysia','indonesia',78,9);
+  add('religion','india','iran',55,14);
+  add('religion','ethiopia','egypt',60,14);  // Coptic connection
+
+  //  POLITICS 
+  group('politics',['usa','uk','france','germany','italy','spain','netherlands','norway','sweden','poland','canada','turkey','greece','portugal'],83,9); // NATO
+  group('politics',['usa','uk','france','germany','italy','canada','japan'],89,7); // G7
+  group('politics',['france','germany','italy','spain','netherlands','sweden','poland','greece','portugal'],80,9); // EU core
+  group('politics',['usa','japan','india','australia'],80,9);                    // Quad
+  group('politics',['china','russia','india','pakistan','iran'],65,14);          // SCO
+  group('politics',['brazil','russia','india','china','southafrica','iran','uae','egypt','ethiopia'],67,12); // BRICS+
+  group('politics',['saudi','egypt','iraq','jordan','uae','qatar','syria','morocco','algeria'],71,11); // Arab League
+  group('politics',['vietnam','thailand','malaysia','philippines','singapore','indonesia'],75,9); // ASEAN
+  group('politics',['nigeria','southafrica','ethiopia','kenya','ghana','tanzania','angola','senegal'],62,13); // AU
+  group('politics',['usa','uk','canada','australia','newzealand'],90,6);         // Five Eyes
+  add('politics','usa','israel',93,4);
+  add('politics','usa','saudi',76,10);
+  add('politics','usa','japan',88,7);
+  add('politics','usa','southkorea',85,7);
+  add('politics','usa','india',70,10);
+  add('politics','usa','australia',88,7);
+  add('politics','usa','colombia',72,10);
+  add('politics','usa','philippines',74,10);
+  add('politics','russia','iran',68,12);
+  add('politics','russia','syria',72,10);
+  add('politics','russia','ukraine',22,20);  // Conflict
+  add('politics','russia','china',75,10);
+  add('politics','china','pakistan',80,8);
+  add('politics','turkey','russia',50,16);
+  add('politics','turkey','iran',48,16);
+  add('politics','turkey','usa',62,14);
+  add('politics','turkey','qatar',72,10);
+  add('politics','india','russia',62,12);
+  add('politics','india','iran',54,14);
+  add('politics','india','israel',67,10);
+  add('politics','india','usa',70,10);
+  add('politics','japan','australia',68,11);
+  add('politics','japan','india',62,12);
+  add('politics','france','senegal',70,11);
+  add('politics','france','morocco',68,11);
+  add('politics','france','algeria',52,16);
+  add('politics','china','uae',68,12);
+  add('politics','china','egypt',65,12);
+  add('politics','israel','uae',72,10);
+  add('politics','israel','morocco',65,12);
+  add('politics','israel','jordan',60,13);
+  add('politics','southkorea','japan',58,15);
+
+  //  ECONOMICS 
+  // G20 major bilateral trade
+  const G20=['usa','china','germany','japan','france','uk','india','brazil','canada','australia','southkorea','russia','italy','mexico','spain','indonesia','turkey','argentina','saudi','southafrica'];
+  group('economics',G20,68,15);
+  // Belt & Road
+  const BRI=['pakistan','bangladesh','srilanka','kenya','ethiopia','tanzania','angola','egypt','iran','iraq','malaysia','vietnam','thailand','philippines','singapore','greece','italy','portugal','drcongo','mozambique'];
+  BRI.forEach(c=>add('economics','china',c,72,13));
+  // USMCA
+  group('economics',['usa','mexico','canada'],90,5);
+  // EU Single Market
+  group('economics',['france','germany','italy','spain','netherlands','sweden','poland','greece','portugal'],82,9);
+  // OPEC+
+  group('economics',['saudi','uae','iran','iraq','russia','nigeria','angola','venezuela','ecuador'],70,13);
+  // CPTPP
+  group('economics',['japan','canada','australia','newzealand','mexico','chile','peru','vietnam','malaysia','singapore'],75,11);
+  // Gulf trade web
+  group('economics',['saudi','uae','qatar'],85,7);
+  ['india','pakistan','bangladesh','srilanka','egypt','jordan','philippines','indonesia','vietnam','kenya','ethiopia'].forEach(c=>{
+    add('economics','uae',c,67,12);
+    add('economics','saudi',c,62,13);
+  });
+  // China-Africa
+  AF.forEach(c=>add('economics','china',c,64,14));
+  // Mercosur
+  group('economics',['brazil','argentina','uruguay','bolivia'],78,9);
+  // Andean Community
+  group('economics',['colombia','peru','ecuador','bolivia'],70,11);
+  // India trade
+  add('economics','india','usa',78,9);
+  add('economics','india','uk',70,10);
+  add('economics','india','china',70,11);
+  add('economics','india','australia',63,12);
+  add('economics','india','russia',60,13);
+  add('economics','india','uae',72,10);
+  // Pacific linkages
+  add('economics','australia','china',85,8);
+  add('economics','australia','japan',78,9);
+  add('economics','australia','southkorea',72,10);
+  add('economics','australia','india',64,12);
+  add('economics','newzealand','australia',82,7);
+  add('economics','newzealand','china',68,12);
+  add('economics','japan','usa',82,8);
+  add('economics','southkorea','usa',78,9);
+  add('economics','southkorea','china',80,9);
+  add('economics','singapore','usa',72,10);
+  add('economics','singapore','china',74,10);
+  // Turkey
+  add('economics','turkey','russia',62,14);
+  add('economics','turkey','iran',55,15);
+  add('economics','turkey','uae',65,12);
+  add('economics','russia','china',80,9);
+
+  //  MEDIA 
+  group('media',['usa','uk','canada','australia','newzealand'],88,7);            // English media core
+  ['india','nigeria','ghana','kenya','southafrica','singapore','philippines'].forEach(c=>{
+    add('media','usa',c,63,13);
+    add('media','uk',c,58,13);
+  });
+  group('media',['spain','mexico','argentina','colombia','chile','venezuela','cuba','uruguay','bolivia','ecuador','peru'],80,9); // Spanish media
+  group('media',['saudi','egypt','uae','qatar','jordan','morocco','algeria','iraq','syria'],75,11); // Arabic media
+  ['india','pakistan','bangladesh','srilanka','nepal','uae','saudi','uk','nigeria','kenya','southafrica','malaysia','singapore'].forEach(c=>{
+    if(c!=='india') add('media','india',c,70,13);
+  });
+  ['southkorea','china','japan','vietnam','thailand','malaysia','philippines','singapore','indonesia','usa','france'].forEach(c=>{
+    if(c!=='southkorea') add('media','southkorea',c,67,13);
+  });
+  group('media',['russia','ukraine'],65,17);
+  ['france','senegal','morocco','algeria','drcongo'].forEach(c=>{
+    if(c!=='france') add('media','france',c,64,13);
+  });
+  ['nigeria','ghana','kenya','ethiopia','tanzania','southafrica','angola','senegal','drcongo'].forEach(c=>{
+    if(c!=='nigeria') add('media','nigeria',c,60,13);
+  });
+  ['china','singapore','malaysia','vietnam','southkorea'].forEach(c=>{
+    if(c!=='china') add('media','china',c,60,13);
+  });
+  ['japan','usa','france','uk','china','southkorea','brazil','australia','germany'].forEach(c=>{
+    if(c!=='japan') add('media','japan',c,67,11);
+  });
+  add('media','turkey','iran',52,16);
+  add('media','turkey','egypt',58,14);
+  add('media','turkey','russia',50,16);
+  add('media','brazil','usa',68,11);
+  add('media','brazil','portugal',65,12);
+  add('media','australia','usa',78,9);
+  add('media','newzealand','australia',72,10);
+  add('media','indonesia','malaysia',65,12);
+  add('media','philippines','usa',68,11);
+  add('media','singapore','usa',62,12);
+
+  //  MILITARY 
+  group('military',['usa','uk','france','germany','canada','netherlands','norway','sweden','poland','italy','spain','portugal','greece'],83,9); // NATO
+  group('military',['usa','uk','australia'],92,5);                               // AUKUS
+  group('military',['usa','uk','canada','australia','newzealand'],90,6);         // Five Eyes
+  ['japan','southkorea','israel','saudi','uae','egypt','jordan','philippines','singapore','india','colombia','morocco'].forEach(c=>add('military','usa',c,71,13));
+  group('military',['russia','iran','syria'],68,13);
+  add('military','russia','china',65,14);
+  add('military','russia','india',60,14);
+  add('military','china','pakistan',82,7);
+  add('military','china','myanmar',63,14);
+  group('military',['saudi','uae','egypt','jordan'],72,11);                      // Gulf + Egypt
+  add('military','india','france',68,11);
+  add('military','india','israel',70,9);
+  add('military','india','usa',68,11);
+  add('military','india','russia',62,13);
+  add('military','india','japan',60,14);
+  add('military','india','australia',62,13);
+  group('military',['nigeria','ghana','kenya','southafrica'],55,17);             // AU peacekeeping
+  add('military','france','senegal',72,9);
+  add('military','france','morocco',65,11);
+  add('military','france','egypt',62,11);
+  add('military','turkey','qatar',68,11);
+  add('military','turkey','ukraine',60,14);
+  add('military','japan','australia',65,11);
+  add('military','japan','india',60,14);
+  add('military','southkorea','usa',86,7);
+  add('military','southkorea','australia',60,14);
+  add('military','israel','uae',65,12);
+  add('military','israel','jordan',58,14);
+  add('military','israel','morocco',55,15);
+  add('military','australia','india',62,13);
+  add('military','australia','japan',65,11);
+  add('military','australia','singapore',68,11);
+  add('military','newzealand','australia',80,8);
+  add('military','singapore','usa',72,10);
+  add('military','philippines','usa',74,10);
+  add('military','egypt','russia',52,16);
+  add('military','angola','russia',50,18);
+  add('military','ethiopia','usa',55,16);
+  add('military','kenya','usa',60,14);
+
+  return C;
+}
+
+const CONNECTIONS = buildConnections();
+// Log totals to console for debugging
+const totals = Object.fromEntries(Object.entries(CONNECTIONS).map(([k,v])=>[k,v.length]));
+console.log('Connection totals:', totals, 'Total:', Object.values(totals).reduce((a,b)=>a+b,0));
+
+// 
+// RENDERING
+// 
+
+const VW=1200, VH=620;
+const svg = d3.select('#map-svg').attr('viewBox',`0 0 ${VW} ${VH}`).attr('preserveAspectRatio','xMidYMid meet');
+const proj = d3.geoNaturalEarth1().scale(190).translate([VW/2,VH/2+15]);
+const path = d3.geoPath().projection(proj);
+const root = svg.append('g').attr('id','root');
+const zoom = d3.zoom().scaleExtent([0.5,10]).on('zoom',e=>root.attr('transform',e.transform));
+svg.call(zoom).on('dblclick.zoom',null);
+svg.on('click',e=>{
+  const cls = e.target.className?.baseVal || '';
+  if(!cls.includes('node') && !cls.includes('nd-')) deselect();
+});
+
+const gGrat = root.append('g');
+const gLand = root.append('g');
+const gBord = root.append('g');
+const gArc  = root.append('g');
+const gNode = root.append('g');
+
+let activeSpheres = new Set(Object.keys(SPHERES));
+let activeLayers  = new Set(Object.keys(LAYERS));
+let selectedId    = null;
+let arcData       = [];
+
+//  INIT (load world atlas) 
+async function init(){
+  let world;
+  try{world = await d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');}
+  catch(e){console.error('Atlas load failed',e);return;}
+
+  const countries = topojson.feature(world, world.objects.countries);
+  const borders   = topojson.mesh(world, world.objects.countries,(a,b)=>a!==b);
+
+  gGrat.append('path').datum({type:'Sphere'}).attr('class','sphere-bg').attr('d',path);
+  const grat = d3.geoGraticule().step([30,30]);
+  gGrat.append('path').datum(grat()).attr('class','graticule').attr('d',path);
+
+  gLand.selectAll('path')
+    .data(countries.features).join('path')
+    .attr('class','cpath').attr('d',path)
+    .each(function(d){
+      const sk = ISO_SPHERE[+d.id];
+      const c  = sk ? SPHERES[sk].color : '#1C2E44';
+      d3.select(this)
+        .attr('fill',c).attr('fill-opacity', sk?0.18:0.09)
+        .attr('stroke',c).attr('stroke-opacity',sk?0.25:0.10)
+        .attr('stroke-width',0.4).attr('data-sphere',sk||'');
+    });
+
+  gBord.append('path').datum(borders).attr('class','border-mesh').attr('d',path);
+
+  drawNodes();
+  drawArcs();
+  buildSidebar();
+  buildMobileSheet();
+  document.getElementById('stat-nodes').textContent = NODES.length;
+}
+
+//  ARCS 
+function drawArcs(){
+  gArc.selectAll('*').remove();
+  arcData=[];
+  let count=0;
+
+  Object.keys(LAYERS).forEach((layer,li)=>{
+    if(!activeLayers.has(layer)) return;
+    const def=LAYERS[layer];
+    (CONNECTIONS[layer]||[]).forEach(([from,to,str])=>{
+      if(!nodeMap[from]||!nodeMap[to]) return;
+      // sphere filter: both nodes' spheres must be active
+      if(!activeSpheres.has(nodeMap[from].sphere)||!activeSpheres.has(nodeMap[to].sphere)) return;
+
+      const pa=proj([nodeMap[from].lon,nodeMap[from].lat]);
+      const pb=proj([nodeMap[to].lon,nodeMap[to].lat]);
+      if(!pa||!pb) return;
+
+      const mx=(pa[0]+pb[0])/2, my=(pa[1]+pb[1])/2;
+      const dx=pb[0]-pa[0], dy=pb[1]-pa[1];
+      const len=Math.hypot(dx,dy)||1;
+      const lift=Math.min(len*.28,90);
+      const sign=(li%2===0)?1:-1;
+      const cx=mx-(dy/len)*lift*sign;
+      const cy=my+(dx/len)*lift*.3;
+
+      const el=gArc.append('path')
+        .attr('class','arc')
+        .attr('d',`M${pa[0]} ${pa[1]} Q${cx} ${cy} ${pb[0]} ${pb[1]}`)
+        .attr('stroke',def.color)
+        .attr('stroke-width',Math.max(1.2,(str/100)*4))
+        .attr('opacity',.6)
+        .attr('data-from',from).attr('data-to',to)
+        .attr('data-layer',layer).attr('data-str',str);
+
+      arcData.push({el:el.node(),from,to,str,layer});
+      count++;
+    });
+  });
+
+  document.getElementById('stat-arcs').textContent = count;
+  document.getElementById('sb-arc-count').textContent = count;
+  applyFilters();
+}
+
+//  NODES 
+function drawNodes(){
+  gNode.selectAll('*').remove();
+  NODES.forEach(node=>{
+    if(!activeSpheres.has(node.sphere)) return;
+    const pos=proj([node.lon,node.lat]);
+    if(!pos) return;
+    const color=SPHERES[node.sphere].color;
+    const g=gNode.append('g').attr('class','node')
+      .attr('transform',`translate(${pos[0]},${pos[1]})`)
+      .attr('data-id',node.id);
+
+    g.append('circle').attr('class','nd-halo').attr('r',15).attr('fill',color).attr('fill-opacity',.06);
+    g.append('circle').attr('class','nd-ring').attr('r',8.5)
+      .attr('fill','none').attr('stroke',color).attr('stroke-width',1).attr('stroke-opacity',.45);
+    g.append('circle').attr('class','nd-core').attr('r',5).attr('fill',color).attr('fill-opacity',.9);
+    g.append('text').attr('class','nd-label').attr('y',12).text(node.label);
+
+    g.on('click',e=>{e.stopPropagation();selectNode(node);})
+     .on('mouseenter',e=>showTip(e,node))
+     .on('mouseleave',hideTip);
+  });
+}
+
+//  FILTER / SELECT 
+function applyFilters(){
+  arcData.forEach(arc=>{
+    const sphereOk = activeSpheres.has(nodeMap[arc.from]?.sphere) && activeSpheres.has(nodeMap[arc.to]?.sphere);
+    const layerOk  = activeLayers.has(arc.layer);
+    const selOk    = !selectedId || arc.from===selectedId || arc.to===selectedId;
+    const vis      = sphereOk && layerOk && selOk;
+    d3.select(arc.el)
+      .attr('opacity', vis ? (selectedId?.9:.62) : .04)
+      .classed('sel', vis && !!selectedId);
+  });
+  gNode.selectAll('.node').each(function(){
+    const id=d3.select(this).attr('data-id');
+    const sphereOk = activeSpheres.has(nodeMap[id]?.sphere);
+    if(!sphereOk){d3.select(this).attr('opacity',0);return;}
+    if(!selectedId){d3.select(this).attr('opacity',1);return;}
+    const conn=getConnected(selectedId);
+    d3.select(this).attr('opacity',(id===selectedId||conn.has(id))?1:.15);
+  });
+  // update country fills based on active spheres
+  gLand.selectAll('.cpath').each(function(){
+    const sk=d3.select(this).attr('data-sphere');
+    if(!sk) return;
+    const on = activeSpheres.has(sk);
+    d3.select(this).attr('fill-opacity', on?0.18:0.04).attr('stroke-opacity', on?0.25:0.06);
+  });
+}
+
+function getConnected(id){
+  const s=new Set();
+  Object.values(CONNECTIONS).flat().forEach(([a,b])=>{if(a===id)s.add(b);if(b===id)s.add(a);});
+  return s;
+}
+
+function selectNode(node){
+  selectedId = (selectedId===node.id)?null:node.id;
+  applyFilters();
+  updateInfoPanel(selectedId?node:null);
+  document.getElementById('sb-sel').textContent = selectedId ? node.label : 'none';
+  // mobile: switch to info tab
+  if(selectedId && window.innerWidth<=768){
+    openSheet(true);
+    switchTab('info');
+  }
+}
+
+function deselect(){
+  if(!selectedId) return;
+  selectedId=null; applyFilters(); updateInfoPanel(null);
+  document.getElementById('sb-sel').textContent='none';
+}
+
+//  INFO PANEL 
+function updateInfoPanel(node){
+  const infoEl=document.getElementById('info');
+  if(!node){infoEl.classList.remove('open');return;}
+
+  document.getElementById('inf-name').textContent=node.label;
+  const sp=SPHERES[node.sphere];
+  document.getElementById('inf-dot').style.background=sp.color;
+  document.getElementById('inf-sphere').textContent=sp.label;
+  document.getElementById('inf-sphere').style.color=sp.color;
+  document.getElementById('inf-desc').textContent=node.desc;
+
+  const cont=document.getElementById('info-conns');
+  cont.innerHTML='';
+  let total=0;
+
+  Object.keys(LAYERS).forEach(lk=>{
+    if(!activeLayers.has(lk)) return;
+    const def=LAYERS[lk];
+    const rows=(CONNECTIONS[lk]||[]).filter(([a,b])=>a===node.id||b===node.id)
+      .map(([a,b,str])=>({other:nodeMap[a===node.id?b:a],str}))
+      .filter(r=>r.other && activeSpheres.has(r.other.sphere))
+      .sort((a,b)=>b.str-a.str);
+    if(!rows.length) return;
+    total+=rows.length;
+
+    const hdr=document.createElement('div');
+    hdr.className='conn-grp-hdr';
+    hdr.style.color=def.color;
+    hdr.textContent=`${def.icon} ${def.label} (${rows.length})`;
+    cont.appendChild(hdr);
+
+    rows.forEach(r=>{
+      const row=document.createElement('div');
+      row.className='conn-row';
+      row.innerHTML=`
+        <div class="conn-pip" style="background:${def.color}"></div>
+        <div class="conn-name">${r.other.label}</div>
+        <div class="conn-bar-bg"><div class="conn-bar-fg" style="width:${r.str}%;background:${def.color}"></div></div>
+        <div class="conn-pct">${r.str}%</div>`;
+      cont.appendChild(row);
+    });
+  });
+
+  if(!total){
+    cont.innerHTML='<div class="no-conn">No active connections match current filters.</div>';
+  }
+
+  if(window.innerWidth>768) infoEl.classList.add('open');
+  updateMobileInfo(node);
+}
+
+//  TOOLTIP 
+const tip=document.getElementById('tip');
+function showTip(e,node){
+  const sp=SPHERES[node.sphere];
+  tip.innerHTML=`<strong style="color:${sp.color}">${node.label}</strong><br><span style="font-size:.52rem;color:var(--muted)">${sp.label}</span>`;
+  tip.classList.add('show');
+  moveTip(e);
+}
+function hideTip(){tip.classList.remove('show');}
+svg.on('mousemove',moveTip);
+function moveTip(e){
+  if(!tip.classList.contains('show')) return;
+  tip.style.left=(e.clientX+14)+'px';
+  tip.style.top=(e.clientY-8)+'px';
+}
+
+//  SIDEBAR 
+function buildSidebar(){
+  // Spheres
+  const sg=document.getElementById('sph-leg');
+  Object.entries(SPHERES).forEach(([k,s])=>{
+    const d=document.createElement('div');
+    d.className='sph-chip on';
+    d.dataset.key=k;
+    d.innerHTML=`<div class="sph-dot" style="background:${s.color}"></div><span class="sph-lbl">${s.label}</span>`;
+    d.addEventListener('click',()=>{
+      const on=activeSpheres.has(k);
+      if(on) activeSpheres.delete(k); else activeSpheres.add(k);
+      d.classList.toggle('on',!on===false); // re-set
+      d.classList.toggle('off',on);
+      d.classList.toggle('on',!on);
+      drawNodes(); drawArcs();
+      if(selectedId){
+        const node=nodeMap[selectedId];
+        if(!node||!activeSpheres.has(node.sphere)) deselect();
+        else updateInfoPanel(node);
+      }
+    });
+    sg.appendChild(d);
+  });
+
+  // Layers
+  const ll=document.getElementById('lyr-list');
+  Object.entries(LAYERS).forEach(([k,layer])=>{
+    const row=document.createElement('div');
+    row.className='lyr-row';
+    const tog=document.createElement('div');
+    tog.className='tog on';
+    tog.style.setProperty('--tc',layer.color);
+    const lbl=document.createElement('span');
+    lbl.className='lyr-name'; lbl.textContent=layer.label;
+    const icon=document.createElement('i');
+    icon.className='lyr-icon'; icon.textContent=layer.icon;
+    const cnt=document.createElement('span');
+    cnt.className='lyr-count'; cnt.textContent=(CONNECTIONS[k]||[]).length;
+    row.append(tog,icon,lbl,cnt);
+    row.addEventListener('click',()=>{
+      const on=activeLayers.has(k);
+      if(on) activeLayers.delete(k); else activeLayers.add(k);
+      tog.classList.toggle('on',!on);
+      drawArcs();
+      if(selectedId) updateInfoPanel(nodeMap[selectedId]);
+    });
+    ll.appendChild(row);
+  });
+}
+
+//  MOBILE SHEET 
+let sheetOpen=false;
+let sheetTab='filters';
+
+function buildMobileSheet(){
+  document.getElementById('sheet-handle').addEventListener('click',()=>openSheet(!sheetOpen));
+  document.querySelectorAll('.sh-tab').forEach(t=>{
+    t.addEventListener('click',()=>switchTab(t.dataset.tab));
+  });
+  renderSheetFilters();
+}
+
+function openSheet(open){
+  sheetOpen=open;
+  const sheet=document.getElementById('sheet');
+  if(open){
+    sheet.style.height='58vh';
+    document.getElementById('sheet-tabs').style.display='flex';
+    document.getElementById('sheet-body').style.display='block';
+  } else {
+    sheet.style.height='64px';
+    document.getElementById('sheet-tabs').style.display='none';
+    document.getElementById('sheet-body').style.display='none';
+  }
+}
+
+function switchTab(tab){
+  sheetTab=tab;
+  document.querySelectorAll('.sh-tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===tab));
+  const body=document.getElementById('sheet-body');
+  if(tab==='filters') renderSheetFilters();
+  else renderSheetInfo();
+}
+
+function renderSheetFilters(){
+  const body=document.getElementById('sheet-body');
+  body.innerHTML='<div style="font-size:.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:.5rem;">Spheres</div>';
+  const sg=document.createElement('div');
+  sg.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:.8rem;';
+  Object.entries(SPHERES).forEach(([k,s])=>{
+    const d=document.createElement('div');
+    d.style.cssText=`display:flex;align-items:center;gap:.35rem;padding:5px 7px;border-radius:4px;border:1px solid var(--border);cursor:pointer;font-size:.6rem;color:var(--text);transition:opacity .2s;opacity:${activeSpheres.has(k)?1:.25};`;
+    d.innerHTML=`<div style="width:7px;height:7px;border-radius:50%;background:${s.color};flex-shrink:0"></div>${s.label}`;
+    d.addEventListener('click',()=>{
+      const on=activeSpheres.has(k);
+      if(on) activeSpheres.delete(k); else activeSpheres.add(k);
+      d.style.opacity=on?'.25':'1';
+      drawNodes(); drawArcs();
+    });
+    sg.appendChild(d);
+  });
+  body.appendChild(sg);
+
+  const lh=document.createElement('div');
+  lh.style.cssText='font-size:.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:.5rem;';
+  lh.textContent='Layers';
+  body.appendChild(lh);
+
+  Object.entries(LAYERS).forEach(([k,layer])=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:.5rem;padding:5px 0;cursor:pointer;';
+    const tog=document.createElement('div');
+    const isOn=activeLayers.has(k);
+    tog.style.cssText=`width:28px;height:15px;border-radius:8px;background:${isOn?layer.color:'var(--muted)'};position:relative;flex-shrink:0;transition:background .2s;`;
+    tog.innerHTML=`<div style="position:absolute;top:2px;left:${isOn?'15':'2'}px;width:11px;height:11px;border-radius:50%;background:#fff;transition:left .2s;"></div>`;
+    const lbl=document.createElement('span');
+    lbl.style.cssText='font-size:.65rem;color:var(--text);flex:1;';
+    lbl.textContent=`${layer.icon} ${layer.label}`;
+    const cnt=document.createElement('span');
+    cnt.style.cssText='font-size:.52rem;color:var(--muted);';
+    cnt.textContent=(CONNECTIONS[k]||[]).length;
+    row.append(tog,lbl,cnt);
+    row.addEventListener('click',()=>{
+      const on=activeLayers.has(k);
+      if(on) activeLayers.delete(k); else activeLayers.add(k);
+      tog.style.background=on?'var(--muted)':layer.color;
+      tog.firstChild.style.left=on?'2px':'15px';
+      drawArcs();
+      if(selectedId) updateInfoPanel(nodeMap[selectedId]);
+    });
+    body.appendChild(row);
+  });
+}
+
+function renderSheetInfo(){
+  const body=document.getElementById('sheet-body');
+  if(!selectedId){
+    body.innerHTML='<div style="font-size:.62rem;color:var(--muted);text-align:center;padding:1rem 0;">Select a country node on the map.</div>';
+    return;
+  }
+  const node=nodeMap[selectedId];
+  const sp=SPHERES[node.sphere];
+  body.innerHTML='';
+
+  const hdr=document.createElement('div');
+  hdr.style.cssText='margin-bottom:.6rem;';
+  hdr.innerHTML=`<div style="font-family:Cinzel,serif;font-size:.9rem;color:var(--white);">${node.label}</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:.52rem;margin-top:.15rem;">
+      <div style="width:6px;height:6px;border-radius:50%;background:${sp.color}"></div>
+      <span style="color:${sp.color}">${sp.label}</span>
+    </div>
+    <div style="font-size:.58rem;color:var(--text);line-height:1.6;margin-top:.4rem;opacity:.8;">${node.desc}</div>`;
+  body.appendChild(hdr);
+
+  Object.keys(LAYERS).forEach(lk=>{
+    if(!activeLayers.has(lk)) return;
+    const def=LAYERS[lk];
+    const rows=(CONNECTIONS[lk]||[]).filter(([a,b])=>a===node.id||b===node.id)
+      .map(([a,b,str])=>({other:nodeMap[a===node.id?b:a],str}))
+      .filter(r=>r.other && activeSpheres.has(r.other.sphere))
+      .sort((a,b)=>b.str-a.str);
+    if(!rows.length) return;
+
+    const gh=document.createElement('div');
+    gh.style.cssText=`font-size:.5rem;color:${def.color};text-transform:uppercase;letter-spacing:.1em;padding:.4rem 0 .2rem;`;
+    gh.textContent=`${def.icon} ${def.label} (${rows.length})`;
+    body.appendChild(gh);
+
+    rows.forEach(r=>{
+      const rr=document.createElement('div');
+      rr.style.cssText='display:flex;align-items:center;gap:6px;padding:2px 0;font-size:.58rem;';
+      rr.innerHTML=`<div style="width:5px;height:5px;border-radius:50%;background:${def.color};flex-shrink:0"></div>
+        <span style="flex:1;color:var(--white)">${r.other.label}</span>
+        <div style="width:42px;height:3px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:${r.str}%;background:${def.color}"></div></div>
+        <span style="font-size:.5rem;color:var(--muted);min-width:22px;text-align:right">${r.str}%</span>`;
+      body.appendChild(rr);
+    });
+  });
+}
+
+function updateMobileInfo(node){
+  if(sheetTab==='info') renderSheetInfo();
+}
+
+document.getElementById('info-close').addEventListener('click',deselect);
+
+init();
+</script>
+</body>
+</html>
