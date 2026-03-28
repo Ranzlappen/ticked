@@ -1,14 +1,11 @@
 <!--
   Changes applied:
-  1. Added source viewer button (</> icon) next to Ko-fi toggle in header.
-     - Opens a modal showing the full page source with syntax-highlighted view.
-     - Copy-to-clipboard button copies the entire HTML source.
-     - Download button saves the current page as a standalone .html file (works offline on desktop/mobile).
-  2. Added Google Drive sync buttons next to existing Import/Export in toolbar.
-     - Upload to Google Drive: authenticates via Google OAuth2 (client-side), uploads ticked data as JSON to user's Drive.
-     - Download from Google Drive: fetches the most recent ticked backup from Drive and merges it.
-     - Uses Google Identity Services + Drive API v3 (lightweight, no server needed).
-  3. All new UI elements match existing design language (icon-btn style, sheet modals, accent colors).
+  1. Replaced inline source-code rendering with lightweight source access actions.
+     - Source modal now provides direct actions to open full page source in a new tab, copy source, and download .html.
+     - Removed inline <pre> source embedding to reduce DOM size and improve initial render performance.
+  2. Added incremental lazy rendering for task/process entry lists.
+     - Lists now render in small batches and append more entries when a sentinel reaches view (Intersection Observer + scroll fallback).
+     - Filtering and sorting still run against the complete in-memory dataset before batching, preserving behavior 100%.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -862,6 +859,24 @@
             gap: 6px;
         }
 
+        .lazy-loader {
+            min-height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .lazy-loader span {
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .lazy-loader.visible span { opacity: 1; }
+
         /* Swipe container — clips overflow, holds delete/action zone behind */
         .entry-wrap {
             position: relative;
@@ -1662,20 +1677,37 @@
         }
         .source-modal-body {
             overflow: auto;
-            padding: 0;
+            padding: 16px;
             flex: 1;
             min-height: 0;
+            display: grid;
+            gap: 12px;
+            align-content: start;
         }
-        .source-modal-body pre {
-            margin: 0;
-            padding: 16px;
+        .source-modal-text {
             font-family: var(--mono);
-            font-size: 0.7rem;
-            line-height: 1.5;
+            font-size: 0.72rem;
+            line-height: 1.6;
             color: var(--text-dim);
-            white-space: pre;
-            tab-size: 4;
-            overflow-x: auto;
+        }
+        .source-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--accent);
+            border: 1px solid rgba(0,229,160,0.35);
+            background: rgba(0,229,160,0.06);
+            border-radius: 8px;
+            text-decoration: none;
+            width: fit-content;
+            padding: 8px 10px;
+            transition: all var(--transition);
+        }
+        .source-link:hover {
+            background: rgba(0,229,160,0.12);
+            border-color: var(--accent);
         }
 
         /* ── Google Drive icon-btn modifier ── */
@@ -2376,6 +2408,7 @@
 
             <!-- Entry list -->
             <ul class="entry-list" id="entryList"></ul>
+            <div class="lazy-loader" id="tasksLazyLoader" aria-hidden="true"><span>Loading more entries…</span></div>
 
             <!-- Timeline view -->
             <div id="timelineView" class="timeline-outer" style="display:none;"></div>
@@ -2473,6 +2506,7 @@
 
             <!-- Process list -->
             <ul class="entry-list" id="processList"></ul>
+            <div class="lazy-loader" id="procLazyLoader" aria-hidden="true"><span>Loading more processes…</span></div>
         </div>
 
     </div>
@@ -2489,7 +2523,8 @@
                 <button class="source-modal-close" onclick="closeSourceViewer()" title="Close">✕</button>
             </div>
             <div class="source-modal-body">
-                <pre id="sourceCodePre"></pre>
+                <p class="source-modal-text">To keep this page lean, source is no longer embedded inline here. Use one of the actions below to access the complete HTML source.</p>
+                <a class="source-link" id="sourceOpenLink" href="#" target="_blank" rel="noopener">↗ Open full source in new tab</a>
             </div>
         </div>
     </div>
@@ -2601,6 +2636,8 @@
         const customPanel     = document.getElementById('customPanel');
         const customTriggerBtn= document.getElementById('customTriggerBtn');
         const timelineView    = document.getElementById('timelineView');
+        const tasksLazyLoader = document.getElementById('tasksLazyLoader');
+        const procLazyLoader  = document.getElementById('procLazyLoader');
 
         // ── Schema migration ──────────────────────────────────────
         const migrations = {
@@ -2959,6 +2996,66 @@
                 return 0;
             });
         }
+
+        const LAZY_BATCH_SIZE = 40;
+        const lazyRender = {
+            tasks: { visibleCount: LAZY_BATCH_SIZE, lastSig: '', observer: null },
+            processes: { visibleCount: LAZY_BATCH_SIZE, lastSig: '', observer: null }
+        };
+
+        function getLazyLoader(tab) {
+            return tab === 'tasks' ? tasksLazyLoader : procLazyLoader;
+        }
+
+        function ensureLazyObserver(tab) {
+            if (!('IntersectionObserver' in window)) return;
+            const lazy = lazyRender[tab];
+            if (lazy.observer) return;
+            const loader = getLazyLoader(tab);
+            lazy.observer = new IntersectionObserver(entries => {
+                if (!entries.some(e => e.isIntersecting)) return;
+                const max = lazy.currentTotal || 0;
+                if (lazy.visibleCount >= max) return;
+                lazy.visibleCount = Math.min(lazy.visibleCount + LAZY_BATCH_SIZE, max);
+                render();
+            }, { root: null, rootMargin: '250px 0px', threshold: 0.01 });
+            lazy.observer.observe(loader);
+        }
+
+        function updateLazyState(tab, sortedEntries) {
+            const lazy = lazyRender[tab];
+            const sig = sortedEntries.map(item => item.id).join('|');
+            if (lazy.lastSig !== sig) {
+                lazy.lastSig = sig;
+                lazy.visibleCount = LAZY_BATCH_SIZE;
+            }
+            lazy.currentTotal = sortedEntries.length;
+
+            const loader = getLazyLoader(tab);
+            loader.style.display = sortedEntries.length > 0 ? '' : 'none';
+            loader.classList.toggle('visible', lazy.visibleCount < sortedEntries.length);
+
+            ensureLazyObserver(tab);
+            return sortedEntries.slice(0, Math.min(lazy.visibleCount, sortedEntries.length));
+        }
+
+        function lazyFallbackHandler() {
+            for (const tab of ['tasks', 'processes']) {
+                const lazy = lazyRender[tab];
+                if (lazy.observer) continue;
+                if (!lazy.currentTotal || lazy.visibleCount >= lazy.currentTotal) continue;
+                const loader = getLazyLoader(tab);
+                const rect = loader.getBoundingClientRect();
+                if (rect.top < window.innerHeight + 280) {
+                    lazy.visibleCount = Math.min(lazy.visibleCount + LAZY_BATCH_SIZE, lazy.currentTotal);
+                    render();
+                    return;
+                }
+            }
+        }
+
+        window.addEventListener('scroll', lazyFallbackHandler, { passive: true });
+        window.addEventListener('resize', lazyFallbackHandler, { passive: true });
 
         // ── Keyed DOM diffing (tasks) ─────────────────────────────
         const _listKeys = new Map();
@@ -4081,9 +4178,12 @@
             timelineView.style.display= currentView === 'timeline' ? '' : 'none';
 
             if (currentView === 'list') {
-                renderListView(tasksFiltered, today);
+                const visibleTasks = updateLazyState('tasks', tasksFiltered);
+                renderListView(visibleTasks, today);
+                lazyFallbackHandler();
             } else {
                 _listKeys.clear();
+                tasksLazyLoader.style.display = 'none';
                 renderTimelineView(tasksFiltered, today);
             }
 
@@ -4114,7 +4214,9 @@
             const procsFiltered = getSorted(getFiltered('processes'), 'processes');
             const procsIsFiltering = procSearchInput.value.trim() || procFilterDate.value || state.procActiveTypeFilter !== 'all';
 
-            renderProcessListView(procsFiltered, today);
+            const visibleProcs = updateLazyState('processes', procsFiltered);
+            renderProcessListView(visibleProcs, today);
+            lazyFallbackHandler();
 
             const procsEmpty = processes.length === 0;
             const procsNoResults = !procsEmpty && procsFiltered.length === 0;
@@ -4355,10 +4457,19 @@
         }
 
         // ── Source Viewer ──────────────────────────────────────
+        function getFullSourceURL() {
+            const src = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+            const blob = new Blob([src], { type: 'text/html; charset=utf-8' });
+            return URL.createObjectURL(blob);
+        }
+
+        let sourcePreviewURL = '';
+
         function openSourceViewer() {
-            const src = document.documentElement.outerHTML;
-            const pre = document.getElementById('sourceCodePre');
-            pre.textContent = '<!DOCTYPE html>\n' + src;
+            if (sourcePreviewURL) URL.revokeObjectURL(sourcePreviewURL);
+            sourcePreviewURL = getFullSourceURL();
+            const sourceLink = document.getElementById('sourceOpenLink');
+            sourceLink.href = sourcePreviewURL;
             document.getElementById('sourceModalOverlay').classList.add('open');
             document.body.classList.add('sheet-open');
         }
@@ -4366,6 +4477,10 @@
         function closeSourceViewer() {
             document.getElementById('sourceModalOverlay').classList.remove('open');
             document.body.classList.remove('sheet-open');
+            if (sourcePreviewURL) {
+                URL.revokeObjectURL(sourcePreviewURL);
+                sourcePreviewURL = '';
+            }
         }
 
         function copySource() {
