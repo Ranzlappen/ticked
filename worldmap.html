@@ -15,11 +15,12 @@
 html,body{height:100%;overflow:hidden;}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;display:flex;flex-direction:column;}
 
-/*  HEADER  */
+/*  HEADER  */
 #hdr{
   display:flex;align-items:center;justify-content:space-between;
   padding:.6rem 1.2rem;border-bottom:1px solid var(--border);
-  background:var(--s1);flex-shrink:0;gap:1rem;z-index:50;
+  background:var(--s1);flex-shrink:0;gap:.5rem;z-index:50;
+  min-height:0;flex-wrap:wrap;
 }
 #hdr h1{font-family:'Cinzel',serif;font-size:1rem;font-weight:600;color:var(--white);letter-spacing:.1em;white-space:nowrap;}
 .hdr-tag{font-size:.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.18em;white-space:nowrap;}
@@ -28,10 +29,10 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 .dot{width:5px;height:5px;border-radius:50%;background:#3DE87A;box-shadow:0 0 6px #3DE87A;animation:pulse 2s ease infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/*  MAIN GRID  */
+/*  MAIN GRID  */
 #app{flex:1;display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:0;overflow:hidden;position:relative;}
 
-/*  SIDEBAR  */
+/*  SIDEBAR  */
 #sidebar{
   background:var(--s1);border-right:1px solid var(--border);
   display:flex;flex-direction:column;overflow:hidden;z-index:40;
@@ -66,7 +67,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
   transition:background .15s;user-select:none;
 }
 .lyr-row:hover{background:rgba(255,255,255,.03);}
-.lyr-icon{font-style:normal;font-size:.72rem;width:16px;text-align:center;flex-shrink:0;}
+.lyr-icon{font-style:normal;font-size:.65rem;width:18px;text-align:center;flex-shrink:0;color:var(--muted);}
 .lyr-name{flex:1;font-size:.65rem;color:var(--text);}
 .lyr-count{font-size:.52rem;color:var(--muted);}
 
@@ -80,7 +81,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 .sb-stats{padding:.65rem 1rem;font-size:.52rem;display:flex;justify-content:space-between;color:var(--muted);}
 .sb-stats span{color:var(--text);}
 
-/*  MAP  */
+/*  MAP  */
 #map{position:relative;overflow:hidden;background:#04070E;}
 #map-svg{width:100%;height:100%;display:block;cursor:grab;}
 #map-svg:active{cursor:grabbing;}
@@ -105,7 +106,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
   fill:rgba(202,224,245,.75);pointer-events:none;text-anchor:middle;
 }
 
-/*  RIGHT INFO PANEL  */
+/*  RIGHT INFO PANEL  */
 #info{
   position:fixed;top:0;right:0;bottom:0;width:var(--info);
   background:var(--s2);border-left:1px solid var(--border);
@@ -150,16 +151,16 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 .conn-pct{font-size:.5rem;color:var(--muted);min-width:22px;text-align:right;}
 .no-conn{font-size:.58rem;color:var(--muted);padding:.75rem 0;text-align:center;}
 
-/*  TOOLTIP  */
+/*  TOOLTIP  */
 #tip{
   position:fixed;background:var(--s2);border:1px solid var(--border);
   padding:.4rem .65rem;border-radius:4px;font-size:.6rem;
   pointer-events:none;opacity:0;transition:opacity .1s;z-index:9999;
-  line-height:1.55;max-width:160px;
+  line-height:1.55;max-width:180px;
 }
 #tip.show{opacity:1;}
 
-/*  MOBILE BOTTOM SHEET  */
+/*  MOBILE BOTTOM SHEET  */
 #sheet{
   display:none;position:fixed;left:0;right:0;bottom:0;
   background:var(--s1);border-top:2px solid var(--border);
@@ -183,7 +184,23 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 .sh-tab.on{color:var(--hi);border-color:var(--hi);}
 #sheet-body{flex:1;overflow-y:auto;padding:.75rem 1rem;}
 
-/*  RESPONSIVE  */
+/*  RESPONSIVE  */
+
+/* Large desktops */
+@media(min-width:1600px){
+  :root{--sidebar:300px;--info:360px;}
+  #hdr h1{font-size:1.15rem;}
+  .nd-label{font-size:8px !important;}
+}
+
+/* Tablets landscape */
+@media(max-width:1024px){
+  :root{--sidebar:220px;--info:280px;}
+  .sph-grid{grid-template-columns:1fr;}
+  .hdr-meta{gap:.7rem;}
+}
+
+/* Tablets portrait / small screens */
 @media(max-width:768px){
   #app{grid-template-columns:1fr;}
   #sidebar{display:none;}
@@ -191,23 +208,34 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
   #sheet{display:flex;}
   #map{height:100%;}
   .hdr-meta{display:none;}
+  #hdr{padding:.5rem .8rem;}
 }
+
+/* Small phones */
 @media(max-width:400px){
-  #hdr h1{font-size:.85rem;}
+  #hdr h1{font-size:.82rem;letter-spacing:.06em;}
   .hdr-tag{display:none;}
+  #sheet-body{padding:.5rem .7rem;}
+  .sh-tab{font-size:.52rem;padding:.4rem .3rem;}
+}
+
+/* Very tall narrow screens */
+@media(max-height:500px) and (max-width:768px){
+  #hdr{padding:.3rem .6rem;}
+  #hdr h1{font-size:.78rem;}
 }
 </style>
 </head>
 <body>
 
 <div id="hdr">
-  <div style="display:flex;align-items:baseline;gap:.8rem;">
+  <div style="display:flex;align-items:baseline;gap:.8rem;min-width:0;">
     <h1>Global Connections</h1>
     <span class="hdr-tag">Civilisational Alignments</span>
   </div>
   <div class="hdr-meta">
-    <div style="display:flex;align-items:center;gap:.4rem;"><div class="dot"></div><span id="stat-arcs">�</span> links</div>
-    <div class="hdr-stat"><span id="stat-nodes">�</span> nodes</div>
+    <div style="display:flex;align-items:center;gap:.4rem;"><div class="dot"></div><span id="stat-arcs">--</span> links</div>
+    <div class="hdr-stat"><span id="stat-nodes">--</span> nodes</div>
   </div>
 </div>
 
@@ -227,7 +255,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 
     </div>
     <div class="sb-stats">
-      <div>Links: <span id="sb-arc-count">�</span></div>
+      <div>Links: <span id="sb-arc-count">--</span></div>
       <div>Selected: <span id="sb-sel">none</span></div>
     </div>
   </div>
@@ -242,7 +270,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
       <div class="info-name" id="inf-name"></div>
       <div class="info-badge"><div class="info-badge-dot" id="inf-dot"></div><span id="inf-sphere"></span></div>
     </div>
-    <button id="info-close" title="Close"></button>
+    <button id="info-close" title="Close">x</button>
   </div>
   <div class="info-desc" id="inf-desc"></div>
   <div id="info-conns"></div>
@@ -263,9 +291,9 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
-// 
+// ──────────────────────────────────────
 // DATA
-// 
+// ──────────────────────────────────────
 
 const SPHERES = {
   western:    {label:'Western',           color:'#4A90D9'},
@@ -278,90 +306,92 @@ const SPHERES = {
 };
 
 const LAYERS = {
-  culture:   {label:'Culture',   icon:'', color:'#F0A82C'},
-  religion:  {label:'Religion',  icon:'',  color:'#A85CF0'},
-  politics:  {label:'Politics',  icon:'',  color:'#2CC8F0'},
-  economics: {label:'Economics', icon:'',  color:'#F04058'},
-  media:     {label:'Media',     icon:'',  color:'#50E878'},
-  military:  {label:'Military',  icon:'',  color:'#1CE8C8'}
+  culture:    {label:'Culture',         icon:'CUL', color:'#F0A82C'},
+  religion:   {label:'Religion',        icon:'REL', color:'#A85CF0'},
+  politics:   {label:'Politics',        icon:'POL', color:'#2CC8F0'},
+  economics:  {label:'Economics',       icon:'ECO', color:'#F04058'},
+  media:      {label:'Media',           icon:'MED', color:'#50E878'},
+  military:   {label:'Military',        icon:'MIL', color:'#1CE8C8'},
+  technology: {label:'Technology',      icon:'TEC', color:'#FF6EC7'},
+  migration:  {label:'Migration',       icon:'MIG', color:'#C8B060'}
 };
 
 const NODES = [
   // Western (16)
-  {id:'usa',         label:'USA',          sphere:'western',    lon:-98,  lat:38,  desc:'Global superpower; dominant in tech, finance, military, and pop culture.'},
-  {id:'uk',          label:'UK',           sphere:'western',    lon:-2,   lat:54,  desc:'Post-imperial power; global finance hub and Five Eyes anchor.'},
-  {id:'france',      label:'France',       sphere:'western',    lon:2,    lat:46,  desc:'European cultural leader; permanent UNSC seat and large global diaspora.'},
-  {id:'germany',     label:'Germany',      sphere:'western',    lon:10,   lat:51,  desc:'Economic engine of the EU; largest European economy.'},
-  {id:'italy',       label:'Italy',        sphere:'western',    lon:12,   lat:42,  desc:'G7 member; cultural powerhouse in art, fashion, and cuisine.'},
-  {id:'spain',       label:'Spain',        sphere:'western',    lon:-4,   lat:40,  desc:'Gateway between Europe and Latin America; NATO and EU member.'},
-  {id:'canada',      label:'Canada',       sphere:'western',    lon:-96,  lat:56,  desc:'G7 member; Anglosphere anchor with strong multicultural identity.'},
-  {id:'netherlands', label:'Netherlands',  sphere:'western',    lon:5,    lat:52,  desc:'Major trading hub; home to Shell and ASML; key EU partner.'},
-  {id:'sweden',      label:'Sweden',       sphere:'western',    lon:18,   lat:62,  desc:'Nordic welfare model; NATO member since 2024; tech innovator.'},
-  {id:'norway',      label:'Norway',       sphere:'western',    lon:10,   lat:62,  desc:'Major oil exporter; largest sovereign wealth fund in the world.'},
-  {id:'poland',      label:'Poland',       sphere:'western',    lon:20,   lat:52,  desc:'Largest Eastern EU economy; key NATO eastern flank.'},
-  {id:'portugal',    label:'Portugal',     sphere:'western',    lon:-8,   lat:39,  desc:'Lusophone hub; historical maritime empire with global diaspora.'},
-  {id:'greece',      label:'Greece',       sphere:'western',    lon:22,   lat:39,  desc:'NATO and EU member; strategic Eastern Mediterranean position.'},
-  {id:'ukraine',     label:'Ukraine',      sphere:'western',    lon:32,   lat:49,  desc:'Largest European country by area; pivotal Eastern European state.'},
-  {id:'israel',      label:'Israel',       sphere:'western',    lon:35,   lat:31,  desc:'Tech hub and US strategic ally; nuclear-capable regional power.'},
-  {id:'russia',      label:'Russia',       sphere:'western',    lon:90,   lat:62,  desc:'Vast Eurasian state; permanent UNSC seat; major energy exporter.'},
+  {id:'usa',         label:'USA',          sphere:'western',    lon:-98,  lat:38,  desc:'Sole post-Cold War superpower. Leads in technology, military spending, and cultural exports. Anchors NATO, the dollar reserve system, and Five Eyes intelligence.'},
+  {id:'uk',          label:'UK',           sphere:'western',    lon:-2,   lat:54,  desc:'Former imperial centre and permanent UNSC member. Global financial hub via the City of London. Five Eyes and AUKUS partner with a worldwide diplomatic network.'},
+  {id:'france',      label:'France',       sphere:'western',    lon:2,    lat:46,  desc:'Permanent UNSC seat and EU co-leader. Maintains military bases across Africa and the Indo-Pacific. Major exporter of luxury goods, nuclear energy, and aerospace.'},
+  {id:'germany',     label:'Germany',      sphere:'western',    lon:10,   lat:51,  desc:'Largest economy in the EU and fourth globally. Industrial powerhouse in automotive and precision engineering. Central to European fiscal and energy policy.'},
+  {id:'italy',       label:'Italy',        sphere:'western',    lon:12,   lat:42,  desc:'G7 member and third-largest EU economy. Global influence in fashion, design, and automotive manufacturing. Strategic Mediterranean position within NATO.'},
+  {id:'spain',       label:'Spain',        sphere:'western',    lon:-4,   lat:40,  desc:'Fourth-largest EU economy. Cultural and linguistic bridge to Latin America through the Hispanophone world. NATO and EU member with major tourism sector.'},
+  {id:'canada',      label:'Canada',       sphere:'western',    lon:-96,  lat:56,  desc:'G7 member and Five Eyes partner. Major resource exporter in oil, timber, and minerals. Highly multicultural immigration-driven society integrated with the US economy.'},
+  {id:'netherlands', label:'Netherlands',  sphere:'western',    lon:5,    lat:52,  desc:'Key EU trading hub with the port of Rotterdam as Europe largest. Home to ASML, the sole producer of advanced EUV lithography systems for semiconductor fabrication.'},
+  {id:'sweden',      label:'Sweden',       sphere:'western',    lon:18,   lat:62,  desc:'Nordic welfare model pioneer. Joined NATO in 2024 after decades of non-alignment. Strong technology and defence sector including Saab and Ericsson.'},
+  {id:'norway',      label:'Norway',       sphere:'western',    lon:10,   lat:62,  desc:'Major oil and gas exporter. Manages the world largest sovereign wealth fund at over 1.5 trillion USD. NATO founding member with strategic Arctic interests.'},
+  {id:'poland',      label:'Poland',       sphere:'western',    lon:20,   lat:52,  desc:'Largest economy in Central Europe. Critical NATO eastern flank state with rapid military modernisation. EU member since 2004 with fast-growing tech sector.'},
+  {id:'portugal',    label:'Portugal',     sphere:'western',    lon:-8,   lat:39,  desc:'Lusophone world hub connecting Europe to Brazil and African Portuguese-speaking nations. NATO founding member. Growing tech and renewable energy sector.'},
+  {id:'greece',      label:'Greece',       sphere:'western',    lon:22,   lat:39,  desc:'NATO and EU member at the crossroads of Europe, Asia, and Africa. Strategic Eastern Mediterranean position. Large merchant shipping fleet, among the world largest.'},
+  {id:'ukraine',     label:'Ukraine',      sphere:'western',    lon:32,   lat:49,  desc:'Largest country entirely in Europe by area. Major grain exporter. Since 2022 engaged in large-scale war against Russian invasion; seeking EU and NATO membership.'},
+  {id:'israel',      label:'Israel',       sphere:'western',    lon:35,   lat:31,  desc:'Advanced technology and military power in the Middle East. Nuclear-capable with strong US alliance. Leads in cybersecurity, AI research, and desalination technology.'},
+  {id:'russia',      label:'Russia',       sphere:'western',    lon:90,   lat:62,  desc:'Largest country by area, spanning Europe and Asia. Permanent UNSC seat and major nuclear power. Dominant energy exporter of oil and natural gas to Europe and Asia.'},
   // Latin American (11)
-  {id:'brazil',      label:'Brazil',       sphere:'latin',      lon:-52,  lat:-10, desc:'Largest Latin American economy; agricultural superpower and BRICS member.'},
-  {id:'mexico',      label:'Mexico',       sphere:'latin',      lon:-102, lat:23,  desc:'USMCA partner; 2nd largest Spanish-speaking economy.'},
-  {id:'argentina',   label:'Argentina',    sphere:'latin',      lon:-64,  lat:-34, desc:'Southern Cone leader; major agricultural exporter.'},
-  {id:'colombia',    label:'Colombia',     sphere:'latin',      lon:-74,  lat:4,   desc:'Pacific and Atlantic access; major US security partner in Latin America.'},
-  {id:'chile',       label:'Chile',        sphere:'latin',      lon:-71,  lat:-35, desc:'Copper giant; stable open economy with strong Pacific ties.'},
-  {id:'peru',        label:'Peru',         sphere:'latin',      lon:-76,  lat:-9,  desc:'Andean nation; major mining producer; growing Pacific trade hub.'},
-  {id:'venezuela',   label:'Venezuela',    sphere:'latin',      lon:-66,  lat:8,   desc:'Vast oil reserves; politically isolated from Western sphere.'},
-  {id:'ecuador',     label:'Ecuador',      sphere:'latin',      lon:-78,  lat:-2,  desc:'OPEC member; dollarised economy; Pacific coast exporter.'},
-  {id:'cuba',        label:'Cuba',         sphere:'latin',      lon:-79,  lat:22,  desc:'Socialist state; historically tied to Russia and leftist movements.'},
-  {id:'uruguay',     label:'Uruguay',      sphere:'latin',      lon:-56,  lat:-33, desc:'Most stable democracy in Latin America; strong rule of law.'},
-  {id:'bolivia',     label:'Bolivia',      sphere:'latin',      lon:-65,  lat:-17, desc:'Largest lithium reserves; landlocked Andean state.'},
+  {id:'brazil',      label:'Brazil',       sphere:'latin',      lon:-52,  lat:-10, desc:'Largest Latin American economy and fifth most populous country. BRICS member and agricultural superpower in soy, beef, and sugar. Major bioethanol producer and Amazon steward.'},
+  {id:'mexico',      label:'Mexico',       sphere:'latin',      lon:-102, lat:23,  desc:'Second-largest Latin American economy. USMCA partner deeply integrated with US manufacturing supply chains. Major auto producer and growing nearshoring destination.'},
+  {id:'argentina',   label:'Argentina',    sphere:'latin',      lon:-64,  lat:-34, desc:'Third-largest Latin American economy. Major agricultural exporter of beef, soy, and wine. Rich in lithium and shale gas reserves in Patagonia.'},
+  {id:'colombia',    label:'Colombia',     sphere:'latin',      lon:-74,  lat:4,   desc:'Strategic position with both Pacific and Caribbean coasts. Largest US security partner in Latin America. Growing tech sector and major coffee exporter.'},
+  {id:'chile',       label:'Chile',        sphere:'latin',      lon:-71,  lat:-35, desc:'World largest copper producer. Most stable and open economy in South America with strong Pacific trade ties via CPTPP. Leading lithium producer.'},
+  {id:'peru',        label:'Peru',         sphere:'latin',      lon:-76,  lat:-9,  desc:'Major global producer of copper, silver, and gold. Pacific trade hub and Andean Community member. Rich archaeological heritage including Machu Picchu.'},
+  {id:'venezuela',   label:'Venezuela',    sphere:'latin',      lon:-66,  lat:8,   desc:'Holds the world largest proven oil reserves. Severe economic and political crisis since 2014 with mass emigration. Politically aligned with Russia, China, and Cuba.'},
+  {id:'ecuador',     label:'Ecuador',      sphere:'latin',      lon:-78,  lat:-2,  desc:'OPEC member with a dollarised economy since 2000. Major banana and shrimp exporter. Pacific coast nation with the Galapagos Islands.'},
+  {id:'cuba',        label:'Cuba',         sphere:'latin',      lon:-79,  lat:22,  desc:'One-party socialist state since 1959. Historically aligned with the Soviet Union, now with Russia and China. Known for its medical diplomacy and biotechnology exports.'},
+  {id:'uruguay',     label:'Uruguay',      sphere:'latin',      lon:-56,  lat:-33, desc:'Consistently rated the most democratic and least corrupt country in Latin America. Strong rule of law and social welfare. Mercosur founding member.'},
+  {id:'bolivia',     label:'Bolivia',      sphere:'latin',      lon:-65,  lat:-17, desc:'Holds major lithium reserves in the Salar de Uyuni. Landlocked Andean state with significant indigenous population. Natural gas exporter to Brazil and Argentina.'},
   // East Asian (9)
-  {id:'china',       label:'China',        sphere:'eastasia',   lon:104,  lat:35,  desc:'Rising superpower; Belt & Road initiator; world factory and tech rival.'},
-  {id:'japan',       label:'Japan',        sphere:'eastasia',   lon:138,  lat:36,  desc:'Technology leader; 3rd largest economy; pacifist constitution.'},
-  {id:'southkorea',  label:'S. Korea',     sphere:'eastasia',   lon:128,  lat:36,  desc:'Tech giant; K-wave cultural export powerhouse; US treaty ally.'},
-  {id:'vietnam',     label:'Vietnam',      sphere:'eastasia',   lon:108,  lat:16,  desc:'Fast-growing manufacturing hub; China Plus One beneficiary.'},
-  {id:'thailand',    label:'Thailand',     sphere:'eastasia',   lon:101,  lat:15,  desc:'ASEAN hub; major auto manufacturing and tourism destination.'},
-  {id:'malaysia',    label:'Malaysia',     sphere:'eastasia',   lon:109,  lat:4,   desc:'Upper-middle income ASEAN economy; strong Chinese diaspora.'},
-  {id:'philippines', label:'Philippines',  sphere:'eastasia',   lon:122,  lat:13,  desc:'Large English-speaking archipelago; key US strategic asset.'},
-  {id:'singapore',   label:'Singapore',    sphere:'eastasia',   lon:104,  lat:1,   desc:'Global finance and trade hub; highest GDP per capita in Asia.'},
-  {id:'indonesia',   label:'Indonesia',    sphere:'eastasia',   lon:118,  lat:-5,  desc:'Largest Muslim-majority nation; 4th most populous country.'},
+  {id:'china',       label:'China',        sphere:'eastasia',   lon:104,  lat:35,  desc:'Second-largest economy and most populous country until 2023. Belt and Road initiator spanning over 140 countries. Global manufacturing centre and rising tech competitor to the US.'},
+  {id:'japan',       label:'Japan',        sphere:'eastasia',   lon:138,  lat:36,  desc:'Third-largest economy with advanced manufacturing in automotive, robotics, and semiconductors. US treaty ally with a pacifist constitution under revision. Aging demographic challenge.'},
+  {id:'southkorea',  label:'S. Korea',     sphere:'eastasia',   lon:128,  lat:36,  desc:'Major semiconductor and electronics producer via Samsung and SK Hynix. K-pop and Korean media cultural wave across Asia and globally. US treaty ally facing North Korean threat.'},
+  {id:'vietnam',     label:'Vietnam',      sphere:'eastasia',   lon:108,  lat:16,  desc:'Fast-growing manufacturing hub benefiting from China-plus-one diversification. CPTPP member with strong FDI inflows. Communist-led but market-oriented economy since Doi Moi reforms.'},
+  {id:'thailand',    label:'Thailand',     sphere:'eastasia',   lon:101,  lat:15,  desc:'Major ASEAN economy and global auto manufacturing hub. Largest rice exporter. Constitutional monarchy with significant military influence in politics. Major tourism destination.'},
+  {id:'malaysia',    label:'Malaysia',     sphere:'eastasia',   lon:109,  lat:4,   desc:'Upper-middle-income ASEAN economy. Major palm oil and semiconductor packaging exporter. Ethnically diverse with significant Malay, Chinese, and Indian populations.'},
+  {id:'philippines', label:'Philippines',  sphere:'eastasia',   lon:122,  lat:13,  desc:'Large English-speaking archipelago and major source of overseas workers globally. US treaty ally with strategic South China Sea position. Fast-growing BPO services sector.'},
+  {id:'singapore',   label:'Singapore',    sphere:'eastasia',   lon:104,  lat:1,   desc:'Global financial centre and busiest transhipment port. Highest GDP per capita in Asia. Strategic Strait of Malacca position connecting Indian and Pacific oceans.'},
+  {id:'indonesia',   label:'Indonesia',    sphere:'eastasia',   lon:118,  lat:-5,  desc:'Largest Muslim-majority nation and fourth most populous country. G20 member and largest ASEAN economy. Major nickel, palm oil, and coal exporter.'},
   // South Asian (5)
-  {id:'india',       label:'India',        sphere:'southasia',  lon:78,   lat:22,  desc:"World's most populous democracy; fast-growing tech and services hub."},
-  {id:'pakistan',    label:'Pakistan',     sphere:'southasia',  lon:69,   lat:30,  desc:'Nuclear-armed state; China ally; strategic South Asian pivot point.'},
-  {id:'bangladesh',  label:'Bangladesh',   sphere:'southasia',  lon:90,   lat:24,  desc:'Global garment manufacturing powerhouse; fast-growing economy.'},
-  {id:'srilanka',    label:'Sri Lanka',    sphere:'southasia',  lon:81,   lat:8,   desc:'Indian Ocean island; strategic location between East and West.'},
-  {id:'nepal',       label:'Nepal',        sphere:'southasia',  lon:84,   lat:28,  desc:'Himalayan buffer state between India and China.'},
+  {id:'india',       label:'India',        sphere:'southasia',  lon:78,   lat:22,  desc:'World most populous country and fifth-largest economy. Fast-growing IT services and digital payments sector. Non-aligned tradition with growing Quad engagement and space programme.'},
+  {id:'pakistan',     label:'Pakistan',     sphere:'southasia',  lon:69,   lat:30,  desc:'Fifth most populous country with nuclear capability. Strategic China-Pakistan Economic Corridor partner. Major textile exporter with large diaspora in the Gulf and UK.'},
+  {id:'bangladesh',  label:'Bangladesh',   sphere:'southasia',  lon:90,   lat:24,  desc:'Second-largest garment exporter globally. One of the fastest-growing economies in South Asia. Dense population highly vulnerable to climate change and flooding.'},
+  {id:'srilanka',    label:'Sri Lanka',    sphere:'southasia',  lon:81,   lat:8,   desc:'Indian Ocean island state at a strategic crossroads between East and West. Key port of Hambantota leased to China. Recovering from 2022 economic crisis.'},
+  {id:'nepal',       label:'Nepal',        sphere:'southasia',  lon:84,   lat:28,  desc:'Himalayan buffer state between India and China. Home to eight of the world fourteen highest peaks. Hydropower potential and significant remittance-dependent economy.'},
   // Middle East (11)
-  {id:'saudi',       label:'Saudi Arabia', sphere:'middleeast', lon:45,   lat:24,  desc:"Oil superpower; custodian of Islam's holiest sites; Vision 2030 reformer."},
-  {id:'iran',        label:'Iran',         sphere:'middleeast', lon:54,   lat:33,  desc:'Shia Islamic Republic; regional power and nuclear threshold state.'},
-  {id:'turkey',      label:'Turkey',       sphere:'middleeast', lon:35,   lat:39,  desc:'NATO member bridging Europe and Asia; Turkic world leader.'},
-  {id:'egypt',       label:'Egypt',        sphere:'middleeast', lon:30,   lat:27,  desc:'Cultural heart of Arab world; controls the Suez Canal.'},
-  {id:'iraq',        label:'Iraq',         sphere:'middleeast', lon:44,   lat:33,  desc:'Major oil producer; contested arena of US, Iran, and Turkey.'},
-  {id:'uae',         label:'UAE',          sphere:'middleeast', lon:54,   lat:24,  desc:'Regional finance hub; Abraham Accords signatory; global city-state model.'},
-  {id:'jordan',      label:'Jordan',       sphere:'middleeast', lon:37,   lat:31,  desc:'Stable Hashemite monarchy; key US and Israeli partner in Levant.'},
-  {id:'qatar',       label:'Qatar',        sphere:'middleeast', lon:51,   lat:25,  desc:'Largest LNG exporter; Al Jazeera headquarters; 2022 World Cup host.'},
-  {id:'syria',       label:'Syria',        sphere:'middleeast', lon:38,   lat:35,  desc:'Post-civil war state; geopolitical chessboard of great powers.'},
-  {id:'morocco',     label:'Morocco',      sphere:'middleeast', lon:-6,   lat:32,  desc:'Arab-African bridge; Abraham Accords; major phosphate exporter.'},
-  {id:'algeria',     label:'Algeria',      sphere:'middleeast', lon:3,    lat:28,  desc:'North African powerhouse; major gas exporter to Europe.'},
+  {id:'saudi',       label:'Saudi Arabia', sphere:'middleeast', lon:45,   lat:24,  desc:'World largest oil exporter and custodian of Islam two holiest cities. Vision 2030 economic diversification programme. Key US security partner and OPEC leader.'},
+  {id:'iran',        label:'Iran',         sphere:'middleeast', lon:54,   lat:33,  desc:'Shia Islamic republic and major regional power. Nuclear threshold state under international sanctions. Significant oil and gas reserves with influence via proxy networks across the Middle East.'},
+  {id:'turkey',      label:'Turkey',       sphere:'middleeast', lon:35,   lat:39,  desc:'NATO member straddling Europe and Asia. Largest economy in the Middle East. Leader of the Turkic world with major defence industry and construction sector abroad.'},
+  {id:'egypt',       label:'Egypt',        sphere:'middleeast', lon:30,   lat:27,  desc:'Most populous Arab country and cultural heart of the Arab world. Controls the Suez Canal, one of the world busiest trade chokepoints. Major US aid recipient and BRICS member.'},
+  {id:'iraq',        label:'Iraq',         sphere:'middleeast', lon:44,   lat:33,  desc:'Major OPEC oil producer rebuilding after decades of conflict. Contested arena of US, Iranian, and Turkish influence. Strategically located between the Gulf and the Levant.'},
+  {id:'uae',         label:'UAE',          sphere:'middleeast', lon:54,   lat:24,  desc:'Regional finance, logistics, and tourism hub via Dubai and Abu Dhabi. Abraham Accords signatory. Sovereign wealth funds among the world largest. Major arms importer.'},
+  {id:'jordan',      label:'Jordan',       sphere:'middleeast', lon:37,   lat:31,  desc:'Stable Hashemite monarchy in a volatile region. Key US and Israeli security partner. Hosts one of the world largest refugee populations relative to its size.'},
+  {id:'qatar',       label:'Qatar',        sphere:'middleeast', lon:51,   lat:25,  desc:'World largest LNG exporter. Home to Al Jazeera media network. Major sovereign wealth investor globally. Hosted the 2022 FIFA World Cup.'},
+  {id:'syria',       label:'Syria',        sphere:'middleeast', lon:38,   lat:35,  desc:'Devastated by civil war since 2011 with major refugee crisis. Arena for Russian, Iranian, Turkish, and US military involvement. Fragmented governance across multiple zones.'},
+  {id:'morocco',     label:'Morocco',      sphere:'middleeast', lon:-6,   lat:32,  desc:'Arab-African bridge and Abraham Accords signatory. World largest phosphate exporter. Growing automotive and aerospace manufacturing hub for European markets.'},
+  {id:'algeria',     label:'Algeria',      sphere:'middleeast', lon:3,    lat:28,  desc:'Largest African country by area. Major natural gas supplier to Europe via pipeline. Non-aligned foreign policy with significant military spending.'},
   // Sub-Saharan Africa (10)
-  {id:'nigeria',     label:'Nigeria',      sphere:'africa',     lon:8,    lat:9,   desc:"Africa's most populous nation; largest economy; Nollywood film hub."},
-  {id:'southafrica', label:'S. Africa',    sphere:'africa',     lon:25,   lat:-29, desc:'Most industrialised African economy; BRICS member; G20 participant.'},
-  {id:'ethiopia',    label:'Ethiopia',     sphere:'africa',     lon:40,   lat:9,   desc:"Africa's 2nd most populous; AU headquarters; Blue Nile dam builder."},
-  {id:'kenya',       label:'Kenya',        sphere:'africa',     lon:38,   lat:0,   desc:'East African tech hub; gateway to interior Africa; US security partner.'},
-  {id:'ghana',       label:'Ghana',        sphere:'africa',     lon:-1,   lat:8,   desc:'Stable West African democracy; gold and cocoa exporter.'},
-  {id:'tanzania',    label:'Tanzania',     sphere:'africa',     lon:35,   lat:-6,  desc:'Resource-rich East African state; Swahili cultural hub.'},
-  {id:'angola',      label:'Angola',       sphere:'africa',     lon:17,   lat:-12, desc:'Major oil producer; significant Chinese investment destination.'},
-  {id:'senegal',     label:'Senegal',      sphere:'africa',     lon:-14,  lat:14,  desc:'Stable Francophone West Africa anchor; peacekeeping contributor.'},
-  {id:'drcongo',     label:'DR Congo',     sphere:'africa',     lon:25,   lat:-4,  desc:'Vast mineral wealth including cobalt; largest Francophone country.'},
-  {id:'mozambique',  label:'Mozambique',   sphere:'africa',     lon:35,   lat:-18, desc:'LNG-rich coastal state; Portuguese-speaking African economy.'},
+  {id:'nigeria',     label:'Nigeria',      sphere:'africa',     lon:8,    lat:9,   desc:'Africa most populous country and largest economy. Major oil producer and Nollywood film industry hub. Young, urbanising population with growing fintech sector.'},
+  {id:'southafrica', label:'S. Africa',    sphere:'africa',     lon:25,   lat:-29, desc:'Most industrialised African economy and G20 member. BRICS partner with the continent strongest financial sector. Major producer of platinum, gold, and manganese.'},
+  {id:'ethiopia',    label:'Ethiopia',     sphere:'africa',     lon:40,   lat:9,   desc:'Africa second most populous country and AU headquarters host. Grand Ethiopian Renaissance Dam reshaping Nile water politics. Ancient civilisation with unique script and calendar.'},
+  {id:'kenya',       label:'Kenya',        sphere:'africa',     lon:38,   lat:0,   desc:'East Africa largest economy and tech innovation hub with mobile money pioneer M-Pesa. Major US security partner in the Horn of Africa. Safari tourism and cut-flower exporter.'},
+  {id:'ghana',       label:'Ghana',        sphere:'africa',     lon:-1,   lat:8,   desc:'Stable West African democracy and major gold and cocoa exporter. Growing offshore oil production. Regional leader in press freedom and democratic governance.'},
+  {id:'tanzania',    label:'Tanzania',     sphere:'africa',     lon:35,   lat:-6,  desc:'Resource-rich East African state with major gold and natural gas deposits. Swahili cultural heartland. Home to Kilimanjaro and Serengeti, major tourism draws.'},
+  {id:'angola',      label:'Angola',       sphere:'africa',     lon:17,   lat:-12, desc:'Major oil producer and second-largest Lusophone economy. Significant Chinese investment in infrastructure. Rebuilding after a 27-year civil war that ended in 2002.'},
+  {id:'senegal',     label:'Senegal',      sphere:'africa',     lon:-14,  lat:14,  desc:'Stable Francophone West African anchor and regular peacekeeping contributor. Emerging offshore oil and gas producer. Cultural hub for West African music and arts.'},
+  {id:'drcongo',     label:'DR Congo',     sphere:'africa',     lon:25,   lat:-4,  desc:'Holds over 70% of global cobalt reserves critical for batteries. Largest Francophone country by population. Vast mineral wealth amid ongoing eastern conflict.'},
+  {id:'mozambique',  label:'Mozambique',   sphere:'africa',     lon:35,   lat:-18, desc:'Major emerging LNG producer with offshore gas fields. Portuguese-speaking coastal state in southern Africa. Strategic Indian Ocean position along key shipping lanes.'},
   // Oceania (3)
-  {id:'australia',   label:'Australia',    sphere:'oceania',    lon:133,  lat:-25, desc:'AUKUS partner; major commodity exporter; Five Eyes member.'},
-  {id:'newzealand',  label:'New Zealand',  sphere:'oceania',    lon:172,  lat:-42, desc:'Five Eyes member; progressive Pacific democracy.'},
-  {id:'papuang',     label:'PNG',          sphere:'oceania',    lon:144,  lat:-7,  desc:'Resource-rich Pacific island; contested China-US strategic space.'}
+  {id:'australia',   label:'Australia',    sphere:'oceania',    lon:133,  lat:-25, desc:'Major commodity exporter of iron ore, coal, and LNG. AUKUS and Five Eyes member. Sixth-largest country by area with advanced services economy and strong US alliance.'},
+  {id:'newzealand',  label:'New Zealand',  sphere:'oceania',    lon:172,  lat:-42, desc:'Five Eyes member and progressive Pacific democracy. Major dairy and agricultural exporter. Active in Pacific Island diplomacy and climate advocacy.'},
+  {id:'papuang',     label:'PNG',          sphere:'oceania',    lon:144,  lat:-7,  desc:'Resource-rich Pacific island nation with significant LNG, gold, and copper. Over 800 languages spoken. Strategic location in US-China Pacific competition.'}
 ];
 
-// ISO numeric  sphere key (for country fill colouring)
+// ISO numeric -> sphere key (for country fill colouring)
 const ISO_SPHERE = {
   840:'western',826:'western',250:'western',276:'western',380:'western',
   724:'western',124:'western',528:'western',752:'western',578:'western',
@@ -376,7 +406,7 @@ const ISO_SPHERE = {
   // eastasia
   156:'eastasia',392:'eastasia',410:'eastasia',704:'eastasia',764:'eastasia',
   458:'eastasia',608:'eastasia',702:'eastasia',360:'eastasia',
-  116:'eastasia',418:'eastasia',104:'eastasia',116:'eastasia',
+  116:'eastasia',418:'eastasia',104:'eastasia',
   // southasia
   356:'southasia',586:'southasia',50:'southasia',144:'southasia',524:'southasia',
   64:'southasia',
@@ -397,7 +427,7 @@ const ISO_SPHERE = {
   548:'oceania',90:'oceania',776:'oceania',882:'oceania'
 };
 
-//  Connection generator 
+//  Connection generator
 const nodeMap = Object.fromEntries(NODES.map(n=>[n.id,n]));
 
 function buildConnections(){
@@ -405,7 +435,7 @@ function buildConnections(){
   function rng(){seed=(seed*1664525+1013904223)&0x7FFFFFFF;return seed/0x7FFFFFFF;}
   function j(base,range=12){return Math.min(99,Math.max(20,Math.round(base+(rng()-.5)*range*2)));}
 
-  const C={culture:[],religion:[],politics:[],economics:[],media:[],military:[]};
+  const C={culture:[],religion:[],politics:[],economics:[],media:[],military:[],technology:[],migration:[]};
   const seen={};
 
   function add(layer,a,b,base,range=12){
@@ -430,24 +460,24 @@ function buildConnections(){
   const AF=['nigeria','southafrica','ethiopia','kenya','ghana','tanzania','angola','senegal','drcongo','mozambique'];
   const OC=['australia','newzealand','papuang'];
 
-  //  CULTURE 
-  group('culture',['usa','uk','canada','australia','newzealand'],90,7);          // Anglosphere core
-  group('culture',['france','belgium','switzerland','canada','monaco'],78,10);   // Francophone high culture
-  group('culture',['spain','mexico','argentina','colombia','chile','peru','venezuela','ecuador','cuba','uruguay','bolivia'],82,9); // Hispanophone
-  group('culture',['brazil','portugal','angola','mozambique'],72,12);            // Lusophone
-  group('culture',['china','japan','southkorea','vietnam'],63,14);               // Confucian East Asia
-  group('culture',['india','nepal','srilanka','bangladesh'],70,11);              // South Asian
-  group('culture',['saudi','egypt','iraq','jordan','uae','qatar','syria','morocco','algeria'],76,10); // Arab world
-  group('culture',['germany','austria','switzerland'],80,8);                     // Germanic
-  group('culture',['sweden','norway'],87,5);                                     // Nordic
-  group('culture',['nigeria','ghana','senegal','drcongo'],58,14);                // West Africa
-  group('culture',['kenya','ethiopia','tanzania','mozambique'],60,13);           // East/Southern Africa
-  group('culture',['thailand','malaysia','singapore','vietnam','indonesia','philippines'],62,13); // Southeast Asia
-  group('culture',['russia','ukraine','poland'],58,17);                          // Slavic
-  group('culture',['france','morocco','algeria','senegal','drcongo'],65,12);     // Francophone Africa
-  group('culture',['iran','iraq','afghanistan'],64,15);                          // Persian sphere
-  group('culture',['turkey','iran','iraq'],52,16);                               // Mideast crossroads
-  group('culture',['southkorea','japan'],70,10);                                 // NE Asia
+  //  CULTURE
+  group('culture',['usa','uk','canada','australia','newzealand'],90,7);
+  group('culture',['france','belgium','switzerland','canada','monaco'],78,10);
+  group('culture',['spain','mexico','argentina','colombia','chile','peru','venezuela','ecuador','cuba','uruguay','bolivia'],82,9);
+  group('culture',['brazil','portugal','angola','mozambique'],72,12);
+  group('culture',['china','japan','southkorea','vietnam'],63,14);
+  group('culture',['india','nepal','srilanka','bangladesh'],70,11);
+  group('culture',['saudi','egypt','iraq','jordan','uae','qatar','syria','morocco','algeria'],76,10);
+  group('culture',['germany','austria','switzerland'],80,8);
+  group('culture',['sweden','norway'],87,5);
+  group('culture',['nigeria','ghana','senegal','drcongo'],58,14);
+  group('culture',['kenya','ethiopia','tanzania','mozambique'],60,13);
+  group('culture',['thailand','malaysia','singapore','vietnam','indonesia','philippines'],62,13);
+  group('culture',['russia','ukraine','poland'],58,17);
+  group('culture',['france','morocco','algeria','senegal','drcongo'],65,12);
+  group('culture',['iran','iraq'],64,15);
+  group('culture',['turkey','iran','iraq'],52,16);
+  group('culture',['southkorea','japan'],70,10);
   add('culture','india','uk',68,10);
   add('culture','india','usa',63,12);
   add('culture','india','iran',56,14);
@@ -462,38 +492,38 @@ function buildConnections(){
   add('culture','japan','usa',68,12);
   add('culture','southafrica','uk',62,12);
 
-  //  RELIGION 
-  group('religion',['usa','uk','germany','sweden','norway','netherlands','canada','australia','newzealand'],78,11); // Protestant
-  group('religion',['france','spain','italy','portugal','brazil','mexico','argentina','colombia','chile','peru','venezuela','ecuador','cuba','uruguay','bolivia','philippines','poland'],80,9); // Catholic
-  group('religion',['russia','greece','ukraine','ethiopia'],78,12);              // Orthodox
-  group('religion',['saudi','egypt','turkey','pakistan','bangladesh','indonesia','malaysia','nigeria','morocco','senegal','iraq','jordan','uae','qatar','syria','algeria'],82,9); // Sunni Islam
-  group('religion',['iran','iraq','syria'],80,11);                               // Shia
-  group('religion',['india','nepal','srilanka'],80,9);                           // Hindu
-  group('religion',['thailand','vietnam','srilanka','japan','southkorea'],63,14);// Buddhist
+  //  RELIGION
+  group('religion',['usa','uk','germany','sweden','norway','netherlands','canada','australia','newzealand'],78,11);
+  group('religion',['france','spain','italy','portugal','brazil','mexico','argentina','colombia','chile','peru','venezuela','ecuador','cuba','uruguay','bolivia','philippines','poland'],80,9);
+  group('religion',['russia','greece','ukraine','ethiopia'],78,12);
+  group('religion',['saudi','egypt','turkey','pakistan','bangladesh','indonesia','malaysia','nigeria','morocco','senegal','iraq','jordan','uae','qatar','syria','algeria'],82,9);
+  group('religion',['iran','iraq','syria'],80,11);
+  group('religion',['india','nepal','srilanka'],80,9);
+  group('religion',['thailand','vietnam','srilanka','japan','southkorea'],63,14);
   add('religion','israel','usa',75,9);
   add('religion','israel','uk',60,12);
   add('religion','nigeria','ghana',70,11);
   add('religion','kenya','ethiopia',65,13);
   add('religion','kenya','tanzania',65,12);
   add('religion','southafrica','nigeria',60,13);
-  add('religion','india','pakistan',36,14);  // Shared history, tension
-  add('religion','india','saudi',44,14);     // Large Indian Muslim diaspora
+  add('religion','india','pakistan',36,14);
+  add('religion','india','saudi',44,14);
   add('religion','iran','turkey',50,16);
   add('religion','malaysia','indonesia',78,9);
   add('religion','india','iran',55,14);
-  add('religion','ethiopia','egypt',60,14);  // Coptic connection
+  add('religion','ethiopia','egypt',60,14);
 
-  //  POLITICS 
-  group('politics',['usa','uk','france','germany','italy','spain','netherlands','norway','sweden','poland','canada','turkey','greece','portugal'],83,9); // NATO
-  group('politics',['usa','uk','france','germany','italy','canada','japan'],89,7); // G7
-  group('politics',['france','germany','italy','spain','netherlands','sweden','poland','greece','portugal'],80,9); // EU core
-  group('politics',['usa','japan','india','australia'],80,9);                    // Quad
-  group('politics',['china','russia','india','pakistan','iran'],65,14);          // SCO
-  group('politics',['brazil','russia','india','china','southafrica','iran','uae','egypt','ethiopia'],67,12); // BRICS+
-  group('politics',['saudi','egypt','iraq','jordan','uae','qatar','syria','morocco','algeria'],71,11); // Arab League
-  group('politics',['vietnam','thailand','malaysia','philippines','singapore','indonesia'],75,9); // ASEAN
-  group('politics',['nigeria','southafrica','ethiopia','kenya','ghana','tanzania','angola','senegal'],62,13); // AU
-  group('politics',['usa','uk','canada','australia','newzealand'],90,6);         // Five Eyes
+  //  POLITICS
+  group('politics',['usa','uk','france','germany','italy','spain','netherlands','norway','sweden','poland','canada','turkey','greece','portugal'],83,9);
+  group('politics',['usa','uk','france','germany','italy','canada','japan'],89,7);
+  group('politics',['france','germany','italy','spain','netherlands','sweden','poland','greece','portugal'],80,9);
+  group('politics',['usa','japan','india','australia'],80,9);
+  group('politics',['china','russia','india','pakistan','iran'],65,14);
+  group('politics',['brazil','russia','india','china','southafrica','iran','uae','egypt','ethiopia'],67,12);
+  group('politics',['saudi','egypt','iraq','jordan','uae','qatar','syria','morocco','algeria'],71,11);
+  group('politics',['vietnam','thailand','malaysia','philippines','singapore','indonesia'],75,9);
+  group('politics',['nigeria','southafrica','ethiopia','kenya','ghana','tanzania','angola','senegal'],62,13);
+  group('politics',['usa','uk','canada','australia','newzealand'],90,6);
   add('politics','usa','israel',93,4);
   add('politics','usa','saudi',76,10);
   add('politics','usa','japan',88,7);
@@ -504,7 +534,7 @@ function buildConnections(){
   add('politics','usa','philippines',74,10);
   add('politics','russia','iran',68,12);
   add('politics','russia','syria',72,10);
-  add('politics','russia','ukraine',22,20);  // Conflict
+  add('politics','russia','ukraine',22,20);
   add('politics','russia','china',75,10);
   add('politics','china','pakistan',80,8);
   add('politics','turkey','russia',50,16);
@@ -527,41 +557,29 @@ function buildConnections(){
   add('politics','israel','jordan',60,13);
   add('politics','southkorea','japan',58,15);
 
-  //  ECONOMICS 
-  // G20 major bilateral trade
+  //  ECONOMICS
   const G20=['usa','china','germany','japan','france','uk','india','brazil','canada','australia','southkorea','russia','italy','mexico','spain','indonesia','turkey','argentina','saudi','southafrica'];
   group('economics',G20,68,15);
-  // Belt & Road
   const BRI=['pakistan','bangladesh','srilanka','kenya','ethiopia','tanzania','angola','egypt','iran','iraq','malaysia','vietnam','thailand','philippines','singapore','greece','italy','portugal','drcongo','mozambique'];
   BRI.forEach(c=>add('economics','china',c,72,13));
-  // USMCA
   group('economics',['usa','mexico','canada'],90,5);
-  // EU Single Market
   group('economics',['france','germany','italy','spain','netherlands','sweden','poland','greece','portugal'],82,9);
-  // OPEC+
   group('economics',['saudi','uae','iran','iraq','russia','nigeria','angola','venezuela','ecuador'],70,13);
-  // CPTPP
   group('economics',['japan','canada','australia','newzealand','mexico','chile','peru','vietnam','malaysia','singapore'],75,11);
-  // Gulf trade web
   group('economics',['saudi','uae','qatar'],85,7);
   ['india','pakistan','bangladesh','srilanka','egypt','jordan','philippines','indonesia','vietnam','kenya','ethiopia'].forEach(c=>{
     add('economics','uae',c,67,12);
     add('economics','saudi',c,62,13);
   });
-  // China-Africa
   AF.forEach(c=>add('economics','china',c,64,14));
-  // Mercosur
   group('economics',['brazil','argentina','uruguay','bolivia'],78,9);
-  // Andean Community
   group('economics',['colombia','peru','ecuador','bolivia'],70,11);
-  // India trade
   add('economics','india','usa',78,9);
   add('economics','india','uk',70,10);
   add('economics','india','china',70,11);
   add('economics','india','australia',63,12);
   add('economics','india','russia',60,13);
   add('economics','india','uae',72,10);
-  // Pacific linkages
   add('economics','australia','china',85,8);
   add('economics','australia','japan',78,9);
   add('economics','australia','southkorea',72,10);
@@ -573,20 +591,19 @@ function buildConnections(){
   add('economics','southkorea','china',80,9);
   add('economics','singapore','usa',72,10);
   add('economics','singapore','china',74,10);
-  // Turkey
   add('economics','turkey','russia',62,14);
   add('economics','turkey','iran',55,15);
   add('economics','turkey','uae',65,12);
   add('economics','russia','china',80,9);
 
-  //  MEDIA 
-  group('media',['usa','uk','canada','australia','newzealand'],88,7);            // English media core
+  //  MEDIA
+  group('media',['usa','uk','canada','australia','newzealand'],88,7);
   ['india','nigeria','ghana','kenya','southafrica','singapore','philippines'].forEach(c=>{
     add('media','usa',c,63,13);
     add('media','uk',c,58,13);
   });
-  group('media',['spain','mexico','argentina','colombia','chile','venezuela','cuba','uruguay','bolivia','ecuador','peru'],80,9); // Spanish media
-  group('media',['saudi','egypt','uae','qatar','jordan','morocco','algeria','iraq','syria'],75,11); // Arabic media
+  group('media',['spain','mexico','argentina','colombia','chile','venezuela','cuba','uruguay','bolivia','ecuador','peru'],80,9);
+  group('media',['saudi','egypt','uae','qatar','jordan','morocco','algeria','iraq','syria'],75,11);
   ['india','pakistan','bangladesh','srilanka','nepal','uae','saudi','uk','nigeria','kenya','southafrica','malaysia','singapore'].forEach(c=>{
     if(c!=='india') add('media','india',c,70,13);
   });
@@ -617,24 +634,23 @@ function buildConnections(){
   add('media','philippines','usa',68,11);
   add('media','singapore','usa',62,12);
 
-  //  MILITARY 
-  group('military',['usa','uk','france','germany','canada','netherlands','norway','sweden','poland','italy','spain','portugal','greece'],83,9); // NATO
-  group('military',['usa','uk','australia'],92,5);                               // AUKUS
-  group('military',['usa','uk','canada','australia','newzealand'],90,6);         // Five Eyes
+  //  MILITARY
+  group('military',['usa','uk','france','germany','canada','netherlands','norway','sweden','poland','italy','spain','portugal','greece'],83,9);
+  group('military',['usa','uk','australia'],92,5);
+  group('military',['usa','uk','canada','australia','newzealand'],90,6);
   ['japan','southkorea','israel','saudi','uae','egypt','jordan','philippines','singapore','india','colombia','morocco'].forEach(c=>add('military','usa',c,71,13));
   group('military',['russia','iran','syria'],68,13);
   add('military','russia','china',65,14);
   add('military','russia','india',60,14);
   add('military','china','pakistan',82,7);
-  add('military','china','myanmar',63,14);
-  group('military',['saudi','uae','egypt','jordan'],72,11);                      // Gulf + Egypt
+  group('military',['saudi','uae','egypt','jordan'],72,11);
   add('military','india','france',68,11);
   add('military','india','israel',70,9);
   add('military','india','usa',68,11);
   add('military','india','russia',62,13);
   add('military','india','japan',60,14);
   add('military','india','australia',62,13);
-  group('military',['nigeria','ghana','kenya','southafrica'],55,17);             // AU peacekeeping
+  group('military',['nigeria','ghana','kenya','southafrica'],55,17);
   add('military','france','senegal',72,9);
   add('military','france','morocco',65,11);
   add('military','france','egypt',62,11);
@@ -658,21 +674,146 @@ function buildConnections(){
   add('military','ethiopia','usa',55,16);
   add('military','kenya','usa',60,14);
 
+  //  TECHNOLOGY (new layer)
+  // Silicon Valley / US tech ecosystem
+  group('technology',['usa','uk','canada','israel'],88,6);
+  group('technology',['usa','japan','southkorea','china'],82,9);
+  add('technology','usa','india',85,7);    // IT services, Silicon Valley workforce
+  add('technology','usa','germany',75,10); // Automotive tech, Industry 4.0
+  add('technology','usa','france',68,11);
+  add('technology','usa','australia',65,12);
+  add('technology','usa','singapore',70,10);
+  add('technology','usa','brazil',55,14);
+  // East Asian tech corridor
+  group('technology',['china','japan','southkorea','singapore'],78,10);
+  add('technology','china','vietnam',65,12);   // Manufacturing tech transfer
+  add('technology','china','malaysia',60,13);
+  add('technology','china','indonesia',55,14);
+  add('technology','japan','vietnam',62,12);
+  add('technology','japan','thailand',60,12);
+  add('technology','southkorea','vietnam',68,10);
+  // European tech hubs
+  group('technology',['uk','germany','france','netherlands','sweden'],72,11);
+  add('technology','netherlands','southkorea',70,9); // ASML-Samsung semiconductor axis
+  add('technology','netherlands','usa',72,9);
+  add('technology','sweden','india',55,14);    // Ericsson
+  add('technology','germany','china',65,12);   // Industry partnerships
+  // India tech connections
+  add('technology','india','uk',70,10);
+  add('technology','india','singapore',62,12);
+  add('technology','india','japan',58,13);
+  add('technology','india','australia',55,14);
+  add('technology','india','uae',60,12);
+  // Emerging tech
+  add('technology','israel','india',65,11);
+  add('technology','israel','singapore',60,12);
+  add('technology','nigeria','india',48,16);   // Fintech
+  add('technology','kenya','india',50,15);     // Mobile money tech
+  add('technology','southafrica','india',50,14);
+  add('technology','brazil','china',52,14);
+  add('technology','uae','india',58,13);
+  add('technology','uae','usa',60,12);
+  add('technology','egypt','china',48,16);
+  add('technology','turkey','germany',55,14);
+  add('technology','australia','japan',60,12);
+  add('technology','australia','southkorea',58,13);
+  add('technology','newzealand','australia',68,10);
+
+  //  MIGRATION (new layer)
+  // Major diaspora and migration corridors
+  // South Asian diaspora
+  add('migration','india','uae',90,5);
+  add('migration','india','saudi',85,6);
+  add('migration','india','usa',82,7);
+  add('migration','india','uk',80,7);
+  add('migration','india','canada',78,8);
+  add('migration','india','australia',72,9);
+  add('migration','india','qatar',80,7);
+  add('migration','pakistan','uae',82,7);
+  add('migration','pakistan','saudi',80,8);
+  add('migration','pakistan','uk',75,9);
+  add('migration','bangladesh','uae',78,8);
+  add('migration','bangladesh','saudi',75,9);
+  add('migration','bangladesh','malaysia',72,10);
+  add('migration','nepal','india',85,6);
+  add('migration','srilanka','uae',70,10);
+  // Latin American migration
+  add('migration','mexico','usa',92,4);
+  add('migration','colombia','usa',70,10);
+  add('migration','brazil','usa',62,12);
+  add('migration','venezuela','colombia',85,6);
+  add('migration','cuba','usa',75,9);
+  add('migration','ecuador','usa',65,11);
+  add('migration','peru','chile',68,10);
+  add('migration','bolivia','argentina',72,9);
+  add('migration','argentina','spain',68,10);
+  add('migration','brazil','portugal',70,10);
+  // African migration
+  add('migration','nigeria','uk',72,10);
+  add('migration','nigeria','usa',65,11);
+  add('migration','ghana','uk',62,12);
+  add('migration','ethiopia','usa',55,14);
+  add('migration','ethiopia','saudi',68,10);
+  add('migration','kenya','uk',60,12);
+  add('migration','senegal','france',75,9);
+  add('migration','morocco','france',80,7);
+  add('migration','morocco','spain',78,8);
+  add('migration','algeria','france',82,7);
+  add('migration','drcongo','france',60,12);
+  add('migration','mozambique','southafrica',72,10);
+  add('migration','angola','portugal',70,10);
+  add('migration','southafrica','uk',65,11);
+  add('migration','southafrica','australia',62,12);
+  // East Asian migration
+  add('migration','china','usa',80,8);
+  add('migration','china','canada',75,9);
+  add('migration','china','australia',78,8);
+  add('migration','china','singapore',72,9);
+  add('migration','china','uk',65,11);
+  add('migration','philippines','usa',78,8);
+  add('migration','philippines','uae',75,9);
+  add('migration','philippines','saudi',72,10);
+  add('migration','indonesia','saudi',68,10);
+  add('migration','indonesia','malaysia',75,9);
+  add('migration','vietnam','usa',62,12);
+  add('migration','japan','usa',58,13);
+  add('migration','japan','brazil',55,14);
+  add('migration','southkorea','usa',68,10);
+  // Middle East corridors
+  add('migration','turkey','germany',82,7);
+  add('migration','syria','turkey',88,5);
+  add('migration','syria','germany',72,10);
+  add('migration','iraq','jordan',70,10);
+  add('migration','egypt','uae',72,9);
+  add('migration','egypt','saudi',68,10);
+  add('migration','jordan','uae',65,11);
+  // Western cross-flows
+  add('migration','uk','australia',78,8);
+  add('migration','uk','canada',72,9);
+  add('migration','uk','usa',70,10);
+  add('migration','italy','argentina',65,11);
+  add('migration','italy','usa',60,12);
+  add('migration','poland','uk',78,8);
+  add('migration','poland','germany',75,9);
+  add('migration','ukraine','poland',85,6);
+  add('migration','greece','germany',62,12);
+
   return C;
 }
 
 const CONNECTIONS = buildConnections();
-// Log totals to console for debugging
 const totals = Object.fromEntries(Object.entries(CONNECTIONS).map(([k,v])=>[k,v.length]));
 console.log('Connection totals:', totals, 'Total:', Object.values(totals).reduce((a,b)=>a+b,0));
 
-// 
+// ──────────────────────────────────────
 // RENDERING
-// 
+// ──────────────────────────────────────
 
 const VW=1200, VH=620;
 const svg = d3.select('#map-svg').attr('viewBox',`0 0 ${VW} ${VH}`).attr('preserveAspectRatio','xMidYMid meet');
-const proj = d3.geoNaturalEarth1().scale(190).translate([VW/2,VH/2+15]);
+
+// Equal Earth projection: equal-area, visually appealing, reduces size distortion
+const proj = d3.geoEqualEarth().scale(185).translate([VW/2,VH/2+10]);
 const path = d3.geoPath().projection(proj);
 const root = svg.append('g').attr('id','root');
 const zoom = d3.zoom().scaleExtent([0.5,10]).on('zoom',e=>root.attr('transform',e.transform));
@@ -693,7 +834,7 @@ let activeLayers  = new Set(Object.keys(LAYERS));
 let selectedId    = null;
 let arcData       = [];
 
-//  INIT (load world atlas) 
+//  INIT (load world atlas)
 async function init(){
   let world;
   try{world = await d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');}
@@ -727,7 +868,7 @@ async function init(){
   document.getElementById('stat-nodes').textContent = NODES.length;
 }
 
-//  ARCS 
+//  ARCS
 function drawArcs(){
   gArc.selectAll('*').remove();
   arcData=[];
@@ -738,7 +879,6 @@ function drawArcs(){
     const def=LAYERS[layer];
     (CONNECTIONS[layer]||[]).forEach(([from,to,str])=>{
       if(!nodeMap[from]||!nodeMap[to]) return;
-      // sphere filter: both nodes' spheres must be active
       if(!activeSpheres.has(nodeMap[from].sphere)||!activeSpheres.has(nodeMap[to].sphere)) return;
 
       const pa=proj([nodeMap[from].lon,nodeMap[from].lat]);
@@ -772,7 +912,7 @@ function drawArcs(){
   applyFilters();
 }
 
-//  NODES 
+//  NODES
 function drawNodes(){
   gNode.selectAll('*').remove();
   NODES.forEach(node=>{
@@ -796,7 +936,7 @@ function drawNodes(){
   });
 }
 
-//  FILTER / SELECT 
+//  FILTER / SELECT
 function applyFilters(){
   arcData.forEach(arc=>{
     const sphereOk = activeSpheres.has(nodeMap[arc.from]?.sphere) && activeSpheres.has(nodeMap[arc.to]?.sphere);
@@ -815,7 +955,6 @@ function applyFilters(){
     const conn=getConnected(selectedId);
     d3.select(this).attr('opacity',(id===selectedId||conn.has(id))?1:.15);
   });
-  // update country fills based on active spheres
   gLand.selectAll('.cpath').each(function(){
     const sk=d3.select(this).attr('data-sphere');
     if(!sk) return;
@@ -835,7 +974,6 @@ function selectNode(node){
   applyFilters();
   updateInfoPanel(selectedId?node:null);
   document.getElementById('sb-sel').textContent = selectedId ? node.label : 'none';
-  // mobile: switch to info tab
   if(selectedId && window.innerWidth<=768){
     openSheet(true);
     switchTab('info');
@@ -848,7 +986,7 @@ function deselect(){
   document.getElementById('sb-sel').textContent='none';
 }
 
-//  INFO PANEL 
+//  INFO PANEL
 function updateInfoPanel(node){
   const infoEl=document.getElementById('info');
   if(!node){infoEl.classList.remove('open');return;}
@@ -877,17 +1015,17 @@ function updateInfoPanel(node){
     const hdr=document.createElement('div');
     hdr.className='conn-grp-hdr';
     hdr.style.color=def.color;
-    hdr.textContent=`${def.icon} ${def.label} (${rows.length})`;
+    hdr.textContent=def.icon + ' ' + def.label + ' (' + rows.length + ')';
     cont.appendChild(hdr);
 
     rows.forEach(r=>{
       const row=document.createElement('div');
       row.className='conn-row';
-      row.innerHTML=`
-        <div class="conn-pip" style="background:${def.color}"></div>
-        <div class="conn-name">${r.other.label}</div>
-        <div class="conn-bar-bg"><div class="conn-bar-fg" style="width:${r.str}%;background:${def.color}"></div></div>
-        <div class="conn-pct">${r.str}%</div>`;
+      row.innerHTML=
+        '<div class="conn-pip" style="background:'+def.color+'"></div>'+
+        '<div class="conn-name">'+r.other.label+'</div>'+
+        '<div class="conn-bar-bg"><div class="conn-bar-fg" style="width:'+r.str+'%;background:'+def.color+'"></div></div>'+
+        '<div class="conn-pct">'+r.str+'%</div>';
       cont.appendChild(row);
     });
   });
@@ -900,11 +1038,11 @@ function updateInfoPanel(node){
   updateMobileInfo(node);
 }
 
-//  TOOLTIP 
+//  TOOLTIP
 const tip=document.getElementById('tip');
 function showTip(e,node){
   const sp=SPHERES[node.sphere];
-  tip.innerHTML=`<strong style="color:${sp.color}">${node.label}</strong><br><span style="font-size:.52rem;color:var(--muted)">${sp.label}</span>`;
+  tip.innerHTML='<strong style="color:'+sp.color+'">'+node.label+'</strong><br><span style="font-size:.52rem;color:var(--muted)">'+sp.label+'</span>';
   tip.classList.add('show');
   moveTip(e);
 }
@@ -916,19 +1054,18 @@ function moveTip(e){
   tip.style.top=(e.clientY-8)+'px';
 }
 
-//  SIDEBAR 
+//  SIDEBAR
 function buildSidebar(){
-  // Spheres
   const sg=document.getElementById('sph-leg');
   Object.entries(SPHERES).forEach(([k,s])=>{
     const d=document.createElement('div');
     d.className='sph-chip on';
     d.dataset.key=k;
-    d.innerHTML=`<div class="sph-dot" style="background:${s.color}"></div><span class="sph-lbl">${s.label}</span>`;
+    d.innerHTML='<div class="sph-dot" style="background:'+s.color+'"></div><span class="sph-lbl">'+s.label+'</span>';
     d.addEventListener('click',()=>{
       const on=activeSpheres.has(k);
       if(on) activeSpheres.delete(k); else activeSpheres.add(k);
-      d.classList.toggle('on',!on===false); // re-set
+      d.classList.toggle('on',!on===false);
       d.classList.toggle('off',on);
       d.classList.toggle('on',!on);
       drawNodes(); drawArcs();
@@ -967,7 +1104,7 @@ function buildSidebar(){
   });
 }
 
-//  MOBILE SHEET 
+//  MOBILE SHEET
 let sheetOpen=false;
 let sheetTab='filters';
 
@@ -1008,8 +1145,8 @@ function renderSheetFilters(){
   sg.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:.8rem;';
   Object.entries(SPHERES).forEach(([k,s])=>{
     const d=document.createElement('div');
-    d.style.cssText=`display:flex;align-items:center;gap:.35rem;padding:5px 7px;border-radius:4px;border:1px solid var(--border);cursor:pointer;font-size:.6rem;color:var(--text);transition:opacity .2s;opacity:${activeSpheres.has(k)?1:.25};`;
-    d.innerHTML=`<div style="width:7px;height:7px;border-radius:50%;background:${s.color};flex-shrink:0"></div>${s.label}`;
+    d.style.cssText='display:flex;align-items:center;gap:.35rem;padding:5px 7px;border-radius:4px;border:1px solid var(--border);cursor:pointer;font-size:.6rem;color:var(--text);transition:opacity .2s;opacity:'+(activeSpheres.has(k)?1:.25)+';';
+    d.innerHTML='<div style="width:7px;height:7px;border-radius:50%;background:'+s.color+';flex-shrink:0"></div>'+s.label;
     d.addEventListener('click',()=>{
       const on=activeSpheres.has(k);
       if(on) activeSpheres.delete(k); else activeSpheres.add(k);
@@ -1030,11 +1167,11 @@ function renderSheetFilters(){
     row.style.cssText='display:flex;align-items:center;gap:.5rem;padding:5px 0;cursor:pointer;';
     const tog=document.createElement('div');
     const isOn=activeLayers.has(k);
-    tog.style.cssText=`width:28px;height:15px;border-radius:8px;background:${isOn?layer.color:'var(--muted)'};position:relative;flex-shrink:0;transition:background .2s;`;
-    tog.innerHTML=`<div style="position:absolute;top:2px;left:${isOn?'15':'2'}px;width:11px;height:11px;border-radius:50%;background:#fff;transition:left .2s;"></div>`;
+    tog.style.cssText='width:28px;height:15px;border-radius:8px;background:'+(isOn?layer.color:'var(--muted)')+';position:relative;flex-shrink:0;transition:background .2s;';
+    tog.innerHTML='<div style="position:absolute;top:2px;left:'+(isOn?'15':'2')+'px;width:11px;height:11px;border-radius:50%;background:#fff;transition:left .2s;"></div>';
     const lbl=document.createElement('span');
     lbl.style.cssText='font-size:.65rem;color:var(--text);flex:1;';
-    lbl.textContent=`${layer.icon} ${layer.label}`;
+    lbl.textContent=layer.icon + ' ' + layer.label;
     const cnt=document.createElement('span');
     cnt.style.cssText='font-size:.52rem;color:var(--muted);';
     cnt.textContent=(CONNECTIONS[k]||[]).length;
@@ -1063,12 +1200,12 @@ function renderSheetInfo(){
 
   const hdr=document.createElement('div');
   hdr.style.cssText='margin-bottom:.6rem;';
-  hdr.innerHTML=`<div style="font-family:Cinzel,serif;font-size:.9rem;color:var(--white);">${node.label}</div>
-    <div style="display:flex;align-items:center;gap:5px;font-size:.52rem;margin-top:.15rem;">
-      <div style="width:6px;height:6px;border-radius:50%;background:${sp.color}"></div>
-      <span style="color:${sp.color}">${sp.label}</span>
-    </div>
-    <div style="font-size:.58rem;color:var(--text);line-height:1.6;margin-top:.4rem;opacity:.8;">${node.desc}</div>`;
+  hdr.innerHTML='<div style="font-family:Cinzel,serif;font-size:.9rem;color:var(--white);">'+node.label+'</div>'+
+    '<div style="display:flex;align-items:center;gap:5px;font-size:.52rem;margin-top:.15rem;">'+
+      '<div style="width:6px;height:6px;border-radius:50%;background:'+sp.color+'"></div>'+
+      '<span style="color:'+sp.color+'">'+sp.label+'</span>'+
+    '</div>'+
+    '<div style="font-size:.58rem;color:var(--text);line-height:1.6;margin-top:.4rem;opacity:.8;">'+node.desc+'</div>';
   body.appendChild(hdr);
 
   Object.keys(LAYERS).forEach(lk=>{
@@ -1081,17 +1218,17 @@ function renderSheetInfo(){
     if(!rows.length) return;
 
     const gh=document.createElement('div');
-    gh.style.cssText=`font-size:.5rem;color:${def.color};text-transform:uppercase;letter-spacing:.1em;padding:.4rem 0 .2rem;`;
-    gh.textContent=`${def.icon} ${def.label} (${rows.length})`;
+    gh.style.cssText='font-size:.5rem;color:'+def.color+';text-transform:uppercase;letter-spacing:.1em;padding:.4rem 0 .2rem;';
+    gh.textContent=def.icon + ' ' + def.label + ' (' + rows.length + ')';
     body.appendChild(gh);
 
     rows.forEach(r=>{
       const rr=document.createElement('div');
       rr.style.cssText='display:flex;align-items:center;gap:6px;padding:2px 0;font-size:.58rem;';
-      rr.innerHTML=`<div style="width:5px;height:5px;border-radius:50%;background:${def.color};flex-shrink:0"></div>
-        <span style="flex:1;color:var(--white)">${r.other.label}</span>
-        <div style="width:42px;height:3px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:${r.str}%;background:${def.color}"></div></div>
-        <span style="font-size:.5rem;color:var(--muted);min-width:22px;text-align:right">${r.str}%</span>`;
+      rr.innerHTML='<div style="width:5px;height:5px;border-radius:50%;background:'+def.color+';flex-shrink:0"></div>'+
+        '<span style="flex:1;color:var(--white)">'+r.other.label+'</span>'+
+        '<div style="width:42px;height:3px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+r.str+'%;background:'+def.color+'"></div></div>'+
+        '<span style="font-size:.5rem;color:var(--muted);min-width:22px;text-align:right">'+r.str+'%</span>';
       body.appendChild(rr);
     });
   });
