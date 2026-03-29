@@ -2174,11 +2174,20 @@
             padding: 10px 14px;
             outline: none;
             resize: vertical;
-            min-height: 60px;
+            min-height: 120px;
             transition: border-color var(--transition);
         }
 
         .stage-detail-form textarea:focus { border-color: var(--accent); }
+
+        /* Larger resize handle for touch targets */
+        .stage-detail-form textarea::-webkit-resizer {
+            background: transparent;
+            border-width: 0 0 12px 12px;
+            border-style: solid;
+            border-color: transparent transparent var(--border) transparent;
+            cursor: ns-resize;
+        }
 
         /* ── Tab content panels ── */
         .tab-panel {
@@ -2524,7 +2533,7 @@
             </div>
             <div class="source-modal-body">
                 <p class="source-modal-text">To keep this page lean, source is no longer embedded inline here. Use one of the actions below to access the complete HTML source.</p>
-                <a class="source-link" id="sourceOpenLink" href="#" target="_blank" rel="noopener">↗ Open full source in new tab</a>
+                <a class="source-link" id="sourceOpenLink" href="https://ranzlappen.github.io/ticked/" target="_blank" rel="noopener">↗ Open source code</a>
             </div>
         </div>
     </div>
@@ -4466,10 +4475,6 @@
         let sourcePreviewURL = '';
 
         function openSourceViewer() {
-            if (sourcePreviewURL) URL.revokeObjectURL(sourcePreviewURL);
-            sourcePreviewURL = getFullSourceURL();
-            const sourceLink = document.getElementById('sourceOpenLink');
-            sourceLink.href = sourcePreviewURL;
             document.getElementById('sourceModalOverlay').classList.add('open');
             document.body.classList.add('sheet-open');
         }
@@ -4484,6 +4489,7 @@
         }
 
         function copySource() {
+            if (!confirm('This will copy a large amount of text to your clipboard, which may cause lag on phones. Continue?')) return;
             const src = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
             navigator.clipboard.writeText(src).then(
                 () => showToast('Source copied to clipboard ✓'),
@@ -4676,7 +4682,7 @@
         procInputText.addEventListener('keypress', e => { if (e.key === 'Enter') addProcess(); });
 
         // ── Init ──────────────────────────────────────────────────
-        window.onload = () => { load(); initTooltip(); initKofi(); initPWA(); initReminder(); };
+        window.onload = () => { load(); initTooltip(); initKofi(); initPWA(); initReminder(); initExternalLinkHandler(); };
 
         // ── PWA ───────────────────────────────────────────────────
         function initPWA() {
@@ -4708,13 +4714,21 @@
                         if (e.data.action === 'log') {
                             addEntry();
                             showToast('Logged from notification ✓');
+                        } else if (e.data.action === 'silent-log') {
+                            // Silently create entry without opening/focusing the app
+                            addEntry();
                         }
                     }
                 });
             }
 
             // Handle #action= hash on load (when opened from notification)
-            if (location.hash.includes('action=log')) {
+            if (location.hash.includes('action=silent-log')) {
+                setTimeout(() => {
+                    addEntry();
+                    history.replaceState(null, '', location.pathname);
+                }, 300);
+            } else if (location.hash.includes('action=log')) {
                 setTimeout(() => {
                     addEntry();
                     showToast('Logged from notification ✓');
@@ -4814,7 +4828,7 @@
                     safeStorage.set('tickedReminder', 'on');
                     // Send a test notification after SW is fully active
                     setTimeout(() => {
-                        sendTickedNotification('Ticked', 'Reminders active! Tap "✓ Log Now" to log instantly.');
+                        sendTickedNotification('Ticked', 'Reminders active! Consider making a backup of the contents.');
                     }, 2500);
                 });
             }
@@ -4828,6 +4842,25 @@
                 const btn = document.getElementById('reminderBtn');
                 if (btn) btn.classList.add('active');
             }
+        }
+
+        // ── External link handler ─────────────────────────────────
+        // Force all external links to open in system browser, not inside the PWA
+        function initExternalLinkHandler() {
+            document.addEventListener('click', e => {
+                const a = e.target.closest('a[href]');
+                if (!a) return;
+                const href = a.href;
+                if (!href || href.startsWith('javascript:') || href.startsWith('#') || href.startsWith('blob:')) return;
+                try {
+                    const linkUrl = new URL(href, location.href);
+                    if (linkUrl.origin !== location.origin) {
+                        // External link: force system browser via window.open
+                        e.preventDefault();
+                        window.open(href, '_system') || window.open(href, '_blank');
+                    }
+                } catch(ex) {}
+            });
         }
 
     </script>
