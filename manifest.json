@@ -9,6 +9,7 @@
   "theme_color": "#0d0f14",
   "orientation": "portrait",
   "categories": ["productivity", "utilities"],
+  "handle_links": "not-preferred",
   "icons": [
     {
       "src": "icon-192.png",

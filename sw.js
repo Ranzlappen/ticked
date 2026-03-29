@@ -46,8 +46,27 @@ self.addEventListener('fetch', e => {
 
 // ── Notification action handler ──
 self.addEventListener('notificationclick', e => {
-    e.notification.close();
     const action = e.action;
+
+    // "Log Now" action: silently create entry in background without opening the app
+    if (action === 'log') {
+        e.notification.close();
+        e.waitUntil(
+            clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+                // Send message to existing client to log silently (no focus/open)
+                for (const client of clientList) {
+                    client.postMessage({ type: 'ticked-action', action: 'silent-log' });
+                    return;
+                }
+                // No open client: open in background with silent flag
+                return clients.openWindow(self.registration.scope + 'index.html#action=silent-log');
+            })
+        );
+        return;
+    }
+
+    // Default / "Open App" action: open or focus the app
+    e.notification.close();
     e.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
