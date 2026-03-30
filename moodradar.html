@@ -403,7 +403,7 @@ body:not(.disconnected) {
   color:var(--muted); margin-bottom:12px; align-self:flex-start;
   display:flex; align-items:center; gap:4px;
 }
-.chart-wrap { width:100%; max-width:400px; aspect-ratio:1; position:relative }
+.chart-wrap { width:100%; max-width:100%; aspect-ratio:1; position:relative }
 
 /* ============================================================
    BUBBLE CARD
@@ -414,7 +414,7 @@ body:not(.disconnected) {
   margin-bottom:var(--gap);
   overflow:hidden;
 }
-#bubbleCanvas { width:100%; height:260px; display:block; cursor:default; border-radius:8px }
+#bubbleCanvas { width:100%; height:260px; display:block; cursor:default; border-radius:8px; min-height:100px }
 
 /* ============================================================
    APPROVAL METER — enlarged, more prominent
@@ -648,6 +648,7 @@ body:not(.disconnected) {
 .resizable {
   overflow:hidden;
   min-height:80px;
+  min-width:120px;
   box-sizing:border-box;
   position:relative; /* needed so handle can be absolute inside */
 }
@@ -657,7 +658,7 @@ body:not(.disconnected) {
   position:absolute;
   bottom:0; right:0;
   width:22px; height:22px;
-  cursor:ns-resize;
+  cursor:nwse-resize;
   z-index:10;
   /* Visible diagonal grip lines */
   background:
@@ -843,6 +844,9 @@ body.preset-custom #customLayoutContainer { display:block }
       </div>
       <div id="layoutManagerSection" style="display:none">
         <div class="settings-section-label" style="margin-top:4px">ARRANGE SECTIONS</div>
+        <div style="padding:2px 10px 6px;font-size:.58em;color:var(--muted);line-height:1.5;letter-spacing:.03em">
+          Drag to reorder. <strong style="color:var(--text)">⬌ SIDE</strong> = side-by-side on same row. <strong style="color:var(--text)">⬍ STACK</strong> = on its own row.
+        </div>
         <div class="layout-section" id="layoutItemList"></div>
         <div style="padding:0 10px 6px">
           <button class="layout-apply-btn" onclick="applyCustomLayout()">APPLY LAYOUT</button>
@@ -1024,7 +1028,15 @@ body.preset-custom #customLayoutContainer { display:block }
 // =============================================================
 //  SETTINGS — preset and settings dropdown
 // =============================================================
-let currentPreset = 'dashboard';
+const PRESET_STORAGE_KEY = 'moodradar_preset_v1';
+let currentPreset = (() => {
+  try { return localStorage.getItem(PRESET_STORAGE_KEY) || 'dashboard'; }
+  catch(e) { return 'dashboard'; }
+})();
+
+function savePreset(preset) {
+  try { localStorage.setItem(PRESET_STORAGE_KEY, preset); } catch(e) {}
+}
 
 function toggleSettings() {
   document.getElementById('settingsDropdown').classList.toggle('open');
@@ -1032,6 +1044,7 @@ function toggleSettings() {
 
 function applyPreset(preset) {
   currentPreset = preset;
+  savePreset(preset);
   if (preset === 'list') {
     document.body.classList.add('preset-list');
   } else {
@@ -2218,7 +2231,7 @@ function setStatus(html, cls) {
 //  all housed visuals redraw correctly at the new dimensions.
 //  Heights are saved to localStorage and restored on page load.
 // =============================================================
-const RESIZE_STORAGE_KEY = 'moodradar_sizes_v1';
+const RESIZE_STORAGE_KEY = 'moodradar_sizes_v2';
 const RESIZE_DEBOUNCE_MS = 180;
 const RESIZABLE_IDS = ['pieCard','radarCard','bubbleCard','timelineLinearCard','timelineLogCard','feedCard'];
 
@@ -2226,7 +2239,10 @@ function saveSizes() {
   const sizes = {};
   for (const id of RESIZABLE_IDS) {
     const el = document.getElementById(id);
-    if (el) sizes[id] = el.offsetHeight;
+    if (el) {
+      sizes[id] = { h: el.offsetHeight };
+      if (el.style.width) sizes[id].w = el.offsetWidth;
+    }
   }
   try { localStorage.setItem(RESIZE_STORAGE_KEY, JSON.stringify(sizes)); } catch(e) {}
 }
@@ -2237,13 +2253,20 @@ function restoreSizes() {
   if (!sizes) return;
   for (const id of RESIZABLE_IDS) {
     const el = document.getElementById(id);
-    if (el && sizes[id]) el.style.height = sizes[id] + 'px';
+    if (!el || !sizes[id]) continue;
+    // Support both old format (number) and new format ({h,w})
+    if (typeof sizes[id] === 'number') {
+      el.style.height = sizes[id] + 'px';
+    } else {
+      if (sizes[id].h) el.style.height = sizes[id].h + 'px';
+      if (sizes[id].w) el.style.width = sizes[id].w + 'px';
+    }
   }
 }
 
 function notifyChartResize(cardId) {
-  if (cardId === 'pieCard'              && pieChart)             pieChart.resize();
-  if (cardId === 'radarCard'            && radarChart)           radarChart.resize();
+  if (cardId === 'pieCard'              && pieChart)             { pieChart.resize(); pieChart.update('none'); }
+  if (cardId === 'radarCard'            && radarChart)           { radarChart.resize(); radarChart.update('none'); }
   if (cardId === 'timelineLinearCard'   && timelineLinearChart)  timelineLinearChart.resize();
   if (cardId === 'timelineLogCard'      && timelineLogChart)     timelineLogChart.resize();
   if (cardId === 'bubbleCard')                                   resizeBubbleCanvas();
@@ -2252,20 +2275,25 @@ function notifyChartResize(cardId) {
 function addResizeHandle(el) {
   const handle = document.createElement('div');
   handle.className = 'resize-handle';
-  handle.title = 'Drag to resize';
+  handle.title = 'Drag corner to resize';
   el.appendChild(handle);
 
-  let startY = 0, startH = 0;
+  let startX = 0, startY = 0, startW = 0, startH = 0;
   let debounceTimer = null;
 
   handle.addEventListener('mousedown', e => {
     e.preventDefault();
+    startX = e.clientX;
     startY = e.clientY;
+    startW = el.offsetWidth;
     startH = el.offsetHeight;
 
     function onMove(e) {
       const newH = Math.max(80, startH + (e.clientY - startY));
+      const newW = Math.max(120, startW + (e.clientX - startX));
       el.style.height = newH + 'px';
+      el.style.width = newW + 'px';
+      el.style.maxWidth = '100%';
       notifyChartResize(el.id);
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(saveSizes, RESIZE_DEBOUNCE_MS);
@@ -2283,13 +2311,18 @@ function addResizeHandle(el) {
   handle.addEventListener('touchstart', e => {
     e.preventDefault();
     const touch = e.touches[0];
+    startX = touch.clientX;
     startY = touch.clientY;
+    startW = el.offsetWidth;
     startH = el.offsetHeight;
 
     function onMove(e) {
       const t = e.touches[0];
       const newH = Math.max(80, startH + (t.clientY - startY));
+      const newW = Math.max(120, startW + (t.clientX - startX));
       el.style.height = newH + 'px';
+      el.style.width = newW + 'px';
+      el.style.maxWidth = '100%';
       notifyChartResize(el.id);
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(saveSizes, RESIZE_DEBOUNCE_MS);
@@ -2431,7 +2464,7 @@ function renderLayoutManager() {
     const isInline = !!layoutInline[id];
     item.innerHTML = `<span class="drag-handle">&#x2630;</span>` +
       `<span class="layout-item-label">${section.label}</span>` +
-      `<button class="layout-inline-toggle ${isInline?'active':''}" onclick="toggleLayoutInline('${id}',this)" title="Pair with next section side-by-side">${isInline?'SIDE':'STACK'}</button>`;
+      `<button class="layout-inline-toggle ${isInline?'active':''}" onclick="toggleLayoutInline('${id}',this)" title="${isInline ? 'Currently side-by-side with next section. Click to stack vertically instead.' : 'Currently stacked vertically. Click to place side-by-side with next section.'}">${isInline?'⬌ SIDE':'⬍ STACK'}</button>`;
 
     item.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', i);
@@ -2458,7 +2491,10 @@ function renderLayoutManager() {
 function toggleLayoutInline(id, btn) {
   layoutInline[id] = !layoutInline[id];
   btn.classList.toggle('active', layoutInline[id]);
-  btn.textContent = layoutInline[id] ? 'SIDE' : 'STACK';
+  btn.textContent = layoutInline[id] ? '⬌ SIDE' : '⬍ STACK';
+  btn.title = layoutInline[id]
+    ? 'Currently side-by-side with next section. Click to stack vertically instead.'
+    : 'Currently stacked vertically. Click to place side-by-side with next section.';
   saveLayout();
 }
 
@@ -2466,6 +2502,7 @@ function applyCustomLayout() {
   document.body.classList.remove('preset-list');
   document.body.classList.add('preset-custom');
   currentPreset = 'custom';
+  savePreset('custom');
   document.querySelectorAll('.preset-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.preset === 'custom');
   });
@@ -2520,6 +2557,7 @@ applyPreset = function(preset) {
     document.getElementById('layoutManagerSection').style.display = 'block';
     renderLayoutManager();
     applyCustomLayout();
+    savePreset('custom');
     return;
   }
   document.getElementById('layoutManagerSection').style.display = 'none';
@@ -2532,36 +2570,54 @@ applyPreset = function(preset) {
 };
 
 function restoreDefaultDOM() {
-  const chartsTop = document.querySelector('.charts-top');
   const app = document.querySelector('.app');
   const customContainer = document.getElementById('customLayoutContainer');
+  const chartsTop = document.querySelector('.charts-top');
 
-  // Move cards back to their original positions
-  const pieCard = document.getElementById('pieCard');
-  const radarCard = document.getElementById('radarCard');
-  if (pieCard && chartsTop && !chartsTop.contains(pieCard)) {
-    chartsTop.insertBefore(pieCard, chartsTop.firstChild);
-  }
-  if (radarCard && chartsTop && !chartsTop.contains(radarCard)) {
-    chartsTop.appendChild(radarCard);
-  }
-
-  // Restore other cards before customLayoutContainer
-  const orderedCards = ['bubbleCard','approvalCard','timelineLinearCard','timelineLogCard','feedCard'];
-  for (const id of orderedCards) {
+  // Clear custom container wrapper rows (but not the cards themselves)
+  // First, collect all cards out of the custom container
+  const allCardIds = ['pieCard','radarCard','bubbleCard','approvalCard','timelineLinearCard','timelineLogCard','feedCard'];
+  const detachedCards = {};
+  for (const id of allCardIds) {
     const el = document.getElementById(id);
-    if (el && !app.contains(el)) continue; // shouldn't happen
-    if (el && el.parentElement === customContainer || el?.parentElement?.parentElement === customContainer) {
-      app.insertBefore(el, customContainer);
-    }
+    if (el) detachedCards[id] = el;
   }
 
-  // Restore legend row
-  const legendRow = document.querySelector('.legend-row');
-  if (legendRow) app.insertBefore(legendRow, document.getElementById('feedCard'));
-
-  // Restore section dividers visibility
+  // Clear custom layout rows
   customContainer.innerHTML = '';
+
+  // Restore pie + radar into charts-top grid
+  if (chartsTop) {
+    chartsTop.innerHTML = '';
+    if (detachedCards.pieCard) chartsTop.appendChild(detachedCards.pieCard);
+    if (detachedCards.radarCard) chartsTop.appendChild(detachedCards.radarCard);
+  }
+
+  // Reference nodes in default order. We insert each card before customLayoutContainer.
+  // The default DOM order: chartsTop (already in place), section-divider, bubbleCard,
+  // section-divider, approvalCard, section-divider, timelineLinearCard, timelineLogCard,
+  // legend-row, feedCard, customLayoutContainer.
+  const insertionRef = customContainer;
+  const legendRow = document.querySelector('.legend-row');
+
+  // Collect all section dividers
+  const dividers = Array.from(app.querySelectorAll('.section-divider'));
+
+  // Build the default order of elements to appear before customContainer
+  const defaultOrderEls = [];
+  if (dividers[0]) defaultOrderEls.push(dividers[0]);
+  if (detachedCards.bubbleCard) defaultOrderEls.push(detachedCards.bubbleCard);
+  if (dividers[1]) defaultOrderEls.push(dividers[1]);
+  if (detachedCards.approvalCard) defaultOrderEls.push(detachedCards.approvalCard);
+  if (dividers[2]) defaultOrderEls.push(dividers[2]);
+  if (detachedCards.timelineLinearCard) defaultOrderEls.push(detachedCards.timelineLinearCard);
+  if (detachedCards.timelineLogCard) defaultOrderEls.push(detachedCards.timelineLogCard);
+  if (legendRow) defaultOrderEls.push(legendRow);
+  if (detachedCards.feedCard) defaultOrderEls.push(detachedCards.feedCard);
+
+  for (const el of defaultOrderEls) {
+    app.insertBefore(el, insertionRef);
+  }
 }
 
 window.onload = function() {
@@ -2579,10 +2635,26 @@ window.onload = function() {
   // Load layout config
   loadLayout();
 
-  restoreSizes();
   restoreCollapsedStates();
   initCharts();
   setupResizeObserver();
+
+  // Restore saved preset (must happen after charts init and resize observer setup)
+  if (currentPreset && currentPreset !== 'dashboard') {
+    applyPreset(currentPreset);
+  } else {
+    // Ensure dashboard button shows active
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.preset === 'dashboard');
+    });
+  }
+
+  // Restore sizes after preset is applied (preset may change layout)
+  restoreSizes();
+  // Re-trigger chart resize after sizes restored
+  setTimeout(() => {
+    for (const id of RESIZABLE_IDS) notifyChartResize(id);
+  }, 100);
 };
 </script>
 </body>
