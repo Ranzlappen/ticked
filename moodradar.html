@@ -147,10 +147,12 @@ header {
   border:1px solid var(--border);
   border-radius:10px;
   padding:6px;
-  min-width:160px;
+  min-width:220px;
   z-index:500;
   display:none;
   box-shadow:0 8px 32px rgba(0,0,0,.6);
+  max-height:70vh;
+  overflow-y:auto;
 }
 .settings-dropdown.open { display:block }
 
@@ -410,6 +412,7 @@ body:not(.disconnected) {
   background:var(--panel); border:1px solid var(--border);
   border-radius:var(--card-radius); padding:var(--card-pad);
   margin-bottom:var(--gap);
+  overflow:hidden;
 }
 #bubbleCanvas { width:100%; height:260px; display:block; cursor:default; border-radius:8px }
 
@@ -555,6 +558,85 @@ body:not(.disconnected) {
 /* bubble tooltip */
 #bubbleTip { position:fixed; background:#0d0d1f; border:1px solid #1a1a36; border-radius:6px; padding:5px 10px; font-size:.72em; color:var(--text); pointer-events:none; opacity:0; transition:opacity .15s; z-index:1000; white-space:nowrap }
 
+/* ============================================================
+   FEED FONT SIZE SLIDER — inline with feed title
+   ============================================================ */
+.feed-title-row {
+  display:flex; align-items:center; gap:10px; margin-bottom:7px; flex-wrap:wrap;
+}
+.feed-title-row .feed-title { margin-bottom:0; flex-shrink:0 }
+.feed-font-slider-wrap {
+  display:flex; align-items:center; gap:6px; margin-left:auto;
+}
+.feed-font-slider-wrap input[type=range] {
+  -webkit-appearance:none; width:80px; height:3px; background:var(--border); border-radius:2px; outline:none;
+}
+.feed-font-slider-wrap input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:10px; height:10px; border-radius:50%; background:var(--accent); cursor:pointer;
+}
+.feed-font-slider-label {
+  font-size:.6em; color:var(--muted); letter-spacing:.08em; white-space:nowrap;
+}
+.feed-font-slider-val {
+  font-size:.62em; color:var(--accent); min-width:22px; text-align:right;
+}
+
+/* ============================================================
+   COLLAPSE / EXPAND CONTROLS
+   ============================================================ */
+.collapse-btn {
+  background:transparent; border:none; color:var(--muted);
+  cursor:pointer; padding:2px 4px; margin-left:auto; flex-shrink:0;
+  transition:color .2s, transform .3s; display:flex; align-items:center;
+  font-size:.72em; line-height:1;
+}
+.collapse-btn:hover { color:var(--accent) }
+.collapse-btn svg { width:12px; height:12px; fill:currentColor; transition:transform .3s }
+.collapse-btn.collapsed svg { transform:rotate(-90deg) }
+
+.collapsible-body { max-height:2000px; transition:max-height .35s ease, opacity .25s ease; overflow:hidden }
+.collapsible-body.collapsed { max-height:0 !important; opacity:0; pointer-events:none }
+
+/* ============================================================
+   LAYOUT MANAGER — in settings dropdown
+   ============================================================ */
+.layout-section { padding:4px 10px 8px }
+.layout-item {
+  display:flex; align-items:center; gap:6px;
+  padding:5px 6px; border-radius:5px;
+  font-size:.72em; color:var(--text); letter-spacing:.04em;
+  cursor:grab; user-select:none;
+  border:1px solid transparent;
+  transition:background .12s, border-color .12s;
+}
+.layout-item:hover { background:rgba(0,255,229,.05) }
+.layout-item.dragging { opacity:.5; border-color:var(--accent) }
+.layout-item .drag-handle {
+  color:var(--muted); font-size:.9em; cursor:grab; flex-shrink:0; line-height:1;
+}
+.layout-item .layout-item-label { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.layout-inline-toggle {
+  background:transparent; border:1px solid var(--border); border-radius:4px;
+  color:var(--muted); font-size:.6em; padding:2px 5px; cursor:pointer;
+  letter-spacing:.06em; transition:all .15s; flex-shrink:0; white-space:nowrap;
+}
+.layout-inline-toggle:hover { border-color:var(--accent); color:var(--accent) }
+.layout-inline-toggle.active { background:rgba(0,255,229,.1); border-color:var(--accent); color:var(--accent) }
+.layout-apply-btn {
+  display:block; width:100%; margin-top:6px; padding:6px 0;
+  font-family:'Orbitron',sans-serif; font-size:.58em; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase;
+  background:rgba(0,255,229,.08); border:1px solid var(--accent);
+  border-radius:5px; color:var(--accent); cursor:pointer;
+  transition:background .15s;
+}
+.layout-apply-btn:hover { background:rgba(0,255,229,.18) }
+.layout-drop-indicator {
+  height:2px; background:var(--accent); border-radius:1px;
+  margin:1px 0; opacity:0; transition:opacity .1s;
+}
+.layout-drop-indicator.active { opacity:1 }
+
 /* Section card title */
 .card-title { font-family:'Orbitron',sans-serif; font-size:clamp(.52em,.6em,1em); letter-spacing:.18em; color:var(--muted); margin-bottom:10px; text-transform:uppercase; display:flex; align-items:center; gap:5px }
 
@@ -691,6 +773,26 @@ body.preset-list .stat-box {
 }
 /* Spacing between all cards is slightly increased in list mode */
 body.preset-list { --gap:20px }
+
+/* ============================================================
+   CUSTOM LAYOUT — dynamic container arrangement
+   ============================================================ */
+.layout-row {
+  display:grid; gap:var(--gap); margin-bottom:var(--gap);
+}
+.layout-row.cols-1 { grid-template-columns:1fr }
+.layout-row.cols-2 { grid-template-columns:1fr 1fr }
+.layout-row.cols-3 { grid-template-columns:1fr 1fr 1fr }
+@media(max-width:660px) {
+  .layout-row.cols-2, .layout-row.cols-3 { grid-template-columns:1fr }
+}
+
+/* When using custom layout, hide the default structure wrappers */
+body.preset-custom .charts-top,
+body.preset-custom .section-divider,
+body.preset-custom .legend-row { display:none }
+body.preset-custom #customLayoutContainer { display:block }
+#customLayoutContainer { display:none }
 </style>
 </head>
 <body>
@@ -722,12 +824,15 @@ body.preset-list { --gap:20px }
       <svg viewBox="0 0 16 16"><path d="M8 10.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm5.85-1.85-.01-.07a5.6 5.6 0 0 0 0-1.16l.01-.07 1.1-.95a.4.4 0 0 0 .08-.5l-1.05-1.82a.4.4 0 0 0-.49-.17l-1.29.52-.1-.06a5.7 5.7 0 0 0-1-.58l-.08-.03-.2-1.37A.4.4 0 0 0 10.4 2H8.6a.4.4 0 0 0-.4.33l-.2 1.37-.08.03a5.7 5.7 0 0 0-1 .58l-.1.06-1.29-.52a.4.4 0 0 0-.49.17L4 5.84a.4.4 0 0 0 .08.5l1.1.95-.01.07a5.6 5.6 0 0 0 0 1.16l.01.07-1.1.95a.4.4 0 0 0-.08.5L5.05 11.9a.4.4 0 0 0 .49.17l1.29-.52.1.06c.31.22.64.41 1 .58l.08.03.2 1.37c.05.19.22.33.4.33h1.8c.18 0 .35-.14.4-.33l.2-1.37.08-.03c.36-.17.69-.36 1-.58l.1-.06 1.29.52a.4.4 0 0 0 .49-.17l1.05-1.82a.4.4 0 0 0-.08-.5l-1.1-.95z"/></svg>
     </button>
     <div class="settings-dropdown" id="settingsDropdown">
-      <div class="settings-section-label">APPEARANCE PRESET</div>
+      <div class="settings-section-label">QUICK PRESETS</div>
       <button class="preset-btn active" data-preset="dashboard" onclick="applyPreset('dashboard')">
         <span class="preset-icon"></span>Dashboard
       </button>
       <button class="preset-btn" data-preset="list" onclick="applyPreset('list')">
         <span class="preset-icon"></span>List
+      </button>
+      <button class="preset-btn" data-preset="custom" onclick="applyPreset('custom')">
+        <span class="preset-icon" style="position:relative"><span style="position:absolute;left:3px;top:3px;width:5px;height:4px;background:currentColor;border-radius:1px;opacity:.5"></span><span style="position:absolute;right:3px;top:3px;width:5px;height:4px;background:currentColor;border-radius:1px;opacity:.5"></span><span style="position:absolute;left:3px;bottom:3px;right:3px;height:3px;background:currentColor;border-radius:1px;opacity:.5"></span></span>Custom
       </button>
       <div class="settings-section-label" style="margin-top:6px">LABEL SIZE</div>
       <div style="display:flex;align-items:center;gap:8px;padding:4px 10px 8px">
@@ -735,6 +840,13 @@ body.preset-list { --gap:20px }
           style="flex:1;width:auto"
           oninput="updateLabelScale(this.value)"/>
         <span id="labelScaleVal" style="font-size:.72em;color:var(--accent);min-width:28px;text-align:right"></span>
+      </div>
+      <div id="layoutManagerSection" style="display:none">
+        <div class="settings-section-label" style="margin-top:4px">ARRANGE SECTIONS</div>
+        <div class="layout-section" id="layoutItemList"></div>
+        <div style="padding:0 10px 6px">
+          <button class="layout-apply-btn" onclick="applyCustomLayout()">APPLY LAYOUT</button>
+        </div>
       </div>
     </div>
   </div>
@@ -795,15 +907,21 @@ body.preset-list { --gap:20px }
     <div class="chart-title card-title">
       MOOD DISTRIBUTION
       <button class="help-btn" onclick="showHelp('mood')" title="How moods are calculated">?</button>
+      <button class="collapse-btn" onclick="toggleCollapse('pieCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
     </div>
-    <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+    <div class="collapsible-body" id="pieCard-body">
+      <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+    </div>
   </div>
   <div class="chart-card resizable" id="radarCard">
     <div class="chart-title card-title">
       KEYWORD WEB - TOP TERMS
       <button class="help-btn" onclick="showHelp('radar')" title="How the keyword web works">?</button>
+      <button class="collapse-btn" onclick="toggleCollapse('radarCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
     </div>
-    <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+    <div class="collapsible-body" id="radarCard-body">
+      <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+    </div>
   </div>
 </div>
 
@@ -812,8 +930,11 @@ body.preset-list { --gap:20px }
   <div class="card-title">
     CONSENSUS BUBBLES - SIZE IS FREQUENCY, COLOR IS MOOD
     <button class="help-btn" onclick="showHelp('bubbles')" title="How bubbles work">?</button>
+    <button class="collapse-btn" onclick="toggleCollapse('bubbleCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
   </div>
-  <canvas id="bubbleCanvas"></canvas>
+  <div class="collapsible-body" id="bubbleCard-body">
+    <canvas id="bubbleCanvas"></canvas>
+  </div>
 </div>
 
 <!-- Divider before approval meter -->
@@ -826,32 +947,45 @@ body.preset-list { --gap:20px }
     <div class="approval-label-center">
       APPROVAL METER
       <button class="help-btn" onclick="showHelp('approval')" title="How approval is measured">?</button>
+      <button class="collapse-btn" onclick="toggleCollapse('approvalCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
     </div>
     <div class="approval-label-right">APPROVAL</div>
   </div>
-  <div class="approval-track-wrap">
-    <div class="approval-track"></div>
-    <div class="approval-ticks" id="approvalTicks"></div>
-    <div class="approval-thumb" id="approvalThumb" style="left:50%"></div>
+  <div class="collapsible-body" id="approvalCard-body">
+    <div class="approval-track-wrap">
+      <div class="approval-track"></div>
+      <div class="approval-ticks" id="approvalTicks"></div>
+      <div class="approval-thumb" id="approvalThumb" style="left:50%"></div>
+    </div>
+    <div class="approval-score" id="approvalScore">-</div>
+    <div class="approval-verdict" id="approvalVerdict">waiting for messages</div>
+    <div class="approval-mini" id="approvalMini"></div>
   </div>
-  <div class="approval-score" id="approvalScore">-</div>
-  <div class="approval-verdict" id="approvalVerdict">waiting for messages</div>
-  <div class="approval-mini" id="approvalMini"></div>
 </div>
 
 <!-- Divider before timeline -->
 <div class="section-divider"></div>
 
-<!-- TIMELINE -->
-<div class="timeline-card resizable" id="timelineCard">
+<!-- TIMELINE — LINEAR VIEW -->
+<div class="timeline-card resizable" id="timelineLinearCard">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-    <div class="card-title" style="margin-bottom:0">MOOD TIMELINE - 2 MIN ROLLING WINDOW</div>
-    <div class="timeline-controls" style="margin-bottom:0">
-      <button class="scale-toggle active" id="scaleLinearBtn" onclick="setTimelineScale('linear')">LINEAR</button>
-      <button class="scale-toggle" id="scaleLogBtn" onclick="setTimelineScale('log')">LOG</button>
-    </div>
+    <div class="card-title" style="margin-bottom:0">MOOD TIMELINE — LINEAR</div>
+    <button class="collapse-btn" onclick="toggleCollapse('timelineLinearCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
   </div>
-  <div class="timeline-wrap"><canvas id="timelineChart"></canvas></div>
+  <div class="collapsible-body" id="timelineLinearCard-body">
+    <div class="timeline-wrap"><canvas id="timelineLinearChart"></canvas></div>
+  </div>
+</div>
+
+<!-- TIMELINE — LOG VIEW -->
+<div class="timeline-card resizable" id="timelineLogCard">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+    <div class="card-title" style="margin-bottom:0">MOOD TIMELINE — LOG SCALE</div>
+    <button class="collapse-btn" onclick="toggleCollapse('timelineLogCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
+  </div>
+  <div class="collapsible-body" id="timelineLogCard-body">
+    <div class="timeline-wrap"><canvas id="timelineLogChart"></canvas></div>
+  </div>
 </div>
 
 <div class="legend-row">
@@ -864,12 +998,25 @@ body.preset-list { --gap:20px }
 </div>
 
 <div class="feed-card resizable" id="feedCard">
-  <div class="feed-title">
-    LIVE FEED
-    <button class="help-btn" onclick="showHelp('feed')" title="About the live feed">?</button>
+  <div class="feed-title-row">
+    <div class="feed-title" style="margin-bottom:0">
+      LIVE FEED
+      <button class="help-btn" onclick="showHelp('feed')" title="About the live feed">?</button>
+    </div>
+    <div class="feed-font-slider-wrap" title="Adjust live feed font size">
+      <span class="feed-font-slider-label">SIZE</span>
+      <input type="range" id="feedFontSlider" min="0.55" max="1.3" step="0.05" value="0.72"
+        oninput="updateFeedFontSize(this.value)"/>
+      <span class="feed-font-slider-val" id="feedFontVal">0.72</span>
+    </div>
+    <button class="collapse-btn" onclick="toggleCollapse('feedCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
   </div>
-  <div id="feedList"></div>
+  <div class="collapsible-body" id="feedCard-body">
+    <div id="feedList"></div>
+  </div>
 </div>
+
+<div id="customLayoutContainer"></div>
 
 </div><!-- .app -->
 
@@ -899,9 +1046,10 @@ function applyPreset(preset) {
   // Resize bubble canvas after layout reflows
   setTimeout(resizeBubbleCanvas, 50);
   // Resize charts
-  if (pieChart)      pieChart.resize();
-  if (radarChart)    radarChart.resize();
-  if (timelineChart) timelineChart.resize();
+  if (pieChart)              pieChart.resize();
+  if (radarChart)            radarChart.resize();
+  if (timelineLinearChart)   timelineLinearChart.resize();
+  if (timelineLogChart)      timelineLogChart.resize();
 }
 
 // Close settings dropdown when clicking outside
@@ -1344,8 +1492,7 @@ function updateLabelScale(v) {
 // =============================================================
 //  CHARTS
 // =============================================================
-let pieChart, radarChart, timelineChart;
-let timelineScaleMode = 'linear'; // 'linear' | 'log'
+let pieChart, radarChart, timelineLinearChart, timelineLogChart;
 
 const pieLabelPlugin = {
   id: 'pieLabels',
@@ -1438,18 +1585,20 @@ function initCharts() {
     miniContainer.appendChild(b);
   }
 
-  // Timeline chart
+  // Timeline charts — one linear, one log
   const moodsForTL = MOODS.filter(m => m !== 'neutral');
-  timelineChart = new Chart(document.getElementById('timelineChart'), {
+
+  function makeTimelineDatasets() {
+    return moodsForTL.map(m => ({
+      label:m.toUpperCase(), data:Array(TIMELINE_POINTS).fill(null),
+      borderColor:MOOD_COLORS[m], backgroundColor:'transparent',
+      borderWidth:2, pointRadius:0, tension:0.45, fill:false
+    }));
+  }
+
+  timelineLinearChart = new Chart(document.getElementById('timelineLinearChart'), {
     type:'line',
-    data:{
-      labels:Array(TIMELINE_POINTS).fill(''),
-      datasets:moodsForTL.map(m => ({
-        label:m.toUpperCase(), data:Array(TIMELINE_POINTS).fill(null),
-        borderColor:MOOD_COLORS[m], backgroundColor:'transparent',
-        borderWidth:2, pointRadius:0, tension:0.45, fill:false
-      }))
-    },
+    data:{ labels:Array(TIMELINE_POINTS).fill(''), datasets:makeTimelineDatasets() },
     options:{
       responsive:true, maintainAspectRatio:false, animation:false,
       interaction:{mode:'index',intersect:false},
@@ -1468,46 +1617,38 @@ function initCharts() {
     }
   });
 
+  timelineLogChart = new Chart(document.getElementById('timelineLogChart'), {
+    type:'line',
+    data:{ labels:Array(TIMELINE_POINTS).fill(''), datasets:makeTimelineDatasets() },
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#2e2e58',maxRotation:0,font:{size:8}}},
+        y:{
+          type:'logarithmic', min:0.5, max:100,
+          grid:{color:'rgba(255,255,255,.04)'},
+          ticks:{
+            color:'#2e2e58',font:{size:8},
+            callback(v) {
+              if (v === 0.5) return '<1%';
+              if ([1,2,5,10,20,50,100].includes(v)) return v + '%';
+              return null;
+            }
+          }
+        }
+      },
+      plugins:{
+        legend:{display:true,position:'top',labels:{color:'#4a4a7a',font:{size:9,family:'Orbitron'},boxWidth:10,padding:7}},
+        tooltip:{backgroundColor:'#0d0d1f',borderColor:'#1a1a36',borderWidth:1}
+      }
+    }
+  });
+
   initBubbles();
 }
 
-// =============================================================
-//  TIMELINE SCALE TOGGLE
-//  Log scale: floor data at 0.5 to avoid log(0)=-inf.
-//  Linear scale: data pushed as-is, y from 0-100.
-// =============================================================
-function setTimelineScale(mode) {
-  if (!timelineChart) return;
-  timelineScaleMode = mode;
-
-  document.getElementById('scaleLinearBtn').classList.toggle('active', mode === 'linear');
-  document.getElementById('scaleLogBtn').classList.toggle('active', mode === 'log');
-
-  if (mode === 'log') {
-    timelineChart.options.scales.y = {
-      type: 'logarithmic',
-      min: 0.5,    // floor — prevents -Infinity at zero
-      max: 100,
-      grid: { color:'rgba(255,255,255,.04)' },
-      ticks: {
-        color:'#2e2e58', font:{ size:8 },
-        // Show clean tick labels: 0.5 shows as <1, others as-is
-        callback(v) {
-          if (v === 0.5) return '<1%';
-          if ([1,2,5,10,20,50,100].includes(v)) return v + '%';
-          return null;
-        }
-      }
-    };
-  } else {
-    timelineChart.options.scales.y = {
-      type: 'linear', min:0, max:100,
-      grid: { color:'rgba(255,255,255,.04)' },
-      ticks: { color:'#2e2e58', font:{ size:8 }, callback: v => v + '%' }
-    };
-  }
-  timelineChart.update();
-}
+// setTimelineScale removed — two dedicated timeline charts now handle linear/log separately
 
 // =============================================================
 //  BUBBLE PHYSICS ENGINE — spring gravity
@@ -1554,10 +1695,11 @@ function updateBubbles(kwList) {
   if (!W || !H) return;
   const top = kwList.slice(0, 22);
   const maxScore = top[0]?.score || 1;
+  const maxR = Math.min(W, H) * 0.42; // never exceed ~42% of smallest dimension
   const existing = new Map(bubbles.map(b => [b.label, b]));
   const next = [];
   for (const { label, score, mood } of top) {
-    const targetR = 16 + (score / maxScore) * 55;
+    const targetR = Math.min(16 + (score / maxScore) * 55, maxR);
     if (existing.has(label)) {
       const b = existing.get(label);
       b.targetR = targetR; b.mood = mood; b.score = score;
@@ -1591,7 +1733,10 @@ function bubAnimLoop() {
     const spd = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
     if (spd > 1.5) { b.vx = b.vx/spd*1.5; b.vy = b.vy/spd*1.5; }
     b.x += b.vx; b.y += b.vy;
-    const pad = 2;
+    // Clamp radius to fit within canvas
+    const effR = Math.min(b.r, Math.min(W, H) * 0.48);
+    b.r = effR;
+    const pad = 4;
     if (b.x-b.r<pad)    { b.x=b.r+pad;     b.vx= Math.abs(b.vx)*0.3; }
     if (b.x+b.r>W-pad)  { b.x=W-b.r-pad;   b.vx=-Math.abs(b.vx)*0.3; }
     if (b.y-b.r<pad)    { b.y=b.r+pad;     b.vy= Math.abs(b.vy)*0.3; }
@@ -1750,16 +1895,29 @@ function updateVisuals() {
 function pushTimelineSnapshot() {
   const pct = computeWeightedMoods(Date.now());
   const label = new Date().toLocaleTimeString([],{minute:'2-digit',second:'2-digit'});
-  timelineChart.data.labels.push(label); timelineChart.data.labels.shift();
-  MOODS.filter(m=>m!=='neutral').forEach((m,i)=>{
-    // In log mode, floor values at 0.5 to avoid log(0).
-    // In linear mode push 0 as usual.
-    let val = pct ? Math.round(pct[m]) : 0;
-    if (timelineScaleMode === 'log' && val < 0.5) val = 0.5;
-    timelineChart.data.datasets[i].data.push(val);
-    timelineChart.data.datasets[i].data.shift();
-  });
-  timelineChart.update('none');
+
+  // Push to linear timeline
+  if (timelineLinearChart) {
+    timelineLinearChart.data.labels.push(label); timelineLinearChart.data.labels.shift();
+    MOODS.filter(m=>m!=='neutral').forEach((m,i)=>{
+      const val = pct ? Math.round(pct[m]) : 0;
+      timelineLinearChart.data.datasets[i].data.push(val);
+      timelineLinearChart.data.datasets[i].data.shift();
+    });
+    timelineLinearChart.update('none');
+  }
+
+  // Push to log timeline (floor at 0.5 to avoid log(0))
+  if (timelineLogChart) {
+    timelineLogChart.data.labels.push(label); timelineLogChart.data.labels.shift();
+    MOODS.filter(m=>m!=='neutral').forEach((m,i)=>{
+      let val = pct ? Math.round(pct[m]) : 0;
+      if (val < 0.5) val = 0.5;
+      timelineLogChart.data.datasets[i].data.push(val);
+      timelineLogChart.data.datasets[i].data.shift();
+    });
+    timelineLogChart.update('none');
+  }
 }
 
 // =============================================================
@@ -2062,7 +2220,7 @@ function setStatus(html, cls) {
 // =============================================================
 const RESIZE_STORAGE_KEY = 'moodradar_sizes_v1';
 const RESIZE_DEBOUNCE_MS = 180;
-const RESIZABLE_IDS = ['pieCard','radarCard','bubbleCard','timelineCard','feedCard'];
+const RESIZABLE_IDS = ['pieCard','radarCard','bubbleCard','timelineLinearCard','timelineLogCard','feedCard'];
 
 function saveSizes() {
   const sizes = {};
@@ -2084,10 +2242,11 @@ function restoreSizes() {
 }
 
 function notifyChartResize(cardId) {
-  if (cardId === 'pieCard'      && pieChart)      pieChart.resize();
-  if (cardId === 'radarCard'    && radarChart)     radarChart.resize();
-  if (cardId === 'timelineCard' && timelineChart)  timelineChart.resize();
-  if (cardId === 'bubbleCard')                     resizeBubbleCanvas();
+  if (cardId === 'pieCard'              && pieChart)             pieChart.resize();
+  if (cardId === 'radarCard'            && radarChart)           radarChart.resize();
+  if (cardId === 'timelineLinearCard'   && timelineLinearChart)  timelineLinearChart.resize();
+  if (cardId === 'timelineLogCard'      && timelineLogChart)     timelineLogChart.resize();
+  if (cardId === 'bubbleCard')                                   resizeBubbleCanvas();
 }
 
 function addResizeHandle(el) {
@@ -2161,13 +2320,267 @@ function setupResizeObserver() {
   }
 }
 
+// =============================================================
+//  COLLAPSE / EXPAND
+// =============================================================
+const COLLAPSE_STORAGE_KEY = 'moodradar_collapsed_v1';
+
+function loadCollapsedState() {
+  try { return JSON.parse(localStorage.getItem(COLLAPSE_STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+function saveCollapsedState(state) {
+  try { localStorage.setItem(COLLAPSE_STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function toggleCollapse(cardId) {
+  const body = document.getElementById(cardId + '-body');
+  const btn = body?.previousElementSibling?.querySelector?.('.collapse-btn') ||
+              document.querySelector(`#${cardId} .collapse-btn`);
+  if (!body) return;
+  const isCollapsed = body.classList.toggle('collapsed');
+  if (btn) btn.classList.toggle('collapsed', isCollapsed);
+  const state = loadCollapsedState();
+  state[cardId] = isCollapsed;
+  saveCollapsedState(state);
+  // After expand, notify chart resize
+  if (!isCollapsed) setTimeout(() => notifyChartResize(cardId), 360);
+}
+
+function restoreCollapsedStates() {
+  const state = loadCollapsedState();
+  for (const [cardId, collapsed] of Object.entries(state)) {
+    if (!collapsed) continue;
+    const body = document.getElementById(cardId + '-body');
+    const btn = document.querySelector(`#${cardId} .collapse-btn`);
+    if (body) body.classList.add('collapsed');
+    if (btn) btn.classList.add('collapsed');
+  }
+}
+
+// =============================================================
+//  FEED FONT SIZE SLIDER
+// =============================================================
+const FEED_FONT_KEY = 'moodradar_feedfont_v1';
+let feedFontSize = (() => {
+  try { const v = parseFloat(localStorage.getItem(FEED_FONT_KEY)); return isNaN(v) ? 0.72 : Math.min(1.3, Math.max(0.55, v)); }
+  catch(e) { return 0.72; }
+})();
+
+function updateFeedFontSize(v) {
+  feedFontSize = Math.min(1.3, Math.max(0.55, parseFloat(v)));
+  document.getElementById('feedFontVal').textContent = feedFontSize.toFixed(2);
+  try { localStorage.setItem(FEED_FONT_KEY, feedFontSize); } catch(e) {}
+  applyFeedFontSize();
+}
+
+function applyFeedFontSize() {
+  const list = document.getElementById('feedList');
+  if (!list) return;
+  list.style.fontSize = feedFontSize + 'em';
+  list.style.lineHeight = (1.4 + (feedFontSize - 0.72) * 0.6).toFixed(2);
+}
+
+// =============================================================
+//  LAYOUT MANAGER — reorder + inline/stacked controls
+// =============================================================
+const LAYOUT_STORAGE_KEY = 'moodradar_layout_v1';
+const LAYOUT_SECTIONS = [
+  { id:'pieCard',             label:'Mood Distribution' },
+  { id:'radarCard',           label:'Keyword Web' },
+  { id:'bubbleCard',          label:'Consensus Bubbles' },
+  { id:'approvalCard',        label:'Approval Meter' },
+  { id:'timelineLinearCard',  label:'Timeline (Linear)' },
+  { id:'timelineLogCard',     label:'Timeline (Log)' },
+  { id:'feedCard',            label:'Live Feed' },
+];
+
+let layoutOrder = LAYOUT_SECTIONS.map(s => s.id);
+let layoutInline = {}; // id -> true means "inline with next"
+
+function loadLayout() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LAYOUT_STORAGE_KEY));
+    if (saved && saved.order) {
+      // Validate all IDs exist
+      const validIds = new Set(LAYOUT_SECTIONS.map(s => s.id));
+      const filtered = saved.order.filter(id => validIds.has(id));
+      // Add any missing IDs at end
+      for (const s of LAYOUT_SECTIONS) { if (!filtered.includes(s.id)) filtered.push(s.id); }
+      layoutOrder = filtered;
+      layoutInline = saved.inline || {};
+    }
+  } catch(e) {}
+}
+
+function saveLayout() {
+  try { localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify({ order:layoutOrder, inline:layoutInline })); } catch(e) {}
+}
+
+function renderLayoutManager() {
+  const container = document.getElementById('layoutItemList');
+  container.innerHTML = '';
+  for (let i = 0; i < layoutOrder.length; i++) {
+    const id = layoutOrder[i];
+    const section = LAYOUT_SECTIONS.find(s => s.id === id);
+    if (!section) continue;
+    const item = document.createElement('div');
+    item.className = 'layout-item';
+    item.draggable = true;
+    item.dataset.idx = i;
+    const isInline = !!layoutInline[id];
+    item.innerHTML = `<span class="drag-handle">&#x2630;</span>` +
+      `<span class="layout-item-label">${section.label}</span>` +
+      `<button class="layout-inline-toggle ${isInline?'active':''}" onclick="toggleLayoutInline('${id}',this)" title="Pair with next section side-by-side">${isInline?'SIDE':'STACK'}</button>`;
+
+    item.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', i);
+      item.classList.add('dragging');
+    });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    item.addEventListener('dragover', e => { e.preventDefault(); item.style.borderColor='var(--accent)'; });
+    item.addEventListener('dragleave', () => { item.style.borderColor='transparent'; });
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      item.style.borderColor='transparent';
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIdx = parseInt(item.dataset.idx);
+      if (fromIdx === toIdx) return;
+      const [moved] = layoutOrder.splice(fromIdx, 1);
+      layoutOrder.splice(toIdx, 0, moved);
+      saveLayout();
+      renderLayoutManager();
+    });
+    container.appendChild(item);
+  }
+}
+
+function toggleLayoutInline(id, btn) {
+  layoutInline[id] = !layoutInline[id];
+  btn.classList.toggle('active', layoutInline[id]);
+  btn.textContent = layoutInline[id] ? 'SIDE' : 'STACK';
+  saveLayout();
+}
+
+function applyCustomLayout() {
+  document.body.classList.remove('preset-list');
+  document.body.classList.add('preset-custom');
+  currentPreset = 'custom';
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === 'custom');
+  });
+
+  const container = document.getElementById('customLayoutContainer');
+  container.innerHTML = '';
+
+  // Group sections into rows: if a section has inline=true, it pairs with the next
+  let i = 0;
+  while (i < layoutOrder.length) {
+    const id = layoutOrder[i];
+    const el = document.getElementById(id);
+    if (!el) { i++; continue; }
+
+    if (layoutInline[id] && i + 1 < layoutOrder.length) {
+      // Create a 2-col row
+      const row = document.createElement('div');
+      row.className = 'layout-row cols-2';
+      row.appendChild(el);
+      const nextId = layoutOrder[i+1];
+      const nextEl = document.getElementById(nextId);
+      if (nextEl) row.appendChild(nextEl);
+      container.appendChild(row);
+      i += 2;
+    } else {
+      const row = document.createElement('div');
+      row.className = 'layout-row cols-1';
+      row.appendChild(el);
+      container.appendChild(row);
+      i++;
+    }
+  }
+
+  // Add legend row
+  const legendRow = document.querySelector('.legend-row');
+  if (legendRow) container.appendChild(legendRow);
+
+  document.getElementById('settingsDropdown').classList.remove('open');
+  setTimeout(() => {
+    resizeBubbleCanvas();
+    if (pieChart) pieChart.resize();
+    if (radarChart) radarChart.resize();
+    if (timelineLinearChart) timelineLinearChart.resize();
+    if (timelineLogChart) timelineLogChart.resize();
+  }, 50);
+}
+
+// Override applyPreset to handle 'custom' and restore default DOM for dashboard/list
+const _origApplyPreset = applyPreset;
+applyPreset = function(preset) {
+  if (preset === 'custom') {
+    document.getElementById('layoutManagerSection').style.display = 'block';
+    renderLayoutManager();
+    applyCustomLayout();
+    return;
+  }
+  document.getElementById('layoutManagerSection').style.display = 'none';
+  document.body.classList.remove('preset-custom');
+
+  // Restore elements to their default containers if they were moved
+  restoreDefaultDOM();
+
+  _origApplyPreset(preset);
+};
+
+function restoreDefaultDOM() {
+  const chartsTop = document.querySelector('.charts-top');
+  const app = document.querySelector('.app');
+  const customContainer = document.getElementById('customLayoutContainer');
+
+  // Move cards back to their original positions
+  const pieCard = document.getElementById('pieCard');
+  const radarCard = document.getElementById('radarCard');
+  if (pieCard && chartsTop && !chartsTop.contains(pieCard)) {
+    chartsTop.insertBefore(pieCard, chartsTop.firstChild);
+  }
+  if (radarCard && chartsTop && !chartsTop.contains(radarCard)) {
+    chartsTop.appendChild(radarCard);
+  }
+
+  // Restore other cards before customLayoutContainer
+  const orderedCards = ['bubbleCard','approvalCard','timelineLinearCard','timelineLogCard','feedCard'];
+  for (const id of orderedCards) {
+    const el = document.getElementById(id);
+    if (el && !app.contains(el)) continue; // shouldn't happen
+    if (el && el.parentElement === customContainer || el?.parentElement?.parentElement === customContainer) {
+      app.insertBefore(el, customContainer);
+    }
+  }
+
+  // Restore legend row
+  const legendRow = document.querySelector('.legend-row');
+  if (legendRow) app.insertBefore(legendRow, document.getElementById('feedCard'));
+
+  // Restore section dividers visibility
+  customContainer.innerHTML = '';
+}
+
 window.onload = function() {
   // Init label scale slider with saved/default value
   const slider = document.getElementById('labelScaleSlider');
   if (slider) slider.value = labelScale;
   document.getElementById('labelScaleVal').textContent = labelScale.toFixed(1) + 'x';
 
+  // Init feed font size slider
+  const feedSlider = document.getElementById('feedFontSlider');
+  if (feedSlider) feedSlider.value = feedFontSize;
+  document.getElementById('feedFontVal').textContent = feedFontSize.toFixed(2);
+  applyFeedFontSize();
+
+  // Load layout config
+  loadLayout();
+
   restoreSizes();
+  restoreCollapsedStates();
   initCharts();
   setupResizeObserver();
 };
