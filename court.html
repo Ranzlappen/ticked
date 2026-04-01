@@ -5,112 +5,181 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Autism-Friendly General Court Procedure Template</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&amp;display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
         :root {
-            --primary: #0066cc;
-            --accent: #00aa88;
+            --primary: #1a56db;
+            --primary-light: #3b82f6;
+            --accent: #0d9488;
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --text: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --info-bg: #eff6ff;
+            --info-border: #bfdbfe;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
+            --radius: 8px;
         }
-        
+
         body {
-            font-family: 'Roboto Mono', monospace;
-            line-height: 1.6;
-            max-width: 1100px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
-            background: #f8f9fa;
-            color: #222;
+            padding: 32px 20px;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
         }
-        
+
         header {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: var(--card);
+            padding: 40px 32px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
         }
-        
+
         h1 {
             color: var(--primary);
-            margin: 0 0 10px 0;
-            font-size: 2.2rem;
-        }
-        
-        .subtitle {
-            color: #555;
-            font-size: 1.1rem;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-        
-        .phase-header {
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            color: white;
-            padding: 18px 24px;
-            font-size: 1.3rem;
+            margin: 0 0 8px 0;
+            font-size: 1.75rem;
             font-weight: 700;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+        }
+
+        .container {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .container:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .phase-header {
+            background: var(--card);
+            color: var(--text);
+            padding: 16px 24px;
+            font-size: 1.05rem;
+            font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 12px;
+            user-select: none;
+            transition: background-color 0.15s ease;
+            position: relative;
         }
-        
+
+        .phase-header::after {
+            content: '';
+            position: absolute;
+            right: 24px;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            border-right: 2px solid var(--text-muted);
+            border-bottom: 2px solid var(--text-muted);
+            transform: translateY(-60%) rotate(45deg);
+            transition: transform 0.25s ease;
+        }
+
+        .open .phase-header::after {
+            transform: translateY(-30%) rotate(-135deg);
+        }
+
         .phase-header:hover {
-            filter: brightness(1.1);
+            background: var(--bg);
         }
-        
+
         .phase-content {
-            padding: 24px;
-            display: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
         }
-        
+
+        .phase-content-inner {
+            padding: 0 24px 24px 24px;
+            border-top: 1px solid var(--border);
+        }
+
         .open .phase-content {
-            display: block;
+            max-height: 3000px;
         }
-        
+
         details summary {
             list-style: none;
         }
-        
+
         details summary::-webkit-details-marker {
             display: none;
         }
-        
+
         .nav-bar {
-            background: white;
-            padding: 12px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            background: var(--card);
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        
+
         .nav-btn {
+            background: transparent;
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
             background: var(--primary);
             color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-            transition: all 0.2s;
         }
-        
-        .nav-btn:hover {
-            background: var(--accent);
-            transform: translateY(-2px);
+
+        .nav-btn:active {
+            transform: scale(0.97);
         }
-        
+
         .section-title {
             font-size: 1.4rem;
             color: var(--primary);
@@ -118,33 +187,141 @@
             padding-bottom: 8px;
             border-bottom: 3px solid var(--accent);
         }
-        
+
+        .phase-content p {
+            margin: 16px 0 8px 0;
+        }
+
+        .phase-content p > strong:first-child {
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
         ul, ol {
             padding-left: 24px;
+            margin: 4px 0 16px 0;
         }
-        
-        li {
+
+        ol {
+            counter-reset: step-counter;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ol li {
+            counter-increment: step-counter;
+            padding-left: 32px;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        ol li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 1px;
+            width: 22px;
+            height: 22px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        ul li {
+            position: relative;
+            padding-left: 16px;
             margin-bottom: 8px;
         }
-        
-        .code-info {
-            background: #e6f7ff;
-            border-left: 6px solid var(--primary);
-            padding: 16px;
-            margin: 20px 0;
-            border-radius: 8px;
+
+        ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
         }
-        
+
+        .code-info {
+            background: var(--info-bg);
+            border: 1px solid var(--info-border);
+            padding: 20px;
+            margin: 20px 0 0 0;
+            border-radius: var(--radius);
+            font-size: 0.88rem;
+            line-height: 1.8;
+            text-align: left;
+        }
+
+        .code-info code {
+            font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+            background: #dbeafe;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
         footer {
             text-align: center;
-            padding: 20px;
-            color: #666;
-            font-size: 0.9rem;
+            padding: 32px 20px 16px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            margin-top: 24px;
         }
-        
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            h1 { font-size: 1.8rem; }
+
+        footer strong {
+            color: var(--text);
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 16px 12px;
+            }
+
+            h1 {
+                font-size: 1.35rem;
+            }
+
+            header {
+                padding: 24px 20px;
+            }
+
+            .nav-bar {
+                gap: 6px;
+                padding: 10px 12px;
+            }
+
+            .nav-btn {
+                padding: 6px 12px;
+                font-size: 0.78rem;
+            }
+
+            .phase-header {
+                padding: 14px 16px;
+                padding-right: 40px;
+                font-size: 0.95rem;
+            }
+
+            .phase-content-inner {
+                padding: 0 16px 20px 16px;
+            }
         }
     </style>
 </head>
@@ -169,15 +346,16 @@
     <button class="nav-btn" onclick="document.getElementById('trial').scrollIntoView({behavior:'smooth'})">📋 Trial</button>
     <button class="nav-btn" onclick="document.getElementById('resolution').scrollIntoView({behavior:'smooth'})">📋 Resolution</button>
     <button class="nav-btn" onclick="document.getElementById('appeals').scrollIntoView({behavior:'smooth'})">📋 Appeals</button>
-    <button onclick="window.location.reload()" class="nav-btn" style="background:#555;">🔄 Reset All</button>
+    <button onclick="window.location.reload()" class="nav-btn" style="background:transparent;color:#6b7280;border-color:#9ca3af;">🔄 Reset All</button>
 </div>
 
 <!-- Adaptation Instructions -->
 <div class="container">
-    <div class="phase-header" onclick="this.parentElement.classList.toggle('open')">
+    <div class="phase-header">
         <span>⚙️ Adaptation Instructions</span>
     </div>
     <div class="phase-content">
+        <div class="phase-content-inner">
         <p><strong>Select one participant perspective before use:</strong></p>
         <ul>
             <li>Defendant/Accused (criminal proceedings)</li>
@@ -186,26 +364,28 @@
             <li>Other role (e.g., juror)</li>
         </ul>
         <p>Replace every <strong>[ROLE]</strong> placeholder in your mind with your chosen perspective.<br>
-        Use the “Procedural Variations &amp; Considerations” section in each phase to customize for your role and case type (civil or criminal).</p>
+        Use the "Procedural Variations &amp; Considerations" section in each phase to customize for your role and case type (civil or criminal).</p>
         <p><strong>Quick Navigation</strong> buttons at the top jump instantly to any phase.</p>
+        </div>
     </div>
 </div>
 
 <!-- PHASE 1 -->
 <div id="init" class="container">
-    <div class="phase-header" onclick="this.parentElement.classList.toggle('open')">
+    <div class="phase-header">
         <span>📋 Case Initiation Phase</span>
     </div>
     <div class="phase-content">
+        <div class="phase-content-inner">
         <p><strong>Purpose</strong>: The purpose is to formally start the court case by submitting the initial document that states the claims or charges to the court.</p>
-        
+
         <p><strong>Chronological Steps</strong>:</p>
         <ol>
             <li>The initiating party prepares and files the initial pleading with the court clerk.</li>
             <li>The court reviews the filing for completeness and assigns a unique case number.</li>
             <li>The court issues official notice of the case to the responding party.</li>
         </ol>
-        
+
         <p><strong>Participants</strong>:</p>
         <ul>
             <li>Court clerk: receives and processes the filing.</li>
@@ -213,10 +393,10 @@
             <li>Responding party: receives notice later in the process.</li>
             <li>Judge: may review the filing if immediate action is requested.</li>
         </ul>
-        
+
         <p><strong>Environmental and Interaction Characteristics</strong>:</p>
-        <p>The phase occurs at the court clerk’s office, by mail, or through an electronic filing system. Typical duration is one to several days. Noise levels are low. Language used consists of written legal terms. Social expectations require formal written submissions with no direct interaction unless filing in person.</p>
-        
+        <p>The phase occurs at the court clerk's office, by mail, or through an electronic filing system. Typical duration is one to several days. Noise levels are low. Language used consists of written legal terms. Social expectations require formal written submissions with no direct interaction unless filing in person.</p>
+
         <p><strong>Preparation and Conduct Requirements</strong>:</p>
         <ul>
             <li>Obtain the correct initial document form for the case type.</li>
@@ -225,7 +405,7 @@
             <li>File within any applicable time limit.</li>
             <li>[ROLE] confirms receipt of any notice sent by the court.</li>
         </ul>
-        
+
         <p><strong>Procedural Variations &amp; Considerations</strong>:</p>
         <ul>
             <li>In civil proceedings the plaintiff or petitioner (the party who starts the lawsuit and seeks a remedy) files a complaint (a document that states the facts of the dispute and the requested relief).</li>
@@ -236,17 +416,19 @@
             <li>Jurisdiction difference: federal cases follow the Federal Rules of Civil Procedure or Federal Rules of Criminal Procedure; state cases follow state rules.</li>
             <li>Red flag: failure to file correctly may cause the case to be dismissed or delayed.</li>
         </ul>
+        </div>
     </div>
 </div>
 
 <!-- PHASE 2 -->
 <div id="pretrial" class="container">
-    <div class="phase-header" onclick="this.parentElement.classList.toggle('open')">
+    <div class="phase-header">
         <span>📋 Pre-Trial Phase</span>
     </div>
     <div class="phase-content">
+        <div class="phase-content-inner">
         <p><strong>Purpose</strong>: The purpose is to allow parties to exchange information, file motions, and prepare for trial or resolution without a full trial.</p>
-        
+
         <p><strong>Chronological Steps</strong>:</p>
         <ol>
             <li>The responding party receives service of the initial document.</li>
@@ -255,7 +437,7 @@
             <li>Parties file pre-trial motions (written requests for court orders on specific issues).</li>
             <li>The court may hold pre-trial conferences or hearings.</li>
         </ol>
-        
+
         <p><strong>Participants</strong>:</p>
         <ul>
             <li>Judge: rules on motions and schedules events.</li>
@@ -263,10 +445,10 @@
             <li>[ROLE]: provides information or attends required events.</li>
             <li>Court clerk: maintains the case file.</li>
         </ul>
-        
+
         <p><strong>Environmental and Interaction Characteristics</strong>:</p>
         <p>The phase occurs through written filings, depositions (sworn out-of-court statements), or short court hearings. Typical duration is weeks to months. Noise levels are low to moderate in hearings. Language used is formal legal terminology. Social expectations include timely written responses and respectful courtroom behavior if a hearing occurs.</p>
-        
+
         <p><strong>Preparation and Conduct Requirements</strong>:</p>
         <ul>
             <li>Review all received documents immediately.</li>
@@ -275,7 +457,7 @@
             <li>Attend any scheduled hearings and remain silent unless addressed by the judge.</li>
             <li>[ROLE] notifies the court of any address changes.</li>
         </ul>
-        
+
         <p><strong>Procedural Variations &amp; Considerations</strong>:</p>
         <ul>
             <li>In criminal proceedings the defendant or accused enters a plea (guilty, not guilty, or no contest) at arraignment (the initial formal reading of charges).</li>
@@ -286,17 +468,19 @@
             <li>Jurisdiction difference: some states require mandatory mediation (a facilitated negotiation) before trial.</li>
             <li>Red flag: missing a discovery deadline can result in sanctions (court penalties).</li>
         </ul>
+        </div>
     </div>
 </div>
 
 <!-- PHASE 3 -->
 <div id="trial" class="container">
-    <div class="phase-header" onclick="this.parentElement.classList.toggle('open')">
+    <div class="phase-header">
         <span>📋 Trial Phase</span>
     </div>
     <div class="phase-content">
+        <div class="phase-content-inner">
         <p><strong>Purpose</strong>: The purpose is to present evidence and arguments before the judge or jury so that a decision on the facts and law can be reached.</p>
-        
+
         <p><strong>Chronological Steps</strong>:</p>
         <ol>
             <li>Jury selection occurs if a jury trial is used.</li>
@@ -305,7 +489,7 @@
             <li>Closing arguments are made by each side.</li>
             <li>The judge instructs the jury (if applicable) and the jury or judge deliberates.</li>
         </ol>
-        
+
         <p><strong>Participants</strong>:</p>
         <ul>
             <li>Judge: controls the courtroom and rules on objections.</li>
@@ -314,10 +498,10 @@
             <li>Witnesses: testify under oath.</li>
             <li>[ROLE]: participates according to selected perspective.</li>
         </ul>
-        
+
         <p><strong>Environmental and Interaction Characteristics</strong>:</p>
-        <p>The phase occurs in a formal courtroom with a judge’s bench, tables for parties, witness stand, and seating for observers. Typical duration is one day to several weeks. Noise levels are low except during testimony. Language used is formal and technical. Social expectations include standing when the judge enters or exits, addressing the judge as “Your Honor,” and remaining silent unless speaking under oath or when permitted.</p>
-        
+        <p>The phase occurs in a formal courtroom with a judge's bench, tables for parties, witness stand, and seating for observers. Typical duration is one day to several weeks. Noise levels are low except during testimony. Language used is formal and technical. Social expectations include standing when the judge enters or exits, addressing the judge as "Your Honor," and remaining silent unless speaking under oath or when permitted.</p>
+
         <p><strong>Preparation and Conduct Requirements</strong>:</p>
         <ul>
             <li>Arrive on time and dressed in clean, conservative clothing.</li>
@@ -326,7 +510,7 @@
             <li>Do not discuss the case with jurors or witnesses outside court.</li>
             <li>[ROLE] follows specific instructions given by the judge or attorney.</li>
         </ul>
-        
+
         <p><strong>Procedural Variations &amp; Considerations</strong>:</p>
         <ul>
             <li>Criminal trials require proof beyond a reasonable doubt; civil trials require proof by a preponderance of the evidence (more likely than not).</li>
@@ -336,17 +520,19 @@
             <li>Jurisdiction difference: some cases use bench trials (judge decides without a jury).</li>
             <li>Red flag: any violation of court rules during trial may lead to a mistrial (new trial ordered).</li>
         </ul>
+        </div>
     </div>
 </div>
 
 <!-- PHASE 4 -->
 <div id="resolution" class="container">
-    <div class="phase-header" onclick="this.parentElement.classList.toggle('open')">
+    <div class="phase-header">
         <span>📋 Resolution Phase</span>
     </div>
     <div class="phase-content">
-        <p><strong>Purpose</strong>: The purpose is to issue the court’s final decision and, if applicable, impose penalties or remedies.</p>
-        
+        <div class="phase-content-inner">
+        <p><strong>Purpose</strong>: The purpose is to issue the court's final decision and, if applicable, impose penalties or remedies.</p>
+
         <p><strong>Chronological Steps</strong>:</p>
         <ol>
             <li>The judge or jury announces the verdict or judgment.</li>
@@ -354,7 +540,7 @@
             <li>The judge issues the final order or sentence.</li>
             <li>The court may set deadlines for compliance.</li>
         </ol>
-        
+
         <p><strong>Participants</strong>:</p>
         <ul>
             <li>Judge: announces and signs the final order.</li>
@@ -362,10 +548,10 @@
             <li>Attorneys: present arguments on remedies or sentencing.</li>
             <li>[ROLE]: receives the decision and any obligations.</li>
         </ul>
-        
+
         <p><strong>Environmental and Interaction Characteristics</strong>:</p>
         <p>The phase occurs in the courtroom. Typical duration is minutes to one day. Noise levels are low. Language used is formal legal terminology. Social expectations include standing and remaining silent during announcement of the decision.</p>
-        
+
         <p><strong>Preparation and Conduct Requirements</strong>:</p>
         <ul>
             <li>Attend the scheduled session.</li>
@@ -373,7 +559,7 @@
             <li>Note any deadlines stated by the judge.</li>
             <li>[ROLE] asks the attorney for clarification only after the session ends.</li>
         </ul>
-        
+
         <p><strong>Procedural Variations &amp; Considerations</strong>:</p>
         <ul>
             <li>In criminal proceedings the verdict is guilty or not guilty, followed by sentencing (the imposition of punishment) if guilty.</li>
@@ -384,17 +570,19 @@
             <li>Jurisdiction difference: sentencing guidelines apply in federal criminal cases; state cases vary.</li>
             <li>Red flag: failure to comply with the order may result in additional court action.</li>
         </ul>
+        </div>
     </div>
 </div>
 
 <!-- PHASE 5 -->
 <div id="appeals" class="container">
-    <div class="phase-header" onclick="this.parentElement.classList.toggle('open')">
+    <div class="phase-header">
         <span>📋 Appeals Phase</span>
     </div>
     <div class="phase-content">
-        <p><strong>Purpose</strong>: The purpose is to request a higher court to review the lower court’s decision for legal errors.</p>
-        
+        <div class="phase-content-inner">
+        <p><strong>Purpose</strong>: The purpose is to request a higher court to review the lower court's decision for legal errors.</p>
+
         <p><strong>Chronological Steps</strong>:</p>
         <ol>
             <li>The losing party files a notice of appeal within the required time limit.</li>
@@ -402,17 +590,17 @@
             <li>The appellate court may hold oral argument.</li>
             <li>The appellate court issues a written decision.</li>
         </ol>
-        
+
         <p><strong>Participants</strong>:</p>
         <ul>
             <li>Appellate judges: review the record and decide the appeal.</li>
             <li>Attorneys: write briefs and argue points of law.</li>
             <li>[ROLE]: provides information to the attorney if needed.</li>
         </ul>
-        
+
         <p><strong>Environmental and Interaction Characteristics</strong>:</p>
         <p>The phase occurs through written filings and, if scheduled, in an appellate courtroom. Typical duration is months. Noise levels are low. Language used is formal legal terminology focused on legal errors. Social expectations include no new evidence and strict adherence to filing deadlines.</p>
-        
+
         <p><strong>Preparation and Conduct Requirements</strong>:</p>
         <ul>
             <li>File the notice of appeal by the exact deadline.</li>
@@ -420,7 +608,7 @@
             <li>Attend oral argument if scheduled and remain silent unless directed.</li>
             <li>[ROLE] does not communicate directly with appellate judges.</li>
         </ul>
-        
+
         <p><strong>Procedural Variations &amp; Considerations</strong>:</p>
         <ul>
             <li>Appeals are available in both civil and criminal proceedings but are limited to questions of law, not facts.</li>
@@ -430,6 +618,7 @@
             <li>Jurisdiction difference: appeals go to intermediate appellate courts or directly to the state supreme court or U.S. Supreme Court in limited cases.</li>
             <li>Red flag: missing the appeal deadline permanently ends the right to appeal.</li>
         </ul>
+        </div>
     </div>
 </div>
 
@@ -441,16 +630,32 @@
 </footer>
 
 <script>
-    // Simple accordion toggle helper (already handled by CSS, but extra smoothness)
     document.querySelectorAll('.phase-header').forEach(header => {
         header.addEventListener('click', function() {
             const container = this.parentElement;
-            container.classList.toggle('open');
+            const content = container.querySelector('.phase-content');
+
+            if (container.classList.contains('open')) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                requestAnimationFrame(() => {
+                    content.style.maxHeight = '0px';
+                });
+                container.classList.remove('open');
+            } else {
+                container.classList.add('open');
+                content.style.maxHeight = content.scrollHeight + 'px';
+                content.addEventListener('transitionend', function handler() {
+                    if (container.classList.contains('open')) {
+                        content.style.maxHeight = 'none';
+                    }
+                    content.removeEventListener('transitionend', handler);
+                });
+            }
         });
     });
-    
-    console.log('%c✅ Autism-Friendly Court Procedure Template loaded successfully!', 'color:#00aa88; font-size:16px; font-weight:bold');
+
+    console.log('%c✅ Autism-Friendly Court Procedure Template loaded successfully!', 'color:#0d9488; font-size:16px; font-weight:bold');
 </script>
 
 </body>
-</html> 
+</html>
