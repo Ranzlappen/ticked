@@ -1,6 +1,6 @@
 <!--
-CHANGE: Enhanced sliders UX, expanded mood categories, emote rendering, feed alignment, consolidated legend, timeline settings
-REASON: UX improvements — better slider control, more moods, emote support, aligned feeds, configurable timelines
+CHANGE: Removed collapse/expand, centralized legend, responsive width fixes, slider full-width
+REASON: UI cleanup — permanent visibility, unified legend, responsive sliders, consistent layout
 DATE: 2026-04-02
 -->
 <!DOCTYPE html>
@@ -225,7 +225,7 @@ input[type=text] {
 }
 input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 10px rgba(0,255,229,.2) }
 .hl-wrap { display:flex; align-items:center; gap:7px; font-size:.76em; color:var(--muted) }
-input[type=range] { -webkit-appearance:none; appearance:none; width:140px; height:8px; background:var(--border); border-radius:4px; outline:none; cursor:pointer; padding:10px 0; background-clip:content-box; touch-action:none }
+input[type=range] { -webkit-appearance:none; appearance:none; width:100%; max-width:100%; height:8px; background:var(--border); border-radius:4px; outline:none; cursor:pointer; padding:10px 0; background-clip:content-box; touch-action:none }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:24px; height:24px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 0 8px rgba(0,255,229,.35); transition:box-shadow .15s,transform .15s; border:2px solid rgba(0,0,0,.4) }
 input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.15); box-shadow:0 0 14px rgba(0,255,229,.55) }
 input[type=range]::-webkit-slider-thumb:active { transform:scale(1.25); box-shadow:0 0 20px rgba(0,255,229,.7) }
@@ -592,7 +592,7 @@ body:not(.disconnected) {
   display:flex; align-items:center; gap:6px; margin-left:auto;
 }
 .feed-font-slider-wrap input[type=range] {
-  -webkit-appearance:none; appearance:none; width:120px; height:6px; background:var(--border); border-radius:3px; outline:none; cursor:pointer; padding:8px 0; background-clip:content-box; touch-action:none;
+  -webkit-appearance:none; appearance:none; width:100%; max-width:100%; height:6px; background:var(--border); border-radius:3px; outline:none; cursor:pointer; padding:8px 0; background-clip:content-box; touch-action:none;
 }
 .feed-font-slider-wrap input[type=range]::-webkit-slider-thumb {
   -webkit-appearance:none; appearance:none; width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 0 6px rgba(0,255,229,.3); border:2px solid rgba(0,0,0,.4); transition:box-shadow .15s,transform .15s;
@@ -608,41 +608,9 @@ body:not(.disconnected) {
   font-size:.62em; color:var(--accent); min-width:22px; text-align:right;
 }
 
-/* ============================================================
-   COLLAPSE / EXPAND CONTROLS
-   ============================================================ */
-.collapse-btn {
-  background:transparent; border:none; color:var(--muted);
-  cursor:pointer; padding:2px 4px; margin-left:auto; flex-shrink:0;
-  transition:color .2s, transform .3s; display:flex; align-items:center;
-  font-size:.72em; line-height:1;
-}
-.collapse-btn:hover { color:var(--accent) }
-.collapse-btn svg { width:12px; height:12px; fill:currentColor; transition:transform .3s }
-.collapse-btn.collapsed svg { transform:rotate(-90deg) }
-
-.collapsible-body { max-height:2000px; transition:max-height .35s ease, opacity .25s ease; overflow:hidden }
-.collapsible-body.collapsed { max-height:0 !important; opacity:0; pointer-events:none }
-
-/* Card-level collapse: hides entire card, shows only a thin restore bar */
-.card-collapsed {
-  min-height:0 !important; height:auto !important;
-  padding:0 !important; overflow:hidden;
-  border-style:dashed; border-color:var(--border);
-}
-.card-collapsed > *:not(.card-collapsed-bar) { display:none !important }
-.card-collapsed-bar {
-  display:flex; align-items:center; gap:8px;
-  padding:6px 14px; cursor:pointer;
-  font-family:'Orbitron',sans-serif; font-size:.55em;
-  letter-spacing:.15em; color:var(--muted);
-  transition:color .2s;
-}
-.card-collapsed-bar:hover { color:var(--accent) }
-.card-collapsed-bar svg { width:12px; height:12px; fill:currentColor; transform:rotate(-90deg) }
-
 /* Inside resizable cards, collapsible-body must participate in flex so charts fill remaining space */
-.resizable .collapsible-body { flex:1; min-height:0; display:flex; flex-direction:column; max-height:none }
+.collapsible-body { display:flex; flex-direction:column }
+.resizable .collapsible-body { flex:1; min-height:0; display:flex; flex-direction:column }
 .resizable .collapsible-body .chart-wrap,
 .resizable .collapsible-body .timeline-wrap { flex:1; min-height:0 }
 .resizable .collapsible-body #bubbleCanvas { flex:1; min-height:0; height:auto }
@@ -799,7 +767,7 @@ body:not(.disconnected) {
   flex-direction:column;
 }
 .approval-card.resizable .collapsible-body {
-  flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center;
+  flex:1; min-height:0; justify-content:center;
 }
 
 /* ============================================================
@@ -859,8 +827,7 @@ body.preset-list { --gap:20px }
 
 /* When using custom layout, hide the default structure wrappers */
 body.preset-custom .charts-top,
-body.preset-custom .section-divider,
-body.preset-custom .legend-row { display:none }
+body.preset-custom .section-divider { display:none }
 body.preset-custom #customLayoutContainer { display:block }
 #customLayoutContainer { display:none }
 </style>
@@ -988,6 +955,9 @@ body.preset-custom #customLayoutContainer { display:block }
 <div class="dominant-mood" id="dominantMood">-</div>
 <div class="shift-alert" id="shiftAlert"></div>
 
+<!-- Centralized mood color legend — single source of truth for all sections -->
+<div class="legend-row" id="moodLegend"></div>
+
 <!-- Subtle divider between status group and charts -->
 <div class="section-divider"></div>
 
@@ -997,7 +967,6 @@ body.preset-custom #customLayoutContainer { display:block }
     <div class="chart-title card-title">
       MOOD DISTRIBUTION
       <button class="help-btn" onclick="showHelp('mood')" title="How moods are calculated">?</button>
-      <button class="collapse-btn" onclick="toggleCollapse('pieCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
     </div>
     <div class="collapsible-body" id="pieCard-body">
       <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
@@ -1007,7 +976,6 @@ body.preset-custom #customLayoutContainer { display:block }
     <div class="chart-title card-title">
       KEYWORD WEB - TOP TERMS
       <button class="help-btn" onclick="showHelp('radar')" title="How the keyword web works">?</button>
-      <button class="collapse-btn" onclick="toggleCollapse('radarCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
     </div>
     <div class="collapsible-body" id="radarCard-body">
       <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
@@ -1020,7 +988,6 @@ body.preset-custom #customLayoutContainer { display:block }
   <div class="card-title">
     CONSENSUS BUBBLES - SIZE IS FREQUENCY, COLOR IS MOOD
     <button class="help-btn" onclick="showHelp('bubbles')" title="How bubbles work">?</button>
-    <button class="collapse-btn" onclick="toggleCollapse('bubbleCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
   </div>
   <div class="collapsible-body" id="bubbleCard-body">
     <canvas id="bubbleCanvas"></canvas>
@@ -1037,7 +1004,6 @@ body.preset-custom #customLayoutContainer { display:block }
     <div class="approval-label-center">
       APPROVAL METER
       <button class="help-btn" onclick="showHelp('approval')" title="How approval is measured">?</button>
-      <button class="collapse-btn" onclick="toggleCollapse('approvalCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
     </div>
     <div class="approval-label-right">APPROVAL</div>
   </div>
@@ -1057,7 +1023,6 @@ body.preset-custom #customLayoutContainer { display:block }
 <div class="timeline-card resizable" id="approvalTimelineCard">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
     <div class="card-title" style="margin-bottom:0">APPROVAL TIMELINE</div>
-    <button class="collapse-btn" onclick="toggleCollapse('approvalTimelineCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
   </div>
   <div class="collapsible-body" id="approvalTimelineCard-body">
     <div class="timeline-wrap"><canvas id="approvalTimelineChart"></canvas></div>
@@ -1071,7 +1036,6 @@ body.preset-custom #customLayoutContainer { display:block }
 <div class="timeline-card resizable" id="timelineLinearCard">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
     <div class="card-title" style="margin-bottom:0">MOOD TIMELINE — LINEAR</div>
-    <button class="collapse-btn" onclick="toggleCollapse('timelineLinearCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
   </div>
   <div class="collapsible-body" id="timelineLinearCard-body">
     <div class="timeline-wrap"><canvas id="timelineLinearChart"></canvas></div>
@@ -1082,14 +1046,11 @@ body.preset-custom #customLayoutContainer { display:block }
 <div class="timeline-card resizable" id="timelineLogCard">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
     <div class="card-title" style="margin-bottom:0">MOOD TIMELINE — LOG SCALE</div>
-    <button class="collapse-btn" onclick="toggleCollapse('timelineLogCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
   </div>
   <div class="collapsible-body" id="timelineLogCard-body">
     <div class="timeline-wrap"><canvas id="timelineLogChart"></canvas></div>
   </div>
 </div>
-
-<div class="legend-row" id="moodLegend"></div>
 
 <div class="feed-card resizable" id="feedCard">
   <div class="feed-title-row">
@@ -1103,7 +1064,6 @@ body.preset-custom #customLayoutContainer { display:block }
         oninput="updateFeedFontSize(this.value)"/>
       <span class="feed-font-slider-val" id="feedFontVal">2.00</span>
     </div>
-    <button class="collapse-btn" onclick="toggleCollapse('feedCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
   </div>
   <div class="collapsible-body" id="feedCard-body">
     <div id="feedList"></div>
@@ -1122,7 +1082,6 @@ body.preset-custom #customLayoutContainer { display:block }
         oninput="updateOutlierFontSize(this.value)"/>
       <span class="feed-font-slider-val" id="outlierFontVal">2.00</span>
     </div>
-    <button class="collapse-btn" onclick="toggleCollapse('outlierCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
   </div>
   <div class="collapsible-body" id="outlierCard-body">
     <div id="outlierFeedList"></div>
@@ -1825,7 +1784,7 @@ function initCharts() {
         }
       },
       plugins:{
-        legend:{display:true,position:'top',labels:{color:'#4a4a7a',font:{size:9,family:'Orbitron'},boxWidth:10,padding:7}},
+        legend:{display:false},
         tooltip:{backgroundColor:'#0d0d1f',borderColor:'#1a1a36',borderWidth:1}
       }
     }
@@ -1853,7 +1812,7 @@ function initCharts() {
         }
       },
       plugins:{
-        legend:{display:true,position:'top',labels:{color:'#4a4a7a',font:{size:9,family:'Orbitron'},boxWidth:10,padding:7}},
+        legend:{display:false},
         tooltip:{backgroundColor:'#0d0d1f',borderColor:'#1a1a36',borderWidth:1}
       }
     }
@@ -2659,60 +2618,6 @@ function setupResizeObserver() {
   }
 }
 
-// =============================================================
-//  COLLAPSE / EXPAND
-// =============================================================
-const COLLAPSE_STORAGE_KEY = 'moodradar_collapsed_v1';
-
-function loadCollapsedState() {
-  try { return JSON.parse(localStorage.getItem(COLLAPSE_STORAGE_KEY) || '{}'); } catch(e) { return {}; }
-}
-
-function saveCollapsedState(state) {
-  try { localStorage.setItem(COLLAPSE_STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
-}
-
-function toggleCollapse(cardId) {
-  const card = document.getElementById(cardId);
-  if (!card) return;
-
-  const isCurrentlyCollapsed = card.classList.contains('card-collapsed');
-
-  if (!isCurrentlyCollapsed) {
-    // Collapse: store the card title for the restore bar
-    const titleEl = card.querySelector('.card-title, .chart-title, .approval-label-center');
-    const titleText = titleEl ? titleEl.textContent.replace(/[?▼▲]/g,'').trim() : cardId;
-    card.classList.add('card-collapsed');
-    // Remove existing bar if any
-    const oldBar = card.querySelector('.card-collapsed-bar');
-    if (oldBar) oldBar.remove();
-    const bar = document.createElement('div');
-    bar.className = 'card-collapsed-bar';
-    bar.innerHTML = `<svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg> ${esc(titleText)}`;
-    bar.onclick = () => toggleCollapse(cardId);
-    card.prepend(bar);
-  } else {
-    // Expand: remove collapsed state and restore bar
-    card.classList.remove('card-collapsed');
-    const bar = card.querySelector('.card-collapsed-bar');
-    if (bar) bar.remove();
-    // Re-trigger chart resize after expand
-    setTimeout(() => notifyChartResize(cardId), 100);
-  }
-
-  const state = loadCollapsedState();
-  state[cardId] = !isCurrentlyCollapsed;
-  saveCollapsedState(state);
-}
-
-function restoreCollapsedStates() {
-  const state = loadCollapsedState();
-  for (const [cardId, collapsed] of Object.entries(state)) {
-    if (!collapsed) continue;
-    // Use toggleCollapse to apply card-level collapse with restore bar
-    toggleCollapse(cardId);
-  }
-}
 
 // =============================================================
 //  FEED FONT SIZE SLIDER
@@ -2938,10 +2843,6 @@ function applyCustomLayout() {
     }
   }
 
-  // Add legend row
-  const legendRow = document.querySelector('.legend-row');
-  if (legendRow) container.appendChild(legendRow);
-
   document.getElementById('settingsDropdown').classList.remove('open');
   setTimeout(() => {
     resizeBubbleCanvas();
@@ -2989,10 +2890,6 @@ function restoreDefaultDOM() {
     }
   }
 
-  // Detach legend row too
-  const legendRow = document.querySelector('.legend-row');
-  if (legendRow && legendRow.parentNode) legendRow.parentNode.removeChild(legendRow);
-
   // Clear custom layout wrapper rows (now empty of cards)
   customContainer.innerHTML = '';
 
@@ -3024,7 +2921,6 @@ function restoreDefaultDOM() {
     dividers[2],
     cards.timelineLinearCard,
     cards.timelineLogCard,
-    legendRow,
     cards.feedCard,
     cards.outlierCard,
   ].filter(Boolean);
@@ -3067,7 +2963,6 @@ window.onload = function() {
   // Load layout config
   loadLayout();
 
-  restoreCollapsedStates();
   initCharts();
   setupResizeObserver();
 
