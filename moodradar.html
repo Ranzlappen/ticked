@@ -1,6 +1,6 @@
 <!--
-CHANGE: Improve MoodRadar usability — wider sliders, fixed feed height, longer timeline interval, approval timeline, 4-column feed layout
-REASON: UX improvements for mobile and desktop usage
+CHANGE: Enhanced sliders UX, expanded mood categories, emote rendering, feed alignment, consolidated legend, timeline settings
+REASON: UX improvements — better slider control, more moods, emote support, aligned feeds, configurable timelines
 DATE: 2026-04-02
 -->
 <!DOCTYPE html>
@@ -21,6 +21,8 @@ DATE: 2026-04-02
   --text:#d8d8f8; --muted:#4a4a7a;
   --hype:#00ffe5; --funny:#ffe600; --love:#ff2d78;
   --toxic:#ff4800; --sad:#9b6ef3; --neutral:#2e3d5e;
+  --calm:#4fc3f7; --angry:#ff1744; --excited:#76ff03;
+  --cringe:#e040fb; --wholesome:#ffab40; --confused:#78909c;
 
   /* Layout rhythm — one place to tune spacing across all sections */
   --gap:16px;
@@ -223,8 +225,13 @@ input[type=text] {
 }
 input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 10px rgba(0,255,229,.2) }
 .hl-wrap { display:flex; align-items:center; gap:7px; font-size:.76em; color:var(--muted) }
-input[type=range] { -webkit-appearance:none; width:140px; height:8px; background:var(--border); border-radius:4px; outline:none }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer }
+input[type=range] { -webkit-appearance:none; appearance:none; width:140px; height:8px; background:var(--border); border-radius:4px; outline:none; cursor:pointer; padding:10px 0; background-clip:content-box; touch-action:none }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:24px; height:24px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 0 8px rgba(0,255,229,.35); transition:box-shadow .15s,transform .15s; border:2px solid rgba(0,0,0,.4) }
+input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.15); box-shadow:0 0 14px rgba(0,255,229,.55) }
+input[type=range]::-webkit-slider-thumb:active { transform:scale(1.25); box-shadow:0 0 20px rgba(0,255,229,.7) }
+input[type=range]::-moz-range-thumb { width:24px; height:24px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 0 8px rgba(0,255,229,.35); border:2px solid rgba(0,0,0,.4) }
+input[type=range]::-moz-range-track { height:8px; background:var(--border); border-radius:4px }
+input[type=range]:focus-visible { outline:2px solid var(--accent); outline-offset:4px }
 #hlVal { color:var(--accent); min-width:26px }
 .btn {
   font-family:'Orbitron',sans-serif; font-size:.68em; font-weight:700;
@@ -543,22 +550,28 @@ body:not(.disconnected) {
   max-height:200px; overflow-y:auto;
 }
 .feed-title { font-family:'Orbitron',sans-serif; font-size:.58em; letter-spacing:.2em; color:var(--muted); margin-bottom:7px; display:flex; align-items:center; gap:4px }
-.feed-item { font-size:.72em; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.04); display:grid; grid-template-columns:auto 1fr auto auto; gap:0 6px; align-items:baseline; animation:fadeIn .2s ease }
+.feed-item { font-size:.72em; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.04); display:grid; grid-template-columns:auto 1fr 62px 80px; gap:0 6px; align-items:baseline; animation:fadeIn .2s ease }
 @keyframes fadeIn { from { opacity:0; transform:translateY(3px) } }
 .feed-user { color:var(--accent); min-width:66px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .feed-msg { color:#6a6a8e; word-break:break-word; white-space:normal }
 .feed-meta { display:flex; align-items:center; gap:5px; flex-shrink:0 }
-.feed-mood { font-size:.68em; padding:1px 4px; border-radius:4px; white-space:nowrap }
+.feed-mood { font-size:.68em; padding:1px 4px; border-radius:4px; white-space:nowrap; text-align:center; display:inline-block; min-width:52px }
 .feed-apv { display:flex; align-items:center; gap:3px }
 .feed-apv-bar { width:28px; height:4px; border-radius:2px; background:var(--border); overflow:hidden; flex-shrink:0 }
 .feed-apv-fill { height:100%; border-radius:2px; transition:width .3s }
-.feed-apv-num { font-size:.65em; color:var(--muted); min-width:24px; text-align:right }
-.mood-hype    { background:rgba(0,255,229,.12);  color:var(--hype) }
-.mood-funny   { background:rgba(255,230,0,.12);  color:var(--funny) }
-.mood-love    { background:rgba(255,45,120,.12); color:var(--love) }
-.mood-toxic   { background:rgba(255,72,0,.12);   color:var(--toxic) }
-.mood-sad     { background:rgba(155,110,243,.18);color:var(--sad) }
-.mood-neutral { background:rgba(46,61,94,.35);   color:#4a6688 }
+.feed-apv-num { font-size:.65em; color:var(--muted); min-width:34px; text-align:right; font-variant-numeric:tabular-nums }
+.mood-hype      { background:rgba(0,255,229,.12);  color:var(--hype) }
+.mood-funny     { background:rgba(255,230,0,.12);  color:var(--funny) }
+.mood-love      { background:rgba(255,45,120,.12); color:var(--love) }
+.mood-toxic     { background:rgba(255,72,0,.12);   color:var(--toxic) }
+.mood-sad       { background:rgba(155,110,243,.18);color:var(--sad) }
+.mood-calm      { background:rgba(79,195,247,.12); color:var(--calm) }
+.mood-angry     { background:rgba(255,23,68,.12);  color:var(--angry) }
+.mood-excited   { background:rgba(118,255,3,.12);  color:var(--excited) }
+.mood-cringe    { background:rgba(224,64,251,.12); color:var(--cringe) }
+.mood-wholesome { background:rgba(255,171,64,.12); color:var(--wholesome) }
+.mood-confused  { background:rgba(120,144,156,.18);color:var(--confused) }
+.mood-neutral   { background:rgba(46,61,94,.35);   color:#4a6688 }
 .feed-card::-webkit-scrollbar { width:3px }
 .feed-card::-webkit-scrollbar-thumb { background:var(--border) }
 .feed-bot { opacity:.35 }
@@ -579,11 +592,15 @@ body:not(.disconnected) {
   display:flex; align-items:center; gap:6px; margin-left:auto;
 }
 .feed-font-slider-wrap input[type=range] {
-  -webkit-appearance:none; width:120px; height:6px; background:var(--border); border-radius:3px; outline:none;
+  -webkit-appearance:none; appearance:none; width:120px; height:6px; background:var(--border); border-radius:3px; outline:none; cursor:pointer; padding:8px 0; background-clip:content-box; touch-action:none;
 }
 .feed-font-slider-wrap input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer;
+  -webkit-appearance:none; appearance:none; width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 0 6px rgba(0,255,229,.3); border:2px solid rgba(0,0,0,.4); transition:box-shadow .15s,transform .15s;
 }
+.feed-font-slider-wrap input[type=range]::-webkit-slider-thumb:hover { transform:scale(1.15); box-shadow:0 0 12px rgba(0,255,229,.5) }
+.feed-font-slider-wrap input[type=range]::-webkit-slider-thumb:active { transform:scale(1.25); box-shadow:0 0 18px rgba(0,255,229,.65) }
+.feed-font-slider-wrap input[type=range]::-moz-range-thumb { width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 0 6px rgba(0,255,229,.3); border:2px solid rgba(0,0,0,.4) }
+.feed-font-slider-wrap input[type=range]::-moz-range-track { height:6px; background:var(--border); border-radius:3px }
 .feed-font-slider-label {
   font-size:.6em; color:var(--muted); letter-spacing:.08em; white-space:nowrap;
 }
@@ -894,6 +911,23 @@ body.preset-custom #customLayoutContainer { display:block }
           oninput="updateLabelScale(this.value)"/>
         <span id="labelScaleVal" style="font-size:.72em;color:var(--accent);min-width:28px;text-align:right"></span>
       </div>
+      <div class="settings-section-label" style="margin-top:6px">TIMELINE SETTINGS</div>
+      <div style="padding:4px 10px 2px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="font-size:.66em;color:var(--muted);letter-spacing:.06em;white-space:nowrap">MAX POINTS</span>
+          <input type="range" id="tlPointsSlider" min="50" max="1000" step="10"
+            style="flex:1;width:auto"
+            oninput="updateTimelinePoints(this.value)"/>
+          <span id="tlPointsVal" style="font-size:.72em;color:var(--accent);min-width:32px;text-align:right"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:.66em;color:var(--muted);letter-spacing:.06em;white-space:nowrap">INTERVAL</span>
+          <input type="range" id="tlIntervalSlider" min="200" max="5000" step="100"
+            style="flex:1;width:auto"
+            oninput="updateTimelineInterval(this.value)"/>
+          <span id="tlIntervalVal" style="font-size:.72em;color:var(--accent);min-width:40px;text-align:right"></span>
+        </div>
+      </div>
       <div id="layoutManagerSection" style="display:none">
         <div class="settings-section-label" style="margin-top:4px">ARRANGE SECTIONS</div>
         <div style="padding:2px 10px 6px;font-size:.58em;color:var(--muted);line-height:1.5;letter-spacing:.03em">
@@ -1055,14 +1089,7 @@ body.preset-custom #customLayoutContainer { display:block }
   </div>
 </div>
 
-<div class="legend-row">
-  <div class="legend-item"><span class="legend-dot" style="background:var(--hype)"></span>Hype</div>
-  <div class="legend-item"><span class="legend-dot" style="background:var(--funny)"></span>Funny</div>
-  <div class="legend-item"><span class="legend-dot" style="background:var(--love)"></span>Love</div>
-  <div class="legend-item"><span class="legend-dot" style="background:var(--toxic)"></span>Toxic</div>
-  <div class="legend-item"><span class="legend-dot" style="background:var(--sad)"></span>Sad</div>
-  <div class="legend-item"><span class="legend-dot" style="background:#4a6688"></span>Neutral</div>
-</div>
+<div class="legend-row" id="moodLegend"></div>
 
 <div class="feed-card resizable" id="feedCard">
   <div class="feed-title-row">
@@ -1171,13 +1198,19 @@ const HELP_CONTENT = {
   },
   mood: {
     title: 'MOOD DISTRIBUTION',
-    body: `<p>Every chat message is classified into one of six moods using a keyword and emote dictionary:</p>
+    body: `<p>Every chat message is classified into one of twelve moods using a keyword and emote dictionary:</p>
 <ul>
   <li><strong>Hype</strong> - Excitement, celebration (PogChamp, LES GO, BANGER, GOAT)</li>
   <li><strong>Funny</strong> - Laughter and sarcasm (KEKW, OMEGALUL, LUL, Kappa)</li>
-  <li><strong>Love</strong> - Affection and positivity (PogHeart, wholesome, ILY)</li>
-  <li><strong>Toxic</strong> - Negativity and aggression (COPE, ratio, trash, MALDING)</li>
+  <li><strong>Love</strong> - Affection and positivity (PogHeart, ILY, beautiful)</li>
+  <li><strong>Toxic</strong> - Negativity and trolling (COPE, ratio, trash, MALDING)</li>
   <li><strong>Sad</strong> - Sadness and disappointment (Sadge, RIP, PepeHands, oof)</li>
+  <li><strong>Calm</strong> - Relaxed, chill vibes (comfy, cozy, zen, good vibes)</li>
+  <li><strong>Angry</strong> - Outright anger and fury (rage, WTF, STFU, triggered)</li>
+  <li><strong>Excited</strong> - High energy enthusiasm (OMG, WOOO, pumped, epic)</li>
+  <li><strong>Cringe</strong> - Awkward and uncomfortable (yikes, WeirdChamp, haHAA, sus)</li>
+  <li><strong>Wholesome</strong> - Warm and heartfelt (blessed, adorable, precious, pure)</li>
+  <li><strong>Confused</strong> - Baffled and lost (HUH, ???, Pepega, hold up)</li>
   <li><strong>Neutral</strong> - No strong signal detected</li>
 </ul>
 <p>Message length affects scoring. Longer messages with clear sentiment get higher weight. Very short messages contribute less.</p>`
@@ -1246,10 +1279,45 @@ function esc(s) {
 }
 
 // =============================================================
+//  EMOTE RENDERING — lightweight text-to-emoji mapping
+// =============================================================
+const EMOTE_MAP = new Map([
+  // Twitch-style emotes → Unicode
+  ['PogChamp','😲'],['Kappa','😏'],['KEKW','🤣'],['OMEGALUL','😂'],['LUL','😆'],
+  ['4Head','😄'],['Kreygasm','😫'],['BibleThump','😢'],['ResidentSleeper','😴'],
+  ['PepeHands','😭'],['Sadge','😞'],['monkaS','😰'],['monkaW','😨'],['COPIUM','🤡'],
+  ['Pog','😮'],['PogO','😳'],['catJAM','🐱'],['ratJAM','🐀'],['PepeJAM','🎵'],
+  ['GIGACHAD','🗿'],['5Head','🧠'],['WeirdChamp','😬'],['haHAA','😬'],['Pepega','🤪'],
+  ['PauseChamp','😮'],['SadChamp','😔'],['FeelsBad','😟'],['PepeSad','😿'],
+  ['PeepoCry','😭'],['PogHeart','💖'],['Prayge','🙏'],['monkaMad','😡'],
+  ['PepeRage','🤬'],['MonkaMad','😤'],
+  // Common text emotes
+  [':)','🙂'],[':D','😄'],[';)','😉'],[':P','😛'],[':(','😞'],[':O','😮'],
+  ['<3','❤️'],['xD','😂'],['XD','😂'],[':3','😺'],['D:','😧'],
+  ['B)','😎'],['>:(',  '😠'],[':/','😕'],[':*','😘'],
+  // Common emoji shortcodes
+  [':fire:','🔥'],[':heart:','❤️'],[':skull:','💀'],[':clown:','🤡'],
+  [':crown:','👑'],[':eyes:','👀'],[':pray:','🙏'],[':100:','💯'],
+  [':cap:','🧢'],[':goat:','🐐'],[':W:','🔥'],[':L:','💀'],
+  [':clap:','👏'],[':thumbsup:','👍'],[':thumbsdown:','👎'],
+]);
+const EMOTE_REGEX = new RegExp(
+  [...EMOTE_MAP.keys()].map(k => k.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|'),
+  'g'
+);
+
+function renderEmotes(escapedHtml) {
+  return escapedHtml.replace(EMOTE_REGEX, match => {
+    const emoji = EMOTE_MAP.get(match);
+    return emoji ? `<span title="${match}">${emoji}</span>` : match;
+  });
+}
+
+// =============================================================
 //  CONSTANTS & STATE
 // =============================================================
-const MOODS = ['hype','funny','love','toxic','sad','neutral'];
-const MOOD_COLORS = {hype:'#00ffe5',funny:'#ffe600',love:'#ff2d78',toxic:'#ff4800',sad:'#9b6ef3',neutral:'#2e3d5e'};
+const MOODS = ['hype','funny','love','toxic','sad','calm','angry','excited','cringe','wholesome','confused','neutral'];
+const MOOD_COLORS = {hype:'#00ffe5',funny:'#ffe600',love:'#ff2d78',toxic:'#ff4800',sad:'#9b6ef3',calm:'#4fc3f7',angry:'#ff1744',excited:'#76ff03',cringe:'#e040fb',wholesome:'#ffab40',confused:'#78909c',neutral:'#2e3d5e'};
 
 let HALF_LIFE_MS = 10_000;
 const WINDOW_MS  = 120_000;
@@ -1270,8 +1338,10 @@ let prevDominant = null;
 let chartsReady  = false;
 let rafHandle    = null;
 let frameIdx     = 0;
-const TIMELINE_POINTS   = 200;
-const TIMELINE_INTERVAL = 1000;
+const TL_POINTS_KEY   = 'moodradar_tlpoints_v1';
+const TL_INTERVAL_KEY = 'moodradar_tlinterval_v1';
+let TIMELINE_POINTS   = (() => { try { const v=parseInt(localStorage.getItem(TL_POINTS_KEY)); return isNaN(v)?200:Math.min(1000,Math.max(50,v)); } catch(e){ return 200; } })();
+let TIMELINE_INTERVAL = (() => { try { const v=parseInt(localStorage.getItem(TL_INTERVAL_KEY)); return isNaN(v)?1000:Math.min(5000,Math.max(200,v)); } catch(e){ return 1000; } })();
 let lastTimelineTs = 0;
 
 // =============================================================
@@ -1301,7 +1371,7 @@ const RAW = {
     ['biblethump',1,'BibleThump'],['pepehands',1,'PepeHands'],
   ],
   love:[
-    ['<3',2,'love'],['love',1,'love'],['wholesome',2,'wholesome'],
+    ['<3',2,'love'],['love',1,'love'],
     ['king',1,'KING'],['queen',1,'QUEEN'],['beststreamer',2,'best streamer'],
     ['bestchat',2,'best chat'],['cute',1,'cute'],[' ily ',2,'ILY'],
     ['pogheart',2,'PogHeart'],['pepeloveyou',2,'love'],['beautiful',1,'beautiful'],
@@ -1311,12 +1381,12 @@ const RAW = {
   toxic:[
     ['trash',2,'trash'],['hate',2,'HATE'],['booo',1,'booo'],
     ['malding',2,'MALDING'],['mald',1,'mald'],['cope',1,'COPE'],
-    ['cringe',2,'cringe'],['rekt',1,'REKT'],
+    ['rekt',1,'REKT'],
     ['ez clap',2,'EZ clap'],['noob',1,'noob'],['boring',1,'boring'],
-    ['peperage',2,'PepeRage'],['monkamad',2,'MonkaMad'],['loser',1,'loser'],
+    ['loser',1,'loser'],
     ['ratio',1,'RATIO'],['down bad',1,'down bad'],['terrible',1,'terrible'],
     ['l streamer',2,'L streamer'],['trash streamer',3,'trash streamer'],
-    ['monkas',1,'monkaS'],['caught',1,'caught'],['diffed',2,'diffed'],
+    ['caught',1,'caught'],['diffed',2,'diffed'],
   ],
   sad:[
     ['sadge',2,'Sadge'],['feelsbadman',2,'FeelsBad'],['rip',1,'RIP'],
@@ -1325,6 +1395,45 @@ const RAW = {
     ['sadchamp',2,'SadChamp'],['pepehands',2,'PepeHands'],['noo',1,'nooo'],
     ['unfortunate',1,'unfortunate'],['disappointing',1,'disappointing'],
     ['biblethump',2,'BibleThump'],['crying',1,'crying'],['rip streamer',2,'RIP'],
+  ],
+  calm:[
+    ['chill',2,'chill'],['relax',1,'relax'],['comfy',2,'comfy'],['cozy',2,'cozy'],
+    ['peaceful',2,'peaceful'],['zen',1,'zen'],['vibes',1,'vibes'],['good vibes',2,'good vibes'],
+    ['chilling',1,'chilling'],['relaxing',1,'relaxing'],['calm',1,'calm'],['soothing',1,'soothing'],
+    ['pepecomfy',2,'comfy'],['catjam',1,'catJAM'],['easy',1,'easy'],['smooth',1,'smooth'],
+  ],
+  angry:[
+    ['rage',2,'RAGE'],['furious',2,'FURIOUS'],['mad',1,'MAD'],['angry',1,'ANGRY'],
+    ['stfu',2,'STFU'],['fk',1,'FK'],['wtf',2,'WTF'],['pissed',2,'PISSED'],
+    ['livid',2,'LIVID'],['fuming',2,'FUMING'],['raging',2,'RAGING'],
+    ['peperage',2,'PepeRage'],['monkamad',2,'MonkaMad'],['triggered',2,'TRIGGERED'],
+    ['reeee',2,'REEEE'],['outraged',2,'OUTRAGED'],
+  ],
+  excited:[
+    ['lets goo',2,'LETS GOO'],['hyped',2,'HYPED'],['omg',1,'OMG'],['wooo',2,'WOOO'],
+    ['whoa',1,'WHOA'],['yay',1,'YAY'],['woot',1,'WOOT'],['pumped',2,'PUMPED'],
+    ['epic',1,'EPIC'],['amazing ',1,'AMAZING'],['stoked',2,'STOKED'],
+    ['lit ',2,'LIT'],['sicko',1,'SICKO'],['popoff',2,'POP OFF'],['electric',1,'ELECTRIC'],
+  ],
+  cringe:[
+    ['cringe',2,'cringe'],['yikes',2,'YIKES'],['awkward',1,'awkward'],
+    ['secondhand',2,'secondhand'],['embarrassing',2,'embarrassing'],['cringy',2,'cringy'],
+    ['monkas',1,'monkaS'],['haHAA',2,'haHAA'],['weird',1,'weird'],
+    ['weirdchamp',2,'WeirdChamp'],['sus',1,'SUS'],['sussy',1,'SUSSY'],
+    ['uncanny',1,'uncanny'],['icky',1,'icky'],
+  ],
+  wholesome:[
+    ['wholesome',2,'wholesome'],['blessed',2,'BLESSED'],['heartwarming',2,'heartwarming'],
+    ['kind',1,'kind'],['sweet',1,'sweet'],['precious',2,'precious'],
+    ['adorable',2,'adorable'],['goodguy',2,'good guy'],['faith in humanity',3,'faith'],
+    ['thankful',1,'thankful'],['grateful',1,'grateful'],['touching',2,'touching'],
+    ['pure',1,'pure'],['innocent',1,'innocent'],
+  ],
+  confused:[
+    ['huh',1,'HUH'],['what',1,'WHAT'],['confused',1,'confused'],['wut',1,'WUT'],
+    ['???',2,'???'],['idk',1,'IDK'],['lost',1,'lost'],['wait',1,'WAIT'],
+    ['excuse me',2,'excuse me'],['hold up',2,'HOLD UP'],['how',1,'HOW'],
+    ['brain hurts',2,'brain hurts'],['makes no sense',2,'no sense'],['pepega',2,'Pepega'],
   ]
 };
 
@@ -1460,7 +1569,7 @@ let approvalHistory     = Array(40).fill(50);
 // =============================================================
 function classifyMessage(msg) {
   const lower = msg.toLowerCase();
-  const scores = {hype:0,funny:0,love:0,toxic:0,sad:0};
+  const scores = {hype:0,funny:0,love:0,toxic:0,sad:0,calm:0,angry:0,excited:0,cringe:0,wholesome:0,confused:0};
   const hits = [];
 
   for (let i = 0; i < TERM_KEYS.length; i++) {
@@ -1509,7 +1618,7 @@ function pruneWindow(now) {
 
 function computeWeightedMoods(now) {
   pruneWindow(now);
-  const totals = {hype:0,funny:0,love:0,toxic:0,sad:0,neutral:0};
+  const totals = {hype:0,funny:0,love:0,toxic:0,sad:0,calm:0,angry:0,excited:0,cringe:0,wholesome:0,confused:0,neutral:0};
   let sumW = 0;
   for (const { ts, mood, strength } of scoredMessages) {
     const w = expWeight(now - ts) * strength;
@@ -1644,7 +1753,7 @@ function initCharts() {
     plugins: [pieLabelPlugin],
     data: {
       labels: MOODS.map(m => m.toUpperCase()),
-      datasets:[{ data:[0,0,0,0,0,100], backgroundColor:MOODS.map(m=>MOOD_COLORS[m]), borderColor:'#06060f', borderWidth:3, hoverOffset:10 }]
+      datasets:[{ data:MOODS.map((_,i)=>i===MOODS.length-1?100:0), backgroundColor:MOODS.map(m=>MOOD_COLORS[m]), borderColor:'#06060f', borderWidth:3, hoverOffset:10 }]
     },
     options: {
       responsive:true, maintainAspectRatio:false,
@@ -2121,7 +2230,7 @@ function flushFeed() {
       const apvNum = approvalVote>0 ? '+'+approvalVote.toFixed(1) : approvalVote.toFixed(1);
       apvTag = `<span class="feed-apv"><span class="feed-apv-bar"><span class="feed-apv-fill" style="width:${apvPct}%;background:${apvColor}"></span></span><span class="feed-apv-num" style="color:${apvColor}">${apvNum}</span></span>`;
     }
-    el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${esc(safeMsg)}</span>${moodTag}${apvTag}`;
+    el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${renderEmotes(esc(safeMsg))}</span>${moodTag}${apvTag}`;
     frag.prepend(el);
   }
   list.prepend(frag);
@@ -2156,7 +2265,7 @@ function flushOutlierFeed() {
     else apvColor='#4a4a7a';
     const apvNum = approvalVote>0 ? '+'+approvalVote.toFixed(1) : approvalVote.toFixed(1);
     const apvTag = `<span class="feed-apv"><span class="feed-apv-bar"><span class="feed-apv-fill" style="width:${apvPct}%;background:${apvColor}"></span></span><span class="feed-apv-num" style="color:${apvColor}">${apvNum}</span></span>`;
-    el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${esc(safeMsg)}</span>${moodTag}${apvTag}`;
+    el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${renderEmotes(esc(safeMsg))}</span>${moodTag}${apvTag}`;
     frag.prepend(el);
   }
   list.prepend(frag);
@@ -2652,6 +2761,53 @@ function applyOutlierFontSize() {
 }
 
 // =============================================================
+//  TIMELINE SETTINGS — max points + update interval
+// =============================================================
+function updateTimelinePoints(v) {
+  const pts = Math.min(1000, Math.max(50, parseInt(v)));
+  document.getElementById('tlPointsVal').textContent = pts;
+  try { localStorage.setItem(TL_POINTS_KEY, pts); } catch(e) {}
+  resizeTimelineData(pts);
+  TIMELINE_POINTS = pts;
+}
+
+function updateTimelineInterval(v) {
+  TIMELINE_INTERVAL = Math.min(5000, Math.max(200, parseInt(v)));
+  document.getElementById('tlIntervalVal').textContent = TIMELINE_INTERVAL + 'ms';
+  try { localStorage.setItem(TL_INTERVAL_KEY, TIMELINE_INTERVAL); } catch(e) {}
+}
+
+function resizeTimelineData(newPts) {
+  const charts = [timelineLinearChart, timelineLogChart, approvalTimelineChart].filter(Boolean);
+  for (const chart of charts) {
+    const labels = chart.data.labels;
+    const datasets = chart.data.datasets;
+    if (newPts > labels.length) {
+      const pad = newPts - labels.length;
+      chart.data.labels = Array(pad).fill('').concat(labels);
+      for (const ds of datasets) ds.data = Array(pad).fill(null).concat(ds.data);
+    } else if (newPts < labels.length) {
+      const trim = labels.length - newPts;
+      chart.data.labels = labels.slice(trim);
+      for (const ds of datasets) ds.data = ds.data.slice(trim);
+    }
+    chart.update('none');
+  }
+}
+
+// =============================================================
+//  LEGEND RENDERING — dynamic from MOODS array
+// =============================================================
+function renderMoodLegend() {
+  const el = document.getElementById('moodLegend');
+  if (!el) return;
+  el.innerHTML = MOODS.map(m => {
+    const col = m === 'neutral' ? '#4a6688' : `var(--${m})`;
+    return `<div class="legend-item"><span class="legend-dot" style="background:${col}"></span>${m.charAt(0).toUpperCase()+m.slice(1)}</div>`;
+  }).join('');
+}
+
+// =============================================================
 //  LAYOUT MANAGER — reorder + inline/stacked controls
 // =============================================================
 const LAYOUT_STORAGE_KEY = 'moodradar_layout_v1';
@@ -2896,6 +3052,17 @@ window.onload = function() {
   if (outlierSlider) outlierSlider.value = outlierFontSize;
   document.getElementById('outlierFontVal').textContent = outlierFontSize.toFixed(2);
   applyOutlierFontSize();
+
+  // Init timeline settings sliders
+  const tlPtsSlider = document.getElementById('tlPointsSlider');
+  if (tlPtsSlider) tlPtsSlider.value = TIMELINE_POINTS;
+  document.getElementById('tlPointsVal').textContent = TIMELINE_POINTS;
+  const tlIntSlider = document.getElementById('tlIntervalSlider');
+  if (tlIntSlider) tlIntSlider.value = TIMELINE_INTERVAL;
+  document.getElementById('tlIntervalVal').textContent = TIMELINE_INTERVAL + 'ms';
+
+  // Render dynamic mood legend
+  renderMoodLegend();
 
   // Load layout config
   loadLayout();
