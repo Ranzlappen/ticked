@@ -1,3 +1,8 @@
+<!--
+CHANGE: Improve MoodRadar usability — wider sliders, fixed feed height, longer timeline interval, approval timeline, 4-column feed layout
+REASON: UX improvements for mobile and desktop usage
+DATE: 2026-04-02
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -218,8 +223,8 @@ input[type=text] {
 }
 input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 10px rgba(0,255,229,.2) }
 .hl-wrap { display:flex; align-items:center; gap:7px; font-size:.76em; color:var(--muted) }
-input[type=range] { -webkit-appearance:none; width:95px; height:4px; background:var(--border); border-radius:2px; outline:none }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; border-radius:50%; background:var(--accent); cursor:pointer }
+input[type=range] { -webkit-appearance:none; width:140px; height:8px; background:var(--border); border-radius:4px; outline:none }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer }
 #hlVal { color:var(--accent); min-width:26px }
 .btn {
   font-family:'Orbitron',sans-serif; font-size:.68em; font-weight:700;
@@ -538,10 +543,10 @@ body:not(.disconnected) {
   max-height:200px; overflow-y:auto;
 }
 .feed-title { font-family:'Orbitron',sans-serif; font-size:.58em; letter-spacing:.2em; color:var(--muted); margin-bottom:7px; display:flex; align-items:center; gap:4px }
-.feed-item { font-size:.72em; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.04); display:flex; gap:6px; align-items:center; animation:fadeIn .2s ease }
+.feed-item { font-size:.72em; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.04); display:grid; grid-template-columns:auto 1fr auto auto; gap:0 6px; align-items:baseline; animation:fadeIn .2s ease }
 @keyframes fadeIn { from { opacity:0; transform:translateY(3px) } }
-.feed-user { color:var(--accent); min-width:66px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex-shrink:0 }
-.feed-msg { color:#6a6a8e; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.feed-user { color:var(--accent); min-width:66px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.feed-msg { color:#6a6a8e; word-break:break-word; white-space:normal }
 .feed-meta { display:flex; align-items:center; gap:5px; flex-shrink:0 }
 .feed-mood { font-size:.68em; padding:1px 4px; border-radius:4px; white-space:nowrap }
 .feed-apv { display:flex; align-items:center; gap:3px }
@@ -574,10 +579,10 @@ body:not(.disconnected) {
   display:flex; align-items:center; gap:6px; margin-left:auto;
 }
 .feed-font-slider-wrap input[type=range] {
-  -webkit-appearance:none; width:80px; height:3px; background:var(--border); border-radius:2px; outline:none;
+  -webkit-appearance:none; width:120px; height:6px; background:var(--border); border-radius:3px; outline:none;
 }
 .feed-font-slider-wrap input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance:none; width:10px; height:10px; border-radius:50%; background:var(--accent); cursor:pointer;
+  -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer;
 }
 .feed-font-slider-label {
   font-size:.6em; color:var(--muted); letter-spacing:.08em; white-space:nowrap;
@@ -747,7 +752,7 @@ body:not(.disconnected) {
   height:auto;
 }
 
-/* Timeline card: make inner timeline-wrap fill the resized card */
+/* Timeline cards (mood + approval): make inner timeline-wrap fill the resized card */
 .timeline-card.resizable {
   display:flex;
   flex-direction:column;
@@ -762,6 +767,7 @@ body:not(.disconnected) {
   display:flex;
   flex-direction:column;
   max-height:none;
+  height:200px;
 }
 .feed-card.resizable #feedList,
 .feed-card.resizable #outlierFeedList {
@@ -1013,6 +1019,17 @@ body.preset-custom #customLayoutContainer { display:block }
   </div>
 </div>
 
+<!-- APPROVAL TIMELINE -->
+<div class="timeline-card resizable" id="approvalTimelineCard">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+    <div class="card-title" style="margin-bottom:0">APPROVAL TIMELINE</div>
+    <button class="collapse-btn" onclick="toggleCollapse('approvalTimelineCard')" title="Collapse/Expand"><svg viewBox="0 0 12 12"><path d="M2 4l4 4 4-4"/></svg></button>
+  </div>
+  <div class="collapsible-body" id="approvalTimelineCard-body">
+    <div class="timeline-wrap"><canvas id="approvalTimelineChart"></canvas></div>
+  </div>
+</div>
+
 <!-- Divider before timeline -->
 <div class="section-divider"></div>
 
@@ -1126,6 +1143,7 @@ function applyPreset(preset) {
   // Resize charts
   if (pieChart)              pieChart.resize();
   if (radarChart)            radarChart.resize();
+  if (approvalTimelineChart) approvalTimelineChart.resize();
   if (timelineLinearChart)   timelineLinearChart.resize();
   if (timelineLogChart)      timelineLogChart.resize();
 }
@@ -1253,7 +1271,7 @@ let chartsReady  = false;
 let rafHandle    = null;
 let frameIdx     = 0;
 const TIMELINE_POINTS   = 24;
-const TIMELINE_INTERVAL = 5000;
+const TIMELINE_INTERVAL = 15000;
 let lastTimelineTs = 0;
 
 // =============================================================
@@ -1579,7 +1597,7 @@ function updateLabelScale(v) {
 // =============================================================
 //  CHARTS
 // =============================================================
-let pieChart, radarChart, timelineLinearChart, timelineLogChart;
+let pieChart, radarChart, timelineLinearChart, timelineLogChart, approvalTimelineChart;
 
 const pieLabelPlugin = {
   id: 'pieLabels',
@@ -1727,6 +1745,37 @@ function initCharts() {
       },
       plugins:{
         legend:{display:true,position:'top',labels:{color:'#4a4a7a',font:{size:9,family:'Orbitron'},boxWidth:10,padding:7}},
+        tooltip:{backgroundColor:'#0d0d1f',borderColor:'#1a1a36',borderWidth:1}
+      }
+    }
+  });
+
+  // Approval timeline — single line showing approval score over time
+  approvalTimelineChart = new Chart(document.getElementById('approvalTimelineChart'), {
+    type:'line',
+    data:{ labels:Array(TIMELINE_POINTS).fill(''), datasets:[{
+      label:'APPROVAL', data:Array(TIMELINE_POINTS).fill(null),
+      borderColor:'#00ffe5', backgroundColor:'rgba(0,255,229,.08)',
+      borderWidth:2, pointRadius:0, tension:0.45, fill:true
+    }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#2e2e58',maxRotation:0,font:{size:8}}},
+        y:{
+          type:'linear', min:0, max:100,
+          grid:{color:'rgba(255,255,255,.04)'},
+          ticks:{color:'#2e2e58',font:{size:8},callback:function(v){
+            if(v===0) return 'DISSENT';
+            if(v===50) return 'NEUTRAL';
+            if(v===100) return 'APPROVAL';
+            return v+'%';
+          }}
+        }
+      },
+      plugins:{
+        legend:{display:false},
         tooltip:{backgroundColor:'#0d0d1f',borderColor:'#1a1a36',borderWidth:1}
       }
     }
@@ -2021,6 +2070,23 @@ function pushTimelineSnapshot() {
   }
 }
 
+function pushApprovalTimelineSnapshot() {
+  if (!approvalTimelineChart) return;
+  const val = Math.round(approvalDisplayVal);
+  const label = new Date().toLocaleTimeString([],{minute:'2-digit',second:'2-digit'});
+  approvalTimelineChart.data.labels.push(label);
+  approvalTimelineChart.data.labels.shift();
+  approvalTimelineChart.data.datasets[0].data.push(val);
+  approvalTimelineChart.data.datasets[0].data.shift();
+  // Tint line color based on current approval
+  let lineCol;
+  if (val >= 50) { const t=(val-50)/50; lineCol=lerpColor('#8888aa','#00ffe5',t); }
+  else           { const t=(50-val)/50; lineCol=lerpColor('#8888aa','#ff4800',t); }
+  approvalTimelineChart.data.datasets[0].borderColor = lineCol;
+  approvalTimelineChart.data.datasets[0].backgroundColor = hexAlpha(lineCol, 0.08);
+  approvalTimelineChart.update('none');
+}
+
 // =============================================================
 //  FEED
 // =============================================================
@@ -2041,7 +2107,7 @@ function flushFeed() {
     const isBot = mood === 'bot';
     el.className = 'feed-item' + (isBot?' feed-bot':'');
     const safeUser = sanitize(user);
-    const safeMsg  = sanitize(msg.length>55 ? msg.slice(0,55)+'...' : msg);
+    const safeMsg  = sanitize(msg);
     const moodTag = isBot
       ? `<span class="feed-mood mood-bot">BOT ${botScore}</span>`
       : `<span class="feed-mood mood-${mood}">${mood}</span>`;
@@ -2055,7 +2121,7 @@ function flushFeed() {
       const apvNum = approvalVote>0 ? '+'+approvalVote.toFixed(1) : approvalVote.toFixed(1);
       apvTag = `<span class="feed-apv"><span class="feed-apv-bar"><span class="feed-apv-fill" style="width:${apvPct}%;background:${apvColor}"></span></span><span class="feed-apv-num" style="color:${apvColor}">${apvNum}</span></span>`;
     }
-    el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${esc(safeMsg)}</span><span class="feed-meta">${moodTag}${apvTag}</span>`;
+    el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${esc(safeMsg)}</span>${moodTag}${apvTag}`;
     frag.prepend(el);
   }
   list.prepend(frag);
@@ -2081,7 +2147,7 @@ function flushOutlierFeed() {
     const el = document.createElement('div');
     el.className = 'feed-item';
     const safeUser = sanitize(user);
-    const safeMsg  = sanitize(msg.length>55 ? msg.slice(0,55)+'...' : msg);
+    const safeMsg  = sanitize(msg);
     const moodTag = `<span class="feed-mood mood-${mood}">${mood}</span>`;
     const apvPct = Math.round(Math.min(100, Math.max(0, (approvalVote+8)/16*100)));
     let apvColor;
@@ -2090,7 +2156,7 @@ function flushOutlierFeed() {
     else apvColor='#4a4a7a';
     const apvNum = approvalVote>0 ? '+'+approvalVote.toFixed(1) : approvalVote.toFixed(1);
     const apvTag = `<span class="feed-apv"><span class="feed-apv-bar"><span class="feed-apv-fill" style="width:${apvPct}%;background:${apvColor}"></span></span><span class="feed-apv-num" style="color:${apvColor}">${apvNum}</span></span>`;
-    el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${esc(safeMsg)}</span><span class="feed-meta">${moodTag}${apvTag}</span>`;
+    el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${esc(safeMsg)}</span>${moodTag}${apvTag}`;
     frag.prepend(el);
   }
   list.prepend(frag);
@@ -2139,7 +2205,7 @@ function processingLoop() {
   }
 
   if (frameIdx%8===0) updateVisuals();
-  if (now-lastTimelineTs >= TIMELINE_INTERVAL) { pushTimelineSnapshot(); lastTimelineTs=now; }
+  if (now-lastTimelineTs >= TIMELINE_INTERVAL) { pushTimelineSnapshot(); pushApprovalTimelineSnapshot(); lastTimelineTs=now; }
 }
 
 // =============================================================
@@ -2363,7 +2429,7 @@ function setStatus(html, cls) {
 // =============================================================
 const RESIZE_STORAGE_KEY = 'moodradar_sizes_v2';
 const RESIZE_DEBOUNCE_MS = 180;
-const RESIZABLE_IDS = ['pieCard','radarCard','bubbleCard','approvalCard','timelineLinearCard','timelineLogCard','feedCard','outlierCard'];
+const RESIZABLE_IDS = ['pieCard','radarCard','bubbleCard','approvalCard','approvalTimelineCard','timelineLinearCard','timelineLogCard','feedCard','outlierCard'];
 
 function saveSizes() {
   const sizes = {};
@@ -2397,6 +2463,7 @@ function restoreSizes() {
 function notifyChartResize(cardId) {
   if (cardId === 'pieCard'              && pieChart)             { pieChart.resize(); pieChart.update('none'); }
   if (cardId === 'radarCard'            && radarChart)           { radarChart.resize(); radarChart.update('none'); }
+  if (cardId === 'approvalTimelineCard' && approvalTimelineChart) approvalTimelineChart.resize();
   if (cardId === 'timelineLinearCard'   && timelineLinearChart)  timelineLinearChart.resize();
   if (cardId === 'timelineLogCard'      && timelineLogChart)     timelineLogChart.resize();
   if (cardId === 'bubbleCard')                                   resizeBubbleCanvas();
@@ -2593,6 +2660,7 @@ const LAYOUT_SECTIONS = [
   { id:'radarCard',           label:'Keyword Web' },
   { id:'bubbleCard',          label:'Consensus Bubbles' },
   { id:'approvalCard',        label:'Approval Meter' },
+  { id:'approvalTimelineCard', label:'Approval Timeline' },
   { id:'timelineLinearCard',  label:'Timeline (Linear)' },
   { id:'timelineLogCard',     label:'Timeline (Log)' },
   { id:'feedCard',            label:'Live Feed' },
@@ -2723,6 +2791,7 @@ function applyCustomLayout() {
     resizeBubbleCanvas();
     if (pieChart) pieChart.resize();
     if (radarChart) radarChart.resize();
+    if (approvalTimelineChart) approvalTimelineChart.resize();
     if (timelineLinearChart) timelineLinearChart.resize();
     if (timelineLogChart) timelineLogChart.resize();
   }, 50);
@@ -2753,7 +2822,7 @@ function restoreDefaultDOM() {
   const chartsTop = document.querySelector('.charts-top');
 
   // Collect all card elements by ID (safe references survive DOM moves)
-  const allCardIds = ['pieCard','radarCard','bubbleCard','approvalCard','timelineLinearCard','timelineLogCard','feedCard','outlierCard'];
+  const allCardIds = ['pieCard','radarCard','bubbleCard','approvalCard','approvalTimelineCard','timelineLinearCard','timelineLogCard','feedCard','outlierCard'];
   const cards = {};
   for (const id of allCardIds) {
     const el = document.getElementById(id);
@@ -2795,6 +2864,7 @@ function restoreDefaultDOM() {
     cards.bubbleCard,
     dividers[1],
     cards.approvalCard,
+    cards.approvalTimelineCard,
     dividers[2],
     cards.timelineLinearCard,
     cards.timelineLogCard,
