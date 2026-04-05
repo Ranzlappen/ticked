@@ -1839,7 +1839,937 @@ footer {
 </div>
 <!-- END PHASE 2 -->
 
-<!-- PLACEHOLDER: Phase 3 and remaining phases continue below -->
+<!-- =====================================================================
+     PHASE 3: TRIAL
+     ===================================================================== -->
+<div class="phase" id="phase3">
+<div class="phase-card">
+  <div class="phase-hdr" onclick="togglePhase(this)">
+    <span class="icon">⚖️</span>
+    <div>
+      <div class="phase-num">Phase 3</div>
+      <div class="label">Trial</div>
+    </div>
+    <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+  </div>
+  <div class="phase-body">
+    <div class="phase-body-inner">
+
+      <div class="section-block recognition">
+        <div class="sec-title">👁️ Recognition Cues — What You See/Hear Right Now</div>
+        <p><strong>On court cam:</strong> The courtroom is fully set up. Jury box may be filled (or empty for a bench trial). Both attorney tables are occupied. A witness stand is visible. The judge sits elevated at the bench. The bailiff stands near the jury.</p>
+        <p><strong>Audio cues:</strong> "All rise! The Honorable [Name] presiding." or "Members of the jury…" or "The State/People call their first witness."</p>
+        <p><strong>Visual cues:</strong> Formal setting. Attorneys in suits. Defendant at the defense table. Court reporter present. Gallery may be full for high-profile cases.</p>
+      </div>
+
+      <div class="section-block" style="background:transparent;border:none;padding:0;">
+        <h3>Overview &amp; Purpose</h3>
+        <p>The trial is where both sides present their evidence and arguments to a judge or jury. The prosecution/plaintiff goes first (they have the <span class="term" data-term="burden-of-proof">burden of proof</span>). Then the defense responds. The trial follows a strict sequence: jury selection, opening statements, evidence presentation (prosecution case, then defense case), closing arguments, jury instructions, and deliberation. This is the most visible and dramatic phase — and the one most commonly shown on court cams.</p>
+      </div>
+
+<!-- ============= SUB-PHASE 3A: VOIR DIRE / JURY SELECTION ============= -->
+<div class="sub-phase" id="phase3a">
+  <div class="phase-card sub">
+    <div class="phase-hdr sub" onclick="togglePhase(this)">
+      <span class="icon">👥</span>
+      <div>
+        <div class="phase-num">Phase 3A</div>
+        <div class="label">Voir Dire (Jury Selection)</div>
+      </div>
+      <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+    </div>
+    <div class="phase-body">
+      <div class="phase-body-inner">
+
+        <div class="section-block recognition">
+          <div class="sec-title">👁️ Recognition Cues</div>
+          <p><strong>On court cam:</strong> A large group of potential jurors (the <span class="term" data-term="venire">venire</span>) sits in the gallery or jury box. Attorneys ask them questions. Some jurors are excused and leave; others remain.</p>
+          <p><strong>Audio cues:</strong> "Good morning, ladies and gentlemen. You have been summoned as potential jurors…" Questions like "Can you be fair and impartial?" "Have you or anyone in your family been a victim of a crime?" "Do you have any prior knowledge of this case?"</p>
+          <p><strong>Visual cues:</strong> Potential jurors may hold questionnaires. Attorneys take notes. The mood is conversational but formal. Some jurors are visibly nervous.</p>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <h3>Overview &amp; Purpose</h3>
+          <p><span class="term" data-term="voir-dire">Voir dire</span> (French: "to speak the truth") is the process of selecting impartial jurors from a pool of citizens. Attorneys question potential jurors to find people who can be fair. Each side can remove jurors "for cause" (bias) with unlimited challenges, or use a limited number of <span class="term" data-term="peremptory-challenge">peremptory challenges</span> (removing a juror without stating a reason — but NOT based on race, gender, or ethnicity per <em>Batson v. Kentucky</em>). A standard jury is 12 people for felonies, often 6 for civil cases or misdemeanors. Alternates are also selected.</p>
+        </div>
+
+        <div class="section-block judge" data-role="judge">
+          <div class="sec-title">⚖️ Judge</div>
+          <p><strong>MUST do:</strong></p>
+          <ul>
+            <li>Administer the oath to potential jurors to answer questions truthfully</li>
+            <li>Ask basic qualifying questions (can you serve? do you speak English? etc.)</li>
+            <li>Rule on challenges for cause (bias, hardship, relationship to parties)</li>
+            <li>Rule on <span class="term" data-term="batson-challenge">Batson challenges</span> if either side alleges discriminatory use of peremptory challenges</li>
+          </ul>
+          <p><strong>MAY do:</strong></p>
+          <ul>
+            <li>Conduct all questioning personally (common in federal courts) or allow attorneys to question jurors directly (common in state courts)</li>
+            <li>Set time limits on attorney questioning</li>
+            <li>Excuse jurors for hardship (medical, financial, caregiving)</li>
+            <li>Sequester the jury in high-profile cases (rare)</li>
+          </ul>
+        </div>
+
+        <div class="section-block prosecution" data-role="prosecution">
+          <div class="sec-title">📋 Prosecution / Plaintiff</div>
+          <p><strong>Goals:</strong></p>
+          <ul>
+            <li>Identify jurors who may be sympathetic to the prosecution's case</li>
+            <li>Remove jurors who seem biased against law enforcement, skeptical of government, or who have strong views against the specific charges</li>
+            <li class="criminal-only">Look for jurors who respect authority and follow rules</li>
+          </ul>
+          <p><strong>Peremptory challenges:</strong> Limited number (varies: federal = 6 for felonies, 3 for misdemeanors; state courts vary from 3-20+)</p>
+        </div>
+
+        <div class="section-block defense" data-role="defense">
+          <div class="sec-title">🛡️ Defense</div>
+          <p><strong>Goals:</strong></p>
+          <ul>
+            <li>Identify jurors who will hold the prosecution to their burden of proof</li>
+            <li>Remove jurors who seem biased against the defendant or who have close ties to law enforcement</li>
+            <li>Look for jurors who are independent thinkers and open-minded</li>
+          </ul>
+          <p><strong>Peremptory challenges:</strong> Defense typically gets the same or more peremptory challenges as the prosecution (federal = 10 for felonies)</p>
+        </div>
+
+        <div class="section-block objection">
+          <div class="sec-title">🚩 Objections Guide</div>
+          <table>
+            <tr><th>Objection / Challenge</th><th>When Raised</th><th>Example Phrasing</th><th>Typical Response</th></tr>
+            <tr>
+              <td>Challenge for cause — bias</td>
+              <td>After a juror reveals potential bias during questioning</td>
+              <td>"Your Honor, we challenge Juror #7 for cause. She stated her brother is a police officer and she tends to believe officers are always truthful."</td>
+              <td>Judge may question the juror further. If bias is clear, juror is excused. If the juror says they can be fair, judge may deny the challenge.</td>
+            </tr>
+            <tr>
+              <td>Challenge for cause — knowledge of case</td>
+              <td>After a juror admits knowing about the case</td>
+              <td>"Your Honor, Juror #12 stated he has followed media coverage extensively and has already formed an opinion."</td>
+              <td>Judge questions the juror about whether they can set aside prior knowledge. May excuse or keep.</td>
+            </tr>
+            <tr>
+              <td>Batson challenge — discriminatory strike</td>
+              <td>After the opposing side uses a peremptory challenge to remove a juror of a protected class</td>
+              <td>"Your Honor, the State has used three of its four peremptory challenges to strike Black jurors. We raise a Batson challenge and request the State provide a race-neutral reason."</td>
+              <td>Three-step process: (1) challenging party shows a pattern, (2) striking party must give a race-neutral reason, (3) judge decides if the reason is pretextual. If discriminatory, the strike is denied and the juror is seated.</td>
+            </tr>
+            <tr>
+              <td>Objection to improper questioning</td>
+              <td>When opposing attorney asks leading or argumentative questions during voir dire</td>
+              <td>"Objection, Your Honor. Counsel is pre-trying the case and attempting to indoctrinate the jury during voir dire."</td>
+              <td>Judge sustains if the attorney is arguing facts rather than assessing impartiality. Warns the attorney to limit questions to juror qualifications.</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="section-block evidence">
+          <div class="sec-title">📜 Evidence Rules in This Phase</div>
+          <ul>
+            <li><strong>No evidence is presented during voir dire.</strong> Attorneys may only reference the general nature of the case, not specific evidence or witness testimony.</li>
+            <li><strong>Batson v. Kentucky (1986):</strong> Peremptory challenges cannot be used to exclude jurors based on race. Extended to gender (<em>J.E.B. v. Alabama</em>, 1994) and ethnicity.</li>
+            <li><strong>State variation:</strong> Some states have extended Batson protections to religion, sexual orientation, or other characteristics. Washington State (GR 37) uses an objective observer standard instead of requiring proof of discriminatory intent.</li>
+          </ul>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <div class="sec-title" style="color:var(--accent);">🔀 Next Possible Outcomes</div>
+          <div class="decision-tree">Voir Dire
+├─ Jury selected → Both sides accept the panel
+│  └─ Opening Statements begin (Phase 3B)
+├─ Batson challenge raised
+│  ├─ Sustained → Struck juror re-seated; new peremptory used on different juror
+│  └─ Overruled → Strike stands; issue preserved for appeal
+├─ Insufficient jurors (too many excused)
+│  └─ Additional venire members called → Process restarts for empty seats
+└─ Bench trial (no jury) → Skip directly to Opening Statements</div>
+        </div>
+
+        <div class="section-block observer">
+          <div class="sec-title">👁️ Sensory &amp; Social Expectations (Gallery / Court Cam)</div>
+          <ul>
+            <li><strong>Duration:</strong> 1 hour to several days for complex cases. High-profile murder cases can take a week or more.</li>
+            <li><strong>What you see:</strong> Large group of citizens. Attorneys ask personal questions. Some jurors are clearly nervous. The process can feel repetitive.</li>
+            <li><strong>Noise level:</strong> Moderate — conversational. Jurors speak into microphones. Attorneys move around the courtroom.</li>
+            <li><strong>Emotional tone:</strong> Neutral to anxious. Potential jurors often don't want to serve. Some share personal stories that can be emotional (trauma, crime victimization).</li>
+            <li><strong>Gallery note:</strong> This phase is less dramatic than trial testimony but is strategically crucial. Experienced court watchers pay close attention to which jurors each side tries to remove — it reveals trial strategy.</li>
+          </ul>
+        </div>
+
+        <div class="section-block pitfalls">
+          <div class="sec-title">⚠️ Common Pitfalls &amp; Red Flags</div>
+          <ul>
+            <li><strong>Juror dishonesty:</strong> If a juror hides bias or relevant information during voir dire, it can be grounds for a mistrial or appeal if discovered later.</li>
+            <li><strong>Batson violations:</strong> Using peremptory challenges in a discriminatory pattern is unconstitutional and can result in the struck juror being re-seated.</li>
+            <li><strong>Wasting peremptory challenges:</strong> Attorneys have a limited number. Using them on marginally problematic jurors may leave worse jurors on the panel.</li>
+            <li><strong>Implicit bias:</strong> Both attorneys and jurors may have unconscious biases that are hard to detect during questioning.</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END SUB-PHASE 3A -->
+
+<!-- ============= SUB-PHASE 3B: OPENING STATEMENTS ============= -->
+<div class="sub-phase" id="phase3b">
+  <div class="phase-card sub">
+    <div class="phase-hdr sub" onclick="togglePhase(this)">
+      <span class="icon">🎤</span>
+      <div>
+        <div class="phase-num">Phase 3B</div>
+        <div class="label">Opening Statements</div>
+      </div>
+      <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+    </div>
+    <div class="phase-body">
+      <div class="phase-body-inner">
+
+        <div class="section-block recognition">
+          <div class="sec-title">👁️ Recognition Cues</div>
+          <p><strong>On court cam:</strong> The jury is seated. One attorney stands and speaks directly to the jury. No witnesses are on the stand. No evidence is on display yet (though attorneys may reference what they plan to show).</p>
+          <p><strong>Audio cues:</strong> "Ladies and gentlemen of the jury, the evidence will show…" or "At the end of this trial, you will hear…" The prosecution always goes first.</p>
+          <p><strong>Visual cues:</strong> Attorney stands near the jury box, often without notes (though some use an outline). Makes eye contact with jurors. May use a visual aid or board.</p>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <h3>Overview &amp; Purpose</h3>
+          <p>Opening statements are each side's opportunity to tell the jury what the case is about and what the evidence will show. This is a <strong>roadmap, not argument</strong>. Attorneys are supposed to describe what they will prove, not argue why the jury should believe it. The prosecution/plaintiff goes first (they have the burden). The defense goes second (and may choose to reserve their opening until the start of their own case). Openings typically last 15 minutes to 1 hour each.</p>
+        </div>
+
+        <div class="section-block judge" data-role="judge">
+          <div class="sec-title">⚖️ Judge</div>
+          <p><strong>MUST do:</strong></p>
+          <ul>
+            <li>Instruct the jury that opening statements are not evidence</li>
+            <li>Sustain objections if an attorney argues rather than previews evidence</li>
+            <li>Maintain order if statements become inflammatory</li>
+          </ul>
+          <p><strong>MAY do:</strong></p>
+          <ul>
+            <li>Set time limits for each side's opening</li>
+            <li>Allow the defense to reserve their opening until the start of their case</li>
+            <li>Strike improper statements and instruct the jury to disregard them</li>
+          </ul>
+        </div>
+
+        <div class="section-block prosecution" data-role="prosecution">
+          <div class="sec-title">📋 Prosecution / Plaintiff</div>
+          <ul>
+            <li>Presents first (burden of proof)</li>
+            <li>Outlines the charges/claims and what each witness and exhibit will show</li>
+            <li>Sets the narrative framework: "Here is what happened, and here is how we will prove it"</li>
+            <li>Should NOT argue, give personal opinions, or reference inadmissible evidence</li>
+          </ul>
+        </div>
+
+        <div class="section-block defense" data-role="defense">
+          <div class="sec-title">🛡️ Defense</div>
+          <ul>
+            <li>Presents second (or may reserve until the start of the defense case)</li>
+            <li>May preview the defense theory: alibi, self-defense, lack of intent, reasonable doubt</li>
+            <li>Often focuses on what the prosecution CANNOT prove</li>
+            <li>May tell the jury: "Keep an open mind until you have heard ALL the evidence"</li>
+          </ul>
+        </div>
+
+        <div class="section-block objection">
+          <div class="sec-title">🚩 Objections Guide</div>
+          <p>Objections during openings are uncommon but do happen:</p>
+          <table>
+            <tr><th>Objection</th><th>When Raised</th><th>Example Phrasing</th><th>Typical Response</th></tr>
+            <tr>
+              <td>Argumentative</td>
+              <td>When the attorney argues rather than previews evidence</td>
+              <td>"Objection, Your Honor. Counsel is arguing to the jury, not describing what the evidence will show."</td>
+              <td>Sustained — attorney told to limit statements to what the evidence will demonstrate.</td>
+            </tr>
+            <tr>
+              <td>Reference to inadmissible evidence</td>
+              <td>When the attorney mentions evidence that was excluded by a prior ruling</td>
+              <td>"Objection! Counsel is referencing the defendant's prior conviction, which this Court has already excluded."</td>
+              <td>Sustained — judge may give a curative instruction to the jury. If egregious, may result in a mistrial.</td>
+            </tr>
+            <tr>
+              <td>Personal opinion</td>
+              <td>When the attorney states their own belief</td>
+              <td>"Objection. Counsel just said 'I believe the defendant is lying.' That is improper personal opinion."</td>
+              <td>Sustained — attorneys must not express personal opinions about credibility or guilt.</td>
+            </tr>
+            <tr>
+              <td>Misstating the law</td>
+              <td>When the attorney incorrectly states the legal standard</td>
+              <td>"Objection, Your Honor. Counsel is misstating the burden of proof."</td>
+              <td>Sustained — judge may clarify the correct legal standard for the jury.</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="section-block evidence">
+          <div class="sec-title">📜 Evidence Rules in This Phase</div>
+          <ul>
+            <li><strong>Opening statements are NOT evidence.</strong> The judge will instruct the jury of this. Jurors should not rely on anything said in openings as fact.</li>
+            <li><strong>Attorneys may only reference evidence they reasonably expect to present.</strong> Promising evidence and then failing to deliver it damages credibility.</li>
+            <li><strong>No exhibits are formally admitted during openings.</strong> Attorneys may display demonstrative aids (charts, timelines) if the judge approves, but these are NOT evidence.</li>
+          </ul>
+        </div>
+
+        <div class="section-block observer">
+          <div class="sec-title">👁️ Sensory &amp; Social Expectations (Gallery / Court Cam)</div>
+          <ul>
+            <li><strong>Duration:</strong> 15 minutes to 1 hour per side. Complex cases may be longer.</li>
+            <li><strong>Noise level:</strong> One voice speaking at a time. Very focused. The courtroom is silent except for the attorney.</li>
+            <li><strong>What you see:</strong> Attorney stands, often moving, making eye contact with jurors. May use a podium, a poster board, or a screen. The other attorney watches and takes notes.</li>
+            <li><strong>Emotional tone:</strong> Prosecution openings are often matter-of-fact and detailed. Defense openings may be more dramatic or emphasize doubt and fairness.</li>
+            <li><strong>Key moment to watch:</strong> The defense opening — this is where you learn the defense theory for the first time. Does the defense promise specific evidence? Do they focus on reasonable doubt?</li>
+          </ul>
+        </div>
+
+        <div class="section-block pitfalls">
+          <div class="sec-title">⚠️ Common Pitfalls</div>
+          <ul>
+            <li><strong>Over-promising:</strong> If an attorney says "the evidence will show X" and then fails to present X, the opposing side will remind the jury during closings.</li>
+            <li><strong>Arguing:</strong> Getting too argumentative during openings invites objections and looks unprofessional.</li>
+            <li><strong>Mentioning excluded evidence:</strong> This can cause a mistrial — one of the most serious consequences possible.</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END SUB-PHASE 3B -->
+
+<!-- ============= SUB-PHASE 3C: PROSECUTION/PLAINTIFF CASE-IN-CHIEF ============= -->
+<div class="sub-phase" id="phase3c">
+  <div class="phase-card sub">
+    <div class="phase-hdr sub" onclick="togglePhase(this)">
+      <span class="icon">📋</span>
+      <div>
+        <div class="phase-num">Phase 3C</div>
+        <div class="label">Prosecution / Plaintiff Case-in-Chief (Direct &amp; Cross Examination)</div>
+      </div>
+      <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+    </div>
+    <div class="phase-body">
+      <div class="phase-body-inner">
+
+        <div class="section-block recognition">
+          <div class="sec-title">👁️ Recognition Cues</div>
+          <p><strong>On court cam:</strong> A witness sits on the witness stand. The prosecutor/plaintiff's attorney stands and asks questions. This is <strong>direct examination</strong>. After the prosecutor finishes, the defense attorney stands and asks questions — this is <strong>cross-examination</strong>.</p>
+          <p><strong>Audio cues (direct):</strong> Open-ended questions: "What did you see?" "Tell the jury what happened next." "Can you describe…?" No leading questions allowed on direct.</p>
+          <p><strong>Audio cues (cross):</strong> Leading, yes/no questions: "Isn't it true that…?" "You didn't actually see the defendant, did you?" "You were 200 feet away, correct?"</p>
+          <p><strong>Distinguishing direct from cross:</strong> On direct, the attorney who called the witness asks open questions. On cross, the opposing attorney asks leading questions designed to challenge the testimony.</p>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <h3>Overview &amp; Purpose</h3>
+          <p>This is the heart of the trial. The prosecution/plaintiff presents their evidence first — they call witnesses, introduce documents, show physical evidence, and play recordings. For each witness: (1) the calling attorney conducts <strong>direct examination</strong> (open-ended questions), (2) the opposing attorney conducts <strong>cross-examination</strong> (challenging, leading questions), (3) optionally, <strong>redirect</strong> and <strong>recross</strong> follow. The prosecution must present enough evidence to meet their <span class="term" data-term="burden-of-proof">burden of proof</span>. If they fail, the defense can move for a directed verdict or judgment of acquittal.</p>
+        </div>
+
+        <div class="section-block judge" data-role="judge">
+          <div class="sec-title">⚖️ Judge</div>
+          <p><strong>MUST do:</strong></p>
+          <ul>
+            <li>Rule on ALL objections immediately (sustained = objection upheld; overruled = objection denied)</li>
+            <li>Ensure witnesses are sworn in before testifying</li>
+            <li>Protect witnesses from harassment or improper questioning</li>
+            <li>Determine admissibility of each piece of evidence before it goes to the jury</li>
+          </ul>
+          <p><strong>MAY do:</strong></p>
+          <ul>
+            <li>Ask questions of witnesses to clarify testimony (but must remain neutral)</li>
+            <li>Limit repetitive or cumulative testimony</li>
+            <li>Excuse the jury for a sidebar (private conversation at the bench) to discuss legal issues</li>
+            <li>Strike testimony and instruct the jury to disregard it</li>
+          </ul>
+        </div>
+
+        <div class="section-block prosecution" data-role="prosecution">
+          <div class="sec-title">📋 Prosecution / Plaintiff Strategy</div>
+          <ul>
+            <li><strong>Witness order matters:</strong> Start strong (first witness = most impactful) and end strong (last witness before resting)</li>
+            <li><strong>Lay the foundation for each exhibit:</strong> Before evidence is admitted, the attorney must establish what it is, where it came from, and why it's reliable (authentication under <em>FRE 901</em>)</li>
+            <li><strong>Anticipate cross:</strong> Prepare witnesses for challenging questions</li>
+            <li><strong>Build the elements:</strong> Must prove every legal element of each charge/claim through testimony and evidence</li>
+          </ul>
+        </div>
+
+        <div class="section-block defense" data-role="defense">
+          <div class="sec-title">🛡️ Defense (Cross-Examination Strategy)</div>
+          <p><strong>Goals of cross-examination:</strong></p>
+          <ul>
+            <li><strong>Impeach credibility:</strong> Show the witness is biased, has a motive to lie, has a prior inconsistent statement, or has a criminal record (<em>FRE 608, 609, 613</em>)</li>
+            <li><strong>Challenge perception:</strong> Show the witness couldn't have seen/heard what they claim (distance, lighting, intoxication, stress)</li>
+            <li><strong>Establish helpful facts:</strong> Get the prosecution's own witness to confirm facts favorable to the defense</li>
+            <li><strong>Highlight omissions:</strong> What did the witness NOT see or NOT do?</li>
+          </ul>
+          <p><strong>Key rule:</strong> Cross-examination is limited to the scope of direct examination plus credibility. (<em>FRE 611(b)</em>)</p>
+        </div>
+
+        <div class="section-block objection">
+          <div class="sec-title">🚩 OBJECTIONS MASTER GUIDE — Direct &amp; Cross Examination</div>
+          <p>This is where most objections happen. Know these well:</p>
+          <table>
+            <tr><th>Objection</th><th>FRE Rule</th><th>When to Raise</th><th>Example Phrasing</th><th>Judge Response</th></tr>
+            <tr>
+              <td><strong>Hearsay</strong></td>
+              <td>FRE 801-807</td>
+              <td>Witness repeats what someone else said, offered for the truth of the matter</td>
+              <td>"Objection, hearsay."</td>
+              <td>Sustained unless an exception applies (excited utterance 803(2), business record 803(6), statement against interest 804(b)(3), etc.). The offering attorney must cite the specific exception.</td>
+            </tr>
+            <tr>
+              <td><strong>Leading question</strong></td>
+              <td>FRE 611(c)</td>
+              <td>On direct exam, the attorney suggests the answer in the question</td>
+              <td>"Objection, leading."</td>
+              <td>Sustained — attorney must rephrase as an open question. (Leading IS allowed on cross-examination.)</td>
+            </tr>
+            <tr>
+              <td><strong>Relevance</strong></td>
+              <td>FRE 401-402</td>
+              <td>The question or evidence has no connection to the case</td>
+              <td>"Objection, relevance." or "Objection, irrelevant."</td>
+              <td>Judge decides if the evidence makes a fact more or less probable. Sustained if no logical connection.</td>
+            </tr>
+            <tr>
+              <td><strong>Unfair prejudice (403)</strong></td>
+              <td>FRE 403</td>
+              <td>Evidence is relevant but its prejudicial effect substantially outweighs its value</td>
+              <td>"Objection under 403, Your Honor. The probative value is substantially outweighed by the danger of unfair prejudice."</td>
+              <td>Judge balances. Graphic photos, inflammatory details, and emotional evidence often trigger this objection.</td>
+            </tr>
+            <tr>
+              <td><strong>Lack of foundation</strong></td>
+              <td>FRE 901-902</td>
+              <td>The attorney tries to introduce evidence without first establishing what it is</td>
+              <td>"Objection, lack of foundation." or "The exhibit has not been properly authenticated."</td>
+              <td>Sustained — the attorney must lay a foundation (identify the evidence, establish chain of custody, show it is what it claims to be) before it is admitted.</td>
+            </tr>
+            <tr>
+              <td><strong>Speculation</strong></td>
+              <td>FRE 602</td>
+              <td>Witness is asked to guess about something they didn't personally observe</td>
+              <td>"Objection, calls for speculation."</td>
+              <td>Sustained — witnesses can only testify about what they personally saw, heard, or experienced (unless they are qualified experts).</td>
+            </tr>
+            <tr>
+              <td><strong>Opinion (lay witness)</strong></td>
+              <td>FRE 701</td>
+              <td>Non-expert witness gives an opinion beyond what is allowed</td>
+              <td>"Objection, improper opinion testimony."</td>
+              <td>Lay witnesses CAN give opinions if based on perception and helpful (e.g., "he seemed drunk"). They CANNOT give opinions requiring expertise (e.g., "he had a blood alcohol of .15").</td>
+            </tr>
+            <tr>
+              <td><strong>Asked and answered</strong></td>
+              <td>FRE 611(a)</td>
+              <td>The attorney asks the same question repeatedly</td>
+              <td>"Objection, asked and answered."</td>
+              <td>Sustained — attorney must move on. (More common on direct; on cross, some repetition is allowed.)</td>
+            </tr>
+            <tr>
+              <td><strong>Compound question</strong></td>
+              <td>FRE 611(a)</td>
+              <td>Two questions asked at once</td>
+              <td>"Objection, compound question."</td>
+              <td>Sustained — attorney must break it into separate questions.</td>
+            </tr>
+            <tr>
+              <td><strong>Assumes facts not in evidence</strong></td>
+              <td>FRE 611(a)</td>
+              <td>The question contains a factual claim that hasn't been established</td>
+              <td>"Objection, assumes facts not in evidence."</td>
+              <td>Sustained — the attorney must first establish the underlying fact before asking about it.</td>
+            </tr>
+            <tr>
+              <td><strong>Beyond the scope</strong></td>
+              <td>FRE 611(b)</td>
+              <td>Cross-examination goes beyond what was covered on direct</td>
+              <td>"Objection, beyond the scope of direct examination."</td>
+              <td>Sustained — the cross-examiner must limit questions to topics raised during direct (plus credibility).</td>
+            </tr>
+            <tr>
+              <td><strong>Character evidence</strong></td>
+              <td>FRE 404(a)</td>
+              <td>Evidence of a person's character is offered to prove they acted in conformity</td>
+              <td>"Objection, improper character evidence."</td>
+              <td>Generally excluded. Exceptions: criminal defendant may offer good character; prosecution can rebut. Victim's character allowed in specific situations.</td>
+            </tr>
+            <tr>
+              <td><strong>Best evidence rule</strong></td>
+              <td>FRE 1002</td>
+              <td>A party tries to describe the contents of a document rather than producing it</td>
+              <td>"Objection, best evidence rule. The original document should be produced."</td>
+              <td>Sustained if the original or a duplicate is available. The actual document must be introduced.</td>
+            </tr>
+            <tr>
+              <td><strong>Privilege</strong></td>
+              <td>FRE 501</td>
+              <td>Question asks about protected communications</td>
+              <td>"Objection, attorney-client privilege." or "Objection, spousal privilege."</td>
+              <td>Sustained if the privilege applies and has not been waived.</td>
+            </tr>
+            <tr>
+              <td><strong>Narrative response</strong></td>
+              <td>FRE 611(a)</td>
+              <td>Witness gives a long, uncontrolled answer instead of responding to the specific question</td>
+              <td>"Objection, the witness is being non-responsive / giving a narrative."</td>
+              <td>Sustained — witness instructed to answer only the question asked. Rambling responses prevent the other side from objecting to specific statements.</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="section-block evidence">
+          <div class="sec-title">📜 Evidence Rules in This Phase (Priority Detail)</div>
+          <p>This is where the Federal Rules of Evidence are most heavily applied:</p>
+          <ul>
+            <li><strong>FRE 401-403 (Relevance):</strong> All evidence must be relevant. Even relevant evidence can be excluded under 403 if it's too prejudicial, confusing, or time-wasting.</li>
+            <li><strong>FRE 602 (Personal knowledge):</strong> Witnesses can only testify about what they personally perceived. No guessing.</li>
+            <li><strong>FRE 611 (Mode of questioning):</strong> Direct = open questions. Cross = leading allowed. Judge controls the order and limits harassment.</li>
+            <li><strong>FRE 613 (Prior inconsistent statements):</strong> On cross, the attorney can confront a witness with their own prior statements that contradict their current testimony. Must give the witness a chance to explain.</li>
+            <li><strong>FRE 701 vs 702 (Lay vs Expert opinion):</strong> Lay witnesses give opinions based on personal perception. Experts give opinions based on specialized knowledge.</li>
+            <li><strong>FRE 801-807 (Hearsay):</strong> Out-of-court statements offered for truth are generally inadmissible. 30+ exceptions exist (excited utterance, dying declaration, business records, prior testimony, etc.).</li>
+            <li><strong>FRE 901 (Authentication):</strong> Every exhibit must be authenticated — someone must testify that it is what it claims to be. Photos, documents, recordings, and physical evidence all need authentication.</li>
+            <li><strong>FRE 1001-1008 (Best evidence):</strong> To prove the contents of a writing, recording, or photo, the original must be produced (with exceptions for duplicates and unavailable originals).</li>
+            <li><strong>State variation:</strong> Most states follow rules similar to the FRE but with differences. California uses its own Evidence Code. Texas has the Texas Rules of Evidence. Check your jurisdiction.</li>
+          </ul>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <div class="sec-title" style="color:var(--accent);">🔀 Next Possible Outcomes</div>
+          <div class="decision-tree">Prosecution / Plaintiff Case-in-Chief
+├─ All witnesses examined → Prosecution rests
+│  ├─ Defense moves for Directed Verdict / Judgment of Acquittal
+│  │  ├─ GRANTED → Case dismissed (prosecution failed to prove their case)
+│  │  └─ DENIED → Defense Case begins (Phase 3D)
+│  └─ No motion → Defense Case begins (Phase 3D)
+├─ Key evidence excluded during testimony
+│  └─ May weaken prosecution's case significantly
+├─ Witness impeached on cross-examination
+│  └─ Jury may give less weight to that testimony
+└─ Mistrial declared (jury hears prejudicial inadmissible evidence)
+   └─ Trial starts over with a new jury</div>
+        </div>
+
+        <div class="section-block observer">
+          <div class="sec-title">👁️ Sensory &amp; Social Expectations (Gallery / Court Cam)</div>
+          <ul>
+            <li><strong>Duration:</strong> Hours to days per witness in complex cases. Simple witnesses may take 15-30 minutes total.</li>
+            <li><strong>Noise level:</strong> Quiet except for the attorney and witness speaking. Occasional objection breaks the rhythm.</li>
+            <li><strong>What you see:</strong> Witness on the stand facing the jury. Attorney stands at the podium or moves around. Exhibits may be shown on a screen or TV.</li>
+            <li><strong>Emotional tone:</strong> Varies dramatically. Victim testimony can be deeply emotional. Expert testimony can be dry and technical. Cross-examination can be confrontational.</li>
+            <li><strong>Key moments to watch:</strong> Objections (watch the judge's ruling), cross-examination (watch for witness discomfort or contradictions), and exhibit introductions (what physical evidence is being shown to the jury).</li>
+          </ul>
+        </div>
+
+        <div class="section-block pitfalls">
+          <div class="sec-title">⚠️ Common Pitfalls &amp; Red Flags</div>
+          <ul>
+            <li><strong>Failing to object:</strong> If an attorney doesn't object to inadmissible evidence, it comes in AND the issue is waived for appeal. You must object in real time.</li>
+            <li><strong>Asking "one question too many" on cross:</strong> Classic mistake — the cross-examiner gets a good answer and then pushes for more, allowing the witness to explain away the damage.</li>
+            <li><strong>Forgetting to lay foundation:</strong> Trying to introduce evidence without proper authentication results in exclusion.</li>
+            <li><strong>Witness coaching vs preparation:</strong> Attorneys may prepare witnesses (legal and expected) but not tell them what to say (illegal and unethical).</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END SUB-PHASE 3C -->
+
+<!-- ============= SUB-PHASE 3D: DEFENSE CASE ============= -->
+<div class="sub-phase" id="phase3d">
+  <div class="phase-card sub">
+    <div class="phase-hdr sub" onclick="togglePhase(this)">
+      <span class="icon">🛡️</span>
+      <div>
+        <div class="phase-num">Phase 3D</div>
+        <div class="label">Defense Case &amp; Rebuttal</div>
+      </div>
+      <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+    </div>
+    <div class="phase-body">
+      <div class="phase-body-inner">
+
+        <div class="section-block recognition">
+          <div class="sec-title">👁️ Recognition Cues</div>
+          <p><strong>On court cam:</strong> After the prosecution rests, you hear "The defense calls [witness name]." Now the defense attorney asks the open-ended questions (direct exam) and the prosecutor cross-examines.</p>
+          <p><strong>Audio cues:</strong> "Your Honor, the defense calls…" or "The defense rests." The judge may ask: "Does the defense wish to present any evidence?"</p>
+          <p><strong>Key difference:</strong> The roles reverse — the defense asks open questions on direct; the prosecution asks leading questions on cross.</p>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <h3>Overview &amp; Purpose</h3>
+          <p>After the prosecution rests, the defense MAY present their own case. This is optional — the defense is never required to present evidence or call witnesses because the burden of proof is entirely on the prosecution. If the defense does present evidence, they call their own witnesses (direct examination) and the prosecution cross-examines. After the defense rests, the prosecution may present <strong>rebuttal evidence</strong> (limited to responding to new issues raised by the defense). The defense may then offer <strong>surrebuttal</strong> (responding to the rebuttal).</p>
+        </div>
+
+        <div class="section-block judge" data-role="judge">
+          <div class="sec-title">⚖️ Judge</div>
+          <ul>
+            <li>Same role as during prosecution's case: rule on objections, manage witnesses, ensure fairness</li>
+            <li>Must rule on motion for judgment of acquittal / directed verdict before defense begins (if filed)</li>
+            <li>Decides whether rebuttal and surrebuttal evidence is proper (must respond to new issues, not repeat the original case)</li>
+          </ul>
+        </div>
+
+        <div class="section-block defense" data-role="defense">
+          <div class="sec-title">🛡️ Defense Strategy Choices</div>
+          <ul>
+            <li><strong>Option 1 — Present no evidence:</strong> The defense argues the prosecution simply hasn't met their burden. This avoids exposing the defendant to cross-examination and keeps the jury focused on prosecution weaknesses.</li>
+            <li><strong>Option 2 — Present witnesses and evidence:</strong> Call alibi witnesses, character witnesses, experts, or other witnesses that support the defense theory.</li>
+            <li><strong>Option 3 — Defendant testifies:</strong> The defendant has a constitutional right to testify (or NOT to testify). If they testify, they are subject to full cross-examination, including impeachment with prior convictions (<em>FRE 609</em>). The jury CANNOT draw negative conclusions from a defendant's decision not to testify (<em>5th Amendment</em>; <em>Griffin v. California</em>).</li>
+          </ul>
+        </div>
+
+        <div class="section-block prosecution" data-role="prosecution">
+          <div class="sec-title">📋 Prosecution on Cross &amp; Rebuttal</div>
+          <ul>
+            <li><strong>Cross-examine defense witnesses:</strong> Challenge their credibility, perception, bias, and consistency</li>
+            <li><strong>If defendant testifies:</strong> This is the prosecution's biggest opportunity — they can question the defendant about every aspect of their story and use prior inconsistent statements and prior convictions</li>
+            <li><strong>Rebuttal evidence:</strong> After the defense rests, the prosecution may call witnesses to directly counter new issues raised by the defense (cannot simply repeat their original case)</li>
+          </ul>
+        </div>
+
+        <div class="section-block objection">
+          <div class="sec-title">🚩 Objections Guide</div>
+          <p>Same objections apply as Phase 3C, plus these additional ones:</p>
+          <table>
+            <tr><th>Objection</th><th>When Raised</th><th>Example Phrasing</th><th>Typical Response</th></tr>
+            <tr>
+              <td>Improper rebuttal (prosecution)</td>
+              <td>When prosecution's rebuttal goes beyond responding to the defense case</td>
+              <td>"Objection, this is not proper rebuttal. The State is re-presenting its case-in-chief."</td>
+              <td>Sustained if the evidence doesn't respond to new defense issues. Overruled if it does.</td>
+            </tr>
+            <tr>
+              <td>Comment on defendant's silence</td>
+              <td>If the prosecution references the defendant not testifying</td>
+              <td>"Objection! The prosecution is commenting on my client's exercise of their Fifth Amendment right to remain silent."</td>
+              <td>Sustained — serious constitutional violation. May result in a mistrial. (<em>Griffin v. California</em>, 1965)</td>
+            </tr>
+            <tr>
+              <td>Improper impeachment with prior conviction</td>
+              <td>When prosecution uses a prior conviction improperly under FRE 609</td>
+              <td>"Objection — the prior conviction is more than 10 years old and its probative value does not substantially outweigh its prejudicial effect."</td>
+              <td>Judge applies FRE 609(b) balancing test. Older convictions require the proponent to show substantial probative value.</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <div class="sec-title" style="color:var(--accent);">🔀 Next Possible Outcomes</div>
+          <div class="decision-tree">Defense Case
+├─ Defense presents evidence → Defense rests
+│  ├─ Prosecution rebuttal → Defense surrebuttal (optional)
+│  └─ No rebuttal → Both sides rest
+├─ Defense presents no evidence → Defense rests immediately
+├─ All evidence concluded → Both sides rest
+│  └─ Closing Arguments begin (Phase 3E)
+└─ Renewed motion for acquittal (after all evidence)
+   ├─ GRANTED → Case dismissed
+   └─ DENIED → Closings proceed</div>
+        </div>
+
+        <div class="section-block observer">
+          <div class="sec-title">👁️ Observer Notes</div>
+          <ul>
+            <li>Watch for whether the defendant testifies — this is always a dramatic moment and a risky strategic choice</li>
+            <li>If the defense rests without calling witnesses, it does NOT mean the defendant is guilty — it means the defense believes the prosecution failed to prove their case</li>
+            <li>Rebuttal witnesses are usually brief and targeted</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END SUB-PHASE 3D -->
+
+<!-- ============= SUB-PHASE 3E: CLOSING ARGUMENTS ============= -->
+<div class="sub-phase" id="phase3e">
+  <div class="phase-card sub">
+    <div class="phase-hdr sub" onclick="togglePhase(this)">
+      <span class="icon">🏛️</span>
+      <div>
+        <div class="phase-num">Phase 3E</div>
+        <div class="label">Closing Arguments</div>
+      </div>
+      <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+    </div>
+    <div class="phase-body">
+      <div class="phase-body-inner">
+
+        <div class="section-block recognition">
+          <div class="sec-title">👁️ Recognition Cues</div>
+          <p><strong>On court cam:</strong> No witnesses on the stand. Attorney stands and speaks directly to the jury, summarizing the evidence. May use exhibits that were already admitted. This is the most rhetorical, persuasive part of the trial.</p>
+          <p><strong>Audio cues:</strong> "The evidence has shown…" "You must find…" "Beyond a reasonable doubt means…" The prosecution goes first, then the defense, then the prosecution gets a final rebuttal.</p>
+          <p><strong>Key distinction from openings:</strong> Closings ARE argument. Attorneys can now draw conclusions, urge the jury, and explain why the evidence supports their position.</p>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <h3>Overview &amp; Purpose</h3>
+          <p>Closing arguments are each side's final chance to persuade the jury. Unlike openings, attorneys CAN argue — they can explain what the evidence means, draw inferences, appeal to common sense, and ask the jury to reach a specific verdict. The prosecution speaks first and last (because they carry the burden). The defense speaks in between. Closings typically last 30 minutes to 2 hours per side.</p>
+        </div>
+
+        <div class="section-block prosecution" data-role="prosecution">
+          <div class="sec-title">📋 Prosecution / Plaintiff Strategy</div>
+          <ul>
+            <li>Summarize the evidence that proves each element of each charge/claim</li>
+            <li>Remind the jury of key testimony and exhibits</li>
+            <li>Explain the burden of proof and argue it has been met</li>
+            <li>Address weaknesses in their case before the defense does</li>
+            <li>Final rebuttal: respond to the defense's closing (cannot raise new arguments)</li>
+          </ul>
+        </div>
+
+        <div class="section-block defense" data-role="defense">
+          <div class="sec-title">🛡️ Defense Strategy</div>
+          <ul>
+            <li>Highlight every weakness, inconsistency, and gap in the prosecution's evidence</li>
+            <li>Emphasize the burden of proof: "The prosecution has NOT proven…"</li>
+            <li class="criminal-only">Define "beyond a reasonable doubt" and argue the evidence falls short</li>
+            <li>Remind the jury of favorable testimony and impeachment of prosecution witnesses</li>
+            <li>If the defendant didn't testify: remind jury they cannot hold that against the defendant</li>
+          </ul>
+        </div>
+
+        <div class="section-block objection">
+          <div class="sec-title">🚩 Objections Guide</div>
+          <table>
+            <tr><th>Objection</th><th>When Raised</th><th>Example Phrasing</th><th>Typical Response</th></tr>
+            <tr>
+              <td>Misstating the evidence</td>
+              <td>When the attorney describes testimony or evidence inaccurately</td>
+              <td>"Objection, counsel is misstating the evidence. The witness said [X], not [Y]."</td>
+              <td>Sustained if clearly inaccurate. Judge may instruct jury to rely on their own recollection.</td>
+            </tr>
+            <tr>
+              <td>Burden shifting</td>
+              <td>When the prosecution implies the defense had a duty to prove something</td>
+              <td>"Objection — the prosecution is improperly shifting the burden of proof to the defense."</td>
+              <td>Sustained — in criminal cases, the defense has NO burden to prove anything.</td>
+            </tr>
+            <tr>
+              <td>Golden Rule argument</td>
+              <td>When the attorney asks jurors to put themselves in the victim's/party's position</td>
+              <td>"Objection — counsel is making an improper Golden Rule argument, asking the jury to decide based on sympathy."</td>
+              <td>Sustained — jurors must decide on evidence, not empathy.</td>
+            </tr>
+            <tr>
+              <td>Reference to facts not in evidence</td>
+              <td>When the attorney argues facts that were never presented</td>
+              <td>"Objection — counsel is arguing facts not in evidence."</td>
+              <td>Sustained — attorneys can only argue based on admitted evidence and reasonable inferences.</td>
+            </tr>
+            <tr>
+              <td>Improper vouching</td>
+              <td>When the attorney personally vouches for a witness's credibility</td>
+              <td>"Objection — counsel is improperly vouching for the witness's credibility."</td>
+              <td>Sustained — attorneys cannot say "I believe this witness" or invoke their personal reputation.</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="section-block observer">
+          <div class="sec-title">👁️ Observer Notes</div>
+          <ul>
+            <li><strong>Duration:</strong> 30 minutes to 2+ hours per side. The prosecution gets two turns (initial + rebuttal).</li>
+            <li><strong>Emotional tone:</strong> This is often the most dramatic part of the trial. Attorneys may raise their voices, use visual aids, and appeal to the jury's sense of justice.</li>
+            <li><strong>What to watch for:</strong> Does the prosecution address the weaknesses in their case? Does the defense effectively create doubt? Does the prosecution's rebuttal respond to the defense or introduce new arguments (which would be improper)?</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END SUB-PHASE 3E -->
+
+<!-- ============= SUB-PHASE 3F: JURY INSTRUCTIONS ============= -->
+<div class="sub-phase" id="phase3f">
+  <div class="phase-card sub">
+    <div class="phase-hdr sub" onclick="togglePhase(this)">
+      <span class="icon">📖</span>
+      <div>
+        <div class="phase-num">Phase 3F</div>
+        <div class="label">Jury Instructions (Charge to the Jury)</div>
+      </div>
+      <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+    </div>
+    <div class="phase-body">
+      <div class="phase-body-inner">
+
+        <div class="section-block recognition">
+          <div class="sec-title">👁️ Recognition Cues</div>
+          <p><strong>On court cam:</strong> The judge reads from a document, speaking directly to the jury. No attorney is standing. The jury listens intently. This can take 15 minutes to over an hour.</p>
+          <p><strong>Audio cues:</strong> "Members of the jury, I will now instruct you on the law…" "The burden of proof is on the prosecution to prove every element beyond a reasonable doubt…" "You must not consider the defendant's decision not to testify…"</p>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <h3>Overview &amp; Purpose</h3>
+          <p>The judge reads the jury the legal rules they must follow when making their decision. This includes: the elements of each charge/claim, the burden of proof, how to evaluate witness credibility, what to do with circumstantial evidence, the definition of reasonable doubt, and specific rules for the case. These instructions are critically important — errors in jury instructions are one of the most common grounds for appeal.</p>
+        </div>
+
+        <div class="section-block judge" data-role="judge">
+          <div class="sec-title">⚖️ Judge</div>
+          <ul>
+            <li><strong>MUST instruct on:</strong> Elements of each charge/claim, burden of proof, presumption of innocence (criminal), witness credibility, unanimous verdict requirement (federal criminal), and any defenses raised by the evidence</li>
+            <li><strong>MAY instruct on:</strong> Lesser included offenses (if supported by evidence), Allen charge (dynamite charge — urging a deadlocked jury to keep deliberating, controversial in some jurisdictions)</li>
+            <li><strong>Timing varies:</strong> In some jurisdictions, instructions are read before closing arguments; in others, after. Federal courts typically instruct after closings.</li>
+          </ul>
+        </div>
+
+        <div class="section-block objection">
+          <div class="sec-title">🚩 Objections to Instructions</div>
+          <p>Objections to jury instructions happen outside the jury's presence, often in a "charge conference":</p>
+          <ul>
+            <li><strong>Failure to include a defense instruction:</strong> "Your Honor, the evidence supports a self-defense instruction and we object to its omission."</li>
+            <li><strong>Incorrect statement of law:</strong> "Your Honor, the instruction on intent misstates the mens rea requirement for this offense."</li>
+            <li><strong>Lesser included offense:</strong> Defense may request instruction on a lesser charge; prosecution may oppose it.</li>
+            <li><strong>Important:</strong> Objections to instructions MUST be made before the jury retires. Failure to object waives the issue for appeal. (<em>FRCP 30</em>)</li>
+          </ul>
+        </div>
+
+        <div class="section-block observer">
+          <div class="sec-title">👁️ Observer Notes</div>
+          <ul>
+            <li>Instructions can be dense and hard to follow — they are written in legal language</li>
+            <li>Watch the jury's faces — are they paying attention? Do they seem confused?</li>
+            <li>The length of instructions often indicates the complexity of the case</li>
+            <li>In criminal cases, listen for: definition of "beyond a reasonable doubt," lesser included offenses, and any special defenses</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END SUB-PHASE 3F -->
+
+<!-- ============= SUB-PHASE 3G: DELIBERATION & VERDICT ============= -->
+<div class="sub-phase" id="phase3g">
+  <div class="phase-card sub">
+    <div class="phase-hdr sub" onclick="togglePhase(this)">
+      <span class="icon">🗳️</span>
+      <div>
+        <div class="phase-num">Phase 3G</div>
+        <div class="label">Jury Deliberation &amp; Verdict</div>
+      </div>
+      <svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+    </div>
+    <div class="phase-body">
+      <div class="phase-body-inner">
+
+        <div class="section-block recognition">
+          <div class="sec-title">👁️ Recognition Cues</div>
+          <p><strong>On court cam — Deliberation:</strong> You will NOT see deliberation. The jury room is private and never recorded. The courtroom is empty or in recess. Court cam may show an empty courtroom or the hallway.</p>
+          <p><strong>On court cam — Verdict:</strong> Everyone returns to the courtroom. The jury files in. The judge asks: "Has the jury reached a verdict?" The foreperson says "Yes" or "We have." The verdict is read aloud. This is the most-watched moment in any trial.</p>
+          <p><strong>Audio cues:</strong> "We the jury, in the above-entitled action, find the defendant [guilty/not guilty] of [charge]." or "We find in favor of the [plaintiff/defendant]."</p>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <h3>Overview &amp; Purpose</h3>
+          <p>The jury goes to a private room to discuss the evidence and reach a verdict. They may request to see exhibits, have testimony read back, or ask the judge legal questions (answered via written notes). In federal criminal cases, the verdict must be <strong>unanimous</strong>. In civil cases and some state criminal cases, a supermajority may suffice. If the jury cannot agree, it is a <span class="term" data-term="hung-jury">hung jury</span> — the judge declares a mistrial and the case may be retried.</p>
+        </div>
+
+        <div class="section-block judge" data-role="judge">
+          <div class="sec-title">⚖️ Judge</div>
+          <ul>
+            <li><strong>MUST do:</strong> Receive the verdict, poll the jury if requested (ask each juror individually if this is their verdict), and enter the verdict into the record</li>
+            <li><strong>MAY do:</strong> Send the jury back to continue deliberating if the verdict form is incomplete or inconsistent; give an Allen charge to a deadlocked jury; declare a mistrial if the jury is hopelessly deadlocked</li>
+            <li><strong>Post-verdict:</strong> May grant a <span class="term" data-term="jnov">judgment notwithstanding the verdict (JNOV)</span> if no reasonable jury could have reached that verdict (civil cases); in criminal cases, may grant a judgment of acquittal</li>
+          </ul>
+        </div>
+
+        <div class="section-block objection">
+          <div class="sec-title">🚩 Post-Verdict Motions</div>
+          <table>
+            <tr><th>Motion</th><th>When Filed</th><th>Purpose</th><th>Typical Outcome</th></tr>
+            <tr>
+              <td>Motion to poll the jury</td>
+              <td>Immediately after verdict is read</td>
+              <td>Confirm each juror individually agrees with the verdict</td>
+              <td>Each juror asked "Is this your verdict?" If any says no, judge may send jury back to deliberate.</td>
+            </tr>
+            <tr>
+              <td>Motion for judgment of acquittal (criminal, FRCP 29)</td>
+              <td>After verdict</td>
+              <td>Argues no rational jury could have found guilt beyond a reasonable doubt</td>
+              <td>Rarely granted. Preserved for appeal.</td>
+            </tr>
+            <tr>
+              <td>Motion for new trial (FRCP 33 / FRCP Civil 59)</td>
+              <td>Within 14-28 days of verdict</td>
+              <td>Argues errors during trial require a new trial (improper evidence, juror misconduct, etc.)</td>
+              <td>Judge reviews the record. Granted only for significant errors that affected the outcome.</td>
+            </tr>
+            <tr>
+              <td>Motion for JNOV / Judgment as a Matter of Law (civil)</td>
+              <td>After verdict</td>
+              <td>Argues the verdict is not supported by any reasonable view of the evidence</td>
+              <td>Judge may overturn the jury verdict. This is a dramatic remedy.</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="section-block" style="background:transparent;border:none;padding:0;">
+          <div class="sec-title" style="color:var(--accent);">🔀 Next Possible Outcomes</div>
+          <div class="decision-tree">Deliberation &amp; Verdict
+├─ GUILTY verdict (criminal)
+│  └─ Sentencing phase begins (Phase 4)
+├─ NOT GUILTY verdict (criminal)
+│  └─ Defendant is free. Case is over. Cannot be retried (double jeopardy).
+├─ Verdict for PLAINTIFF (civil)
+│  └─ Damages determined → Judgment entered (Phase 4)
+├─ Verdict for DEFENDANT (civil)
+│  └─ Case dismissed. Plaintiff may appeal.
+├─ HUNG JURY (cannot reach agreement)
+│  ├─ Allen charge given → Jury sent back to try again
+│  └─ Mistrial declared → Prosecution/Plaintiff decides whether to retry
+├─ Mixed verdict (guilty on some counts, not guilty on others)
+│  └─ Sentencing on guilty counts only (Phase 4)
+└─ Post-verdict motions filed
+   ├─ New trial granted → Start over
+   └─ JNOV granted (civil) → Verdict overturned</div>
+        </div>
+
+        <div class="section-block observer">
+          <div class="sec-title">👁️ Sensory &amp; Social Expectations (Gallery / Court Cam)</div>
+          <ul>
+            <li><strong>During deliberation:</strong> You will see an empty courtroom. Waiting can last hours to weeks. There is no way to predict how long the jury will take.</li>
+            <li><strong>Verdict reading:</strong> Extremely tense. Everyone stands. The courtroom is completely silent. The defendant stands to face the jury.</li>
+            <li><strong>Emotional reactions:</strong> Expect strong emotional reactions — crying, gasps, hugging, or stunned silence. The bailiff will maintain order.</li>
+            <li><strong>Gallery etiquette:</strong> Absolutely no reactions, cheering, booing, or outbursts. The judge may clear the gallery if order is disrupted.</li>
+            <li><strong>Duration of verdict reading:</strong> Usually 1-5 minutes for the actual reading, but the surrounding proceedings may take 15-30 minutes.</li>
+          </ul>
+        </div>
+
+        <div class="section-block pitfalls">
+          <div class="sec-title">⚠️ Common Pitfalls &amp; Red Flags</div>
+          <ul>
+            <li><strong>Juror misconduct:</strong> If a juror conducts independent research, discusses the case with outsiders, or is exposed to media coverage, it can result in a mistrial.</li>
+            <li><strong>Inconsistent verdict:</strong> If the jury's findings on different counts are logically contradictory, the judge must address it.</li>
+            <li><strong>Coerced verdict (Allen charge abuse):</strong> If the judge pressures a deadlocked jury too aggressively, the resulting verdict may be challenged on appeal.</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- END SUB-PHASE 3G -->
+
+    </div>
+  </div>
+</div>
+</div>
+<!-- END PHASE 3 -->
+
+<!-- PLACEHOLDER: Phase 4 and remaining phases continue below -->
 </main>
 </div><!-- end .layout -->
 
