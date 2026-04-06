@@ -129,7 +129,11 @@ const IntuiNO = {
     if (txt) txt.textContent = `${Math.min(cur, req)} / ${req} chaos events`;
     if (cur >= req && btn) {
       btn.classList.remove('hidden');
-      gsap.fromTo(btn, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 });
+      if (typeof gsap !== 'undefined') {
+        gsap.fromTo(btn, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 });
+      } else {
+        btn.style.opacity = '1';
+      }
     }
   },
 
@@ -172,9 +176,14 @@ const IntuiNO = {
     document.getElementById('ach-icon').textContent = def.icon;
     document.getElementById('ach-text').textContent = def.text;
     const popup = document.getElementById('achievement-popup');
-    gsap.timeline()
-      .to(popup, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(2)' })
-      .to(popup, { opacity: 0, y: -20, duration: 0.4, delay: 2.5 });
+    if (typeof gsap !== 'undefined') {
+      gsap.timeline()
+        .to(popup, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(2)' })
+        .to(popup, { opacity: 0, y: -20, duration: 0.4, delay: 2.5 });
+    } else {
+      popup.style.opacity = '1'; popup.style.transform = 'translateX(-50%) translateY(0)';
+      setTimeout(() => { popup.style.opacity = '0'; popup.style.transform = 'translateX(-50%) translateY(-20px)'; }, 3000);
+    }
     this.updateHubStats();
   },
 
@@ -238,7 +247,11 @@ const IntuiNO = {
         </div>`;
       card.addEventListener('click', () => this.navigate('level' + lv.id));
       grid.appendChild(card);
-      gsap.fromTo(card, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, delay: lv.id * 0.08, ease: 'power2.out' });
+      if (typeof gsap !== 'undefined') {
+        gsap.fromTo(card, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, delay: lv.id * 0.08, ease: 'power2.out' });
+      } else {
+        card.style.opacity = '1';
+      }
     });
     this.updateHubStats();
   },
@@ -290,14 +303,20 @@ const IntuiNO = {
   initMenu() {
     const menu = document.getElementById('sabotaged-menu');
     const panel = menu.querySelector('.absolute.right-0');
+    const hasGsap = typeof gsap !== 'undefined';
     let closeAttempts = 0;
 
     document.getElementById('menu-btn').addEventListener('click', () => {
       if (this.state.menuOpen) return;
       this.state.menuOpen = true;
       menu.classList.remove('pointer-events-none');
-      gsap.to(menu, { opacity: 1, duration: 0.3 });
-      gsap.to(panel, { x: 0, duration: 0.4, ease: 'power2.out' });
+      if (hasGsap) {
+        gsap.to(menu, { opacity: 1, duration: 0.3 });
+        gsap.to(panel, { x: 0, duration: 0.4, ease: 'power2.out' });
+      } else {
+        menu.style.opacity = '1';
+        panel.style.transform = 'translateX(0)';
+      }
       closeAttempts = 0;
     });
 
@@ -309,8 +328,14 @@ const IntuiNO = {
         return;
       }
       this.state.menuOpen = false;
-      gsap.to(panel, { x: '100%', duration: 0.3, ease: 'power2.in' });
-      gsap.to(menu, { opacity: 0, duration: 0.3, delay: 0.1, onComplete: () => menu.classList.add('pointer-events-none') });
+      if (hasGsap) {
+        gsap.to(panel, { x: '100%', duration: 0.3, ease: 'power2.in' });
+        gsap.to(menu, { opacity: 0, duration: 0.3, delay: 0.1, onComplete: () => menu.classList.add('pointer-events-none') });
+      } else {
+        panel.style.transform = 'translateX(100%)';
+        menu.style.opacity = '0';
+        setTimeout(() => menu.classList.add('pointer-events-none'), 400);
+      }
     };
     document.getElementById('menu-close').addEventListener('click', closeMenu);
     menu.querySelector('.absolute.inset-0').addEventListener('click', closeMenu);
@@ -392,7 +417,9 @@ const IntuiNO = {
         this.addChaos(4);
         this.levelProg(1);
         this.toast(`Clicked ${target} — you\'ve been taken to ${wrong}!`, 'warn');
-        gsap.fromTo(btn, { scale: 0.95, borderColor: 'rgba(255,0,229,.5)' }, { scale: 1, borderColor: 'rgba(255,255,255,.06)', duration: 0.4 });
+        if (typeof gsap !== 'undefined') {
+          gsap.fromTo(btn, { scale: 0.95, borderColor: 'rgba(255,0,229,.5)' }, { scale: 1, borderColor: 'rgba(255,255,255,.06)', duration: 0.4 });
+        }
       });
     });
 
@@ -406,6 +433,7 @@ const IntuiNO = {
     const pw = document.getElementById('l2-password');
     const eye = document.getElementById('l2-eye');
     const age = document.getElementById('l2-age');
+    document.getElementById('l2-age-val').textContent = 101 - parseInt(age.value);
     let eyeTriggered = false, unameTriggered = false, emailTriggered = false, ageTriggered = false;
 
     // Reversed username validation
@@ -492,6 +520,7 @@ const IntuiNO = {
   initLevel3() {
     const area = document.getElementById('l3-swipe-area');
     const card = document.getElementById('l3-swipe-card');
+    const hasGsap = typeof gsap !== 'undefined';
     let startX = 0, currentX = 0, dragging = false;
 
     const updateSwipeCard = () => {
@@ -505,33 +534,58 @@ const IntuiNO = {
       if (!dragging) return;
       currentX = x;
       const diff = currentX - startX;
-      gsap.set(card, { x: diff, rotation: diff * 0.05 });
       const likeLabel = document.getElementById('l3-label-like');
       const skipLabel = document.getElementById('l3-label-skip');
-      // INVERTED: moving right shows SKIP, moving left shows LIKE
-      gsap.set(skipLabel, { opacity: Math.max(0, diff / 100) });
-      gsap.set(likeLabel, { opacity: Math.max(0, -diff / 100) });
+      if (hasGsap) {
+        gsap.set(card, { x: diff, rotation: diff * 0.05 });
+        gsap.set(skipLabel, { opacity: Math.max(0, diff / 100) });
+        gsap.set(likeLabel, { opacity: Math.max(0, -diff / 100) });
+      } else {
+        card.style.transform = `translateX(${diff}px) rotate(${diff * 0.05}deg)`;
+        skipLabel.style.opacity = Math.max(0, diff / 100);
+        likeLabel.style.opacity = Math.max(0, -diff / 100);
+      }
     };
     const onEnd = () => {
       if (!dragging) return;
       dragging = false;
       const diff = currentX - startX;
+      const likeLabel = document.getElementById('l3-label-like');
+      const skipLabel = document.getElementById('l3-label-skip');
       if (Math.abs(diff) > 80) {
         // INVERTED: right swipe = skip, left swipe = like
         const action = diff > 0 ? 'skipped' : 'liked';
         this.addChaos(3); this.levelProg(3);
         this.toast(`You ${action} it! (Directions are inverted.)`, 'info');
-        gsap.to(card, { x: diff > 0 ? 300 : -300, opacity: 0, duration: 0.3, onComplete: () => {
+        const resetCard = () => {
           this.state.swipeCardIndex++;
           updateSwipeCard();
-          gsap.set(card, { x: 0, opacity: 1, rotation: 0 });
-          gsap.set('#l3-label-like', { opacity: 0 });
-          gsap.set('#l3-label-skip', { opacity: 0 });
-        }});
+          card.style.transform = ''; card.style.opacity = '1';
+          likeLabel.style.opacity = '0';
+          skipLabel.style.opacity = '0';
+          if (hasGsap) {
+            gsap.set(card, { x: 0, opacity: 1, rotation: 0 });
+            gsap.set(likeLabel, { opacity: 0 });
+            gsap.set(skipLabel, { opacity: 0 });
+          }
+        };
+        if (hasGsap) {
+          gsap.to(card, { x: diff > 0 ? 300 : -300, opacity: 0, duration: 0.3, onComplete: resetCard });
+        } else {
+          card.style.transform = `translateX(${diff > 0 ? 300 : -300}px)`;
+          card.style.opacity = '0';
+          setTimeout(resetCard, 300);
+        }
       } else {
-        gsap.to(card, { x: 0, rotation: 0, duration: 0.3, ease: 'back.out(2)' });
-        gsap.to('#l3-label-like', { opacity: 0, duration: 0.2 });
-        gsap.to('#l3-label-skip', { opacity: 0, duration: 0.2 });
+        if (hasGsap) {
+          gsap.to(card, { x: 0, rotation: 0, duration: 0.3, ease: 'back.out(2)' });
+          gsap.to(likeLabel, { opacity: 0, duration: 0.2 });
+          gsap.to(skipLabel, { opacity: 0, duration: 0.2 });
+        } else {
+          card.style.transform = '';
+          likeLabel.style.opacity = '0';
+          skipLabel.style.opacity = '0';
+        }
       }
     };
 
@@ -552,7 +606,11 @@ const IntuiNO = {
       // INVERTED: scroll up (negative deltaY) = zoom OUT, scroll down = zoom IN
       this.state.pinchScale += e.deltaY * 0.003;
       this.state.pinchScale = Math.max(0.3, Math.min(3, this.state.pinchScale));
-      gsap.to(pinchContent, { scale: this.state.pinchScale, duration: 0.2 });
+      if (hasGsap) {
+        gsap.to(pinchContent, { scale: this.state.pinchScale, duration: 0.2 });
+      } else {
+        pinchContent.style.transform = `scale(${this.state.pinchScale})`;
+      }
       if (!pinchTriggered) { pinchTriggered = true; this.addChaos(3); this.levelProg(3); this.toast('Zoom is inverted. Naturally.', 'info'); }
     }, { passive: false });
 
@@ -570,7 +628,11 @@ const IntuiNO = {
         // INVERTED: fingers apart (positive delta) = zoom OUT, fingers together = zoom IN
         this.state.pinchScale -= delta * 0.005;
         this.state.pinchScale = Math.max(0.3, Math.min(3, this.state.pinchScale));
-        gsap.to(pinchContent, { scale: this.state.pinchScale, duration: 0.1 });
+        if (hasGsap) {
+          gsap.to(pinchContent, { scale: this.state.pinchScale, duration: 0.1 });
+        } else {
+          pinchContent.style.transform = `scale(${this.state.pinchScale})`;
+        }
         lastPinchDist = dist;
         if (!pinchTriggered) { pinchTriggered = true; this.addChaos(3); this.levelProg(3); this.toast('Pinch zoom is inverted!', 'info'); }
       }
@@ -613,7 +675,11 @@ const IntuiNO = {
       const maxY = rect.height - runBtn.offsetHeight - 10;
       const nx = Math.random() * maxX;
       const ny = Math.random() * maxY;
-      gsap.to(runBtn, { left: nx, top: ny, transform: 'none', duration: 0.25, ease: 'power2.out' });
+      if (typeof gsap !== 'undefined') {
+        gsap.to(runBtn, { left: nx, top: ny, transform: 'none', duration: 0.25, ease: 'power2.out' });
+      } else {
+        runBtn.style.left = nx + 'px'; runBtn.style.top = ny + 'px'; runBtn.style.transform = 'none';
+      }
     };
 
     runBtn.addEventListener('mouseenter', flee);
@@ -623,7 +689,9 @@ const IntuiNO = {
     runBtn.addEventListener('click', () => {
       this.addChaos(5); this.levelProg(4);
       this.toast('You caught the button! It took ' + this.state.runawayAttempts + ' attempts.', 'success');
-      gsap.to(runBtn, { scale: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
+      if (typeof gsap !== 'undefined') {
+        gsap.to(runBtn, { scale: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
+      }
     });
 
     // Opposite label buttons
@@ -633,7 +701,9 @@ const IntuiNO = {
         const real = btn.dataset.real;
         this.addChaos(3); this.levelProg(4);
         this.toast(realActions[real] || 'Opposite action triggered!', 'warn');
-        gsap.fromTo(btn, { scale: 0.93 }, { scale: 1, duration: 0.3, ease: 'back.out(3)' });
+        if (typeof gsap !== 'undefined') {
+          gsap.fromTo(btn, { scale: 0.93 }, { scale: 1, duration: 0.3, ease: 'back.out(3)' });
+        }
       });
     });
 
@@ -735,11 +805,16 @@ const IntuiNO = {
       this.addChaos(5);
       this.unlockAchievement('shakeItOff');
       const overlay = document.getElementById('good-ux-overlay');
-      gsap.to(overlay, { opacity: 1, duration: 0.4, onComplete: () => {
-        setTimeout(() => {
-          gsap.to(overlay, { opacity: 0, duration: 0.4 });
-        }, 4000);
-      }});
+      if (typeof gsap !== 'undefined') {
+        gsap.to(overlay, { opacity: 1, duration: 0.4, onComplete: () => {
+          setTimeout(() => {
+            gsap.to(overlay, { opacity: 0, duration: 0.4 });
+          }, 4000);
+        }});
+      } else {
+        overlay.style.opacity = '1';
+        setTimeout(() => { overlay.style.opacity = '0'; }, 4000);
+      }
       this.toast('Good UX Mode activated for 4 seconds!', 'success');
     };
 
