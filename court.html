@@ -123,6 +123,102 @@
 </div>
 
 <!-- =====================================================================
+     INTERACTIVE FLOWCHART — Case Flow Navigator
+     ===================================================================== -->
+<div class="flowchart-container" id="flowchart">
+  <svg viewBox="0 0 960 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--text-muted)"/>
+      </marker>
+    </defs>
+
+    <!-- Phase 1: Case Initiation -->
+    <g class="fc-node fc-active" data-phase="phase1" transform="translate(10,60)">
+      <rect x="0" y="0" width="100" height="50" rx="8" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="50" y="22" text-anchor="middle" font-weight="600">Case</text>
+      <text x="50" y="36" text-anchor="middle">Filing</text>
+    </g>
+    <line class="fc-arrow" x1="110" y1="85" x2="140" y2="85"/>
+
+    <g class="fc-node" data-phase="phase1" transform="translate(140,60)">
+      <rect x="0" y="0" width="100" height="50" rx="8" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="50" y="22" text-anchor="middle" font-weight="600">Initial</text>
+      <text x="50" y="36" text-anchor="middle">Appearance</text>
+    </g>
+    <line class="fc-arrow" x1="240" y1="85" x2="270" y2="85"/>
+
+    <!-- Phase 2: Pre-Trial -->
+    <g class="fc-node" data-phase="phase2" transform="translate(270,60)">
+      <rect x="0" y="0" width="100" height="50" rx="8" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="50" y="22" text-anchor="middle" font-weight="600">Pre-Trial</text>
+      <text x="50" y="36" text-anchor="middle">Discovery</text>
+    </g>
+    <line class="fc-arrow" x1="370" y1="85" x2="410" y2="85"/>
+
+    <!-- Decision: Plea? -->
+    <g class="fc-node" data-phase="phase2" transform="translate(410,55)">
+      <polygon points="50,0 100,30 50,60 0,30" fill="var(--bg-surface)" stroke="var(--accent-dim, var(--border))" stroke-width="1.5"/>
+      <text x="50" y="27" text-anchor="middle" font-weight="600" font-size="10">Plea</text>
+      <text x="50" y="39" text-anchor="middle" font-size="9">Deal?</text>
+    </g>
+    <!-- Yes arrow (down to sentencing) -->
+    <line class="fc-arrow" x1="460" y1="115" x2="460" y2="170"/>
+    <text class="fc-label" x="468" y="148">Yes</text>
+    <!-- No arrow (right to trial) -->
+    <line class="fc-arrow" x1="510" y1="85" x2="550" y2="85"/>
+    <text class="fc-label" x="520" y="78">No</text>
+
+    <!-- Phase 3: Trial -->
+    <g class="fc-node" data-phase="phase3" transform="translate(550,60)">
+      <rect x="0" y="0" width="100" height="50" rx="8" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="50" y="22" text-anchor="middle" font-weight="600">Trial</text>
+      <text x="50" y="36" text-anchor="middle">Proceedings</text>
+    </g>
+    <line class="fc-arrow" x1="650" y1="85" x2="690" y2="85"/>
+
+    <!-- Decision: Guilty? -->
+    <g class="fc-node" data-phase="phase3" transform="translate(690,55)">
+      <polygon points="50,0 100,30 50,60 0,30" fill="var(--bg-surface)" stroke="var(--accent-dim, var(--border))" stroke-width="1.5"/>
+      <text x="50" y="27" text-anchor="middle" font-weight="600" font-size="10">Guilty</text>
+      <text x="50" y="39" text-anchor="middle" font-size="9">Verdict?</text>
+    </g>
+    <!-- Yes arrow (down to sentencing) -->
+    <line class="fc-arrow" x1="740" y1="115" x2="740" y2="170"/>
+    <text class="fc-label" x="748" y="148">Yes</text>
+    <!-- No arrow (to case closed) -->
+    <line class="fc-arrow" x1="790" y1="85" x2="920" y2="85"/>
+    <text class="fc-label" x="830" y="78">Not Guilty</text>
+
+    <!-- Case Closed (acquittal) -->
+    <g transform="translate(920,70)">
+      <ellipse cx="20" cy="15" rx="20" ry="15" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="20" y="19" text-anchor="middle" font-size="9" font-weight="600">End</text>
+    </g>
+
+    <!-- Phase 4: Sentencing (bottom row) -->
+    <g class="fc-node" data-phase="phase4" transform="translate(550,170)">
+      <rect x="0" y="0" width="100" height="40" rx="8" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="50" y="25" text-anchor="middle" font-weight="600">Sentencing</text>
+    </g>
+    <!-- Arrows pointing into sentencing from plea and verdict -->
+    <line class="fc-arrow" x1="460" y1="190" x2="550" y2="190"/>
+    <line class="fc-arrow" x1="650" y1="190" x2="740" y2="170" style="display:none"/>
+
+    <!-- Phase 5: Appeals -->
+    <line class="fc-arrow" x1="650" y1="190" x2="690" y2="190"/>
+    <g class="fc-node" data-phase="phase5" transform="translate(690,170)">
+      <rect x="0" y="0" width="100" height="40" rx="8" fill="var(--bg-surface)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="50" y="25" text-anchor="middle" font-weight="600">Appeals</text>
+    </g>
+
+    <!-- Arrow from sentencing down and then to appeals is already implied by position -->
+    <!-- Arrow from guilty verdict down to sentencing -->
+    <line class="fc-arrow" x1="740" y1="170" x2="740" y2="190" style="display:none"/>
+  </svg>
+</div>
+
+<!-- =====================================================================
      PHASE 1: CASE INITIATION
      ===================================================================== -->
 <div class="phase phase-tab active" id="phase1">
