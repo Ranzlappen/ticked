@@ -301,6 +301,18 @@
             align-items: stretch;
             flex-shrink: 0;
         }
+        #procTemplateSelect {
+            min-width: 118px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            padding: 0 10px;
+            cursor: pointer;
+        }
+        #procTemplateSelect:focus { border-color: var(--accent); outline: none; }
 
         .add-btn {
             background: var(--accent);
@@ -1713,6 +1725,21 @@
             background: rgba(0,229,160,0.12);
             border-color: var(--accent);
         }
+        .gdrive-modal-field {
+            display: grid;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .gdrive-modal-field label {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .gdrive-modal-field input {
+            width: 100%;
+        }
 
         /* ── Google Drive icon-btn modifier ── */
         .icon-btn.gdrive-btn svg { width: 13px; height: 13px; }
@@ -2355,12 +2382,6 @@
                             <path d="M1 9h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                         </svg>
                     </button>
-                    <button class="icon-btn" id="reminderBtn" title="Enable hourly log reminders" onclick="toggleReminder()">
-                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                            <path d="M8 1.5a4.5 4.5 0 00-4.5 4.5c0 2.1-.7 3.4-1.3 4.1a.5.5 0 00.4.9h10.8a.5.5 0 00.4-.9c-.6-.7-1.3-2-1.3-4.1A4.5 4.5 0 008 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M6.5 12.5a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-                        </svg>
-                    </button>
                     <button class="icon-btn gdrive-btn" id="gdriveUploadBtn" title="Upload to Google Drive" onclick="gdriveUpload()">
                         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                             <path d="M7 9V2M4.5 4.5L7 2l2.5 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -2437,6 +2458,12 @@
                         <input type="text" id="procInputText" placeholder="Enter process name…">
                     </div>
                     <div class="btn-group">
+                        <select id="procTemplateSelect" class="filter-chip" onchange="addProcessFromTemplate(this.value)">
+                            <option value="">Templates</option>
+                            <option value="dailyRoutine">Daily Routine</option>
+                            <option value="contentCreation">Content Creation</option>
+                            <option value="bugFix">Bug Fix</option>
+                        </select>
                         <button class="add-btn" onclick="addProcess()">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
                             Add Process
@@ -2522,6 +2549,26 @@
             <div class="lazy-loader" id="procLazyLoader" aria-hidden="true"><span>Loading more processes…</span></div>
         </div>
 
+    </div>
+
+    <div class="source-modal-overlay" id="gdriveClientModal" onclick="if(event.target===this)closeGdriveClientModal(false)">
+        <div class="source-modal" style="max-width:560px;">
+            <div class="source-modal-header">
+                <span class="source-modal-title">Google Drive Client ID</span>
+                <button class="source-modal-close" onclick="closeGdriveClientModal(false)" title="Close">✕</button>
+            </div>
+            <div class="source-modal-body">
+                <p class="source-modal-text">Paste your Google OAuth Client ID. It is stored only in localStorage on this device and reused for upload/download.</p>
+                <div class="gdrive-modal-field">
+                    <label for="gdriveClientInput">Client ID</label>
+                    <input type="text" id="gdriveClientInput" placeholder="1234567890-abc123.apps.googleusercontent.com">
+                </div>
+                <div class="sheet-btn-row" style="margin-top:8px;">
+                    <button class="sheet-btn secondary" onclick="closeGdriveClientModal(false)">Cancel</button>
+                    <button class="sheet-btn primary" onclick="closeGdriveClientModal(true)">Save</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Source Viewer Modal -->
@@ -2613,10 +2660,12 @@
             procSortField:        'time',
             procSortDir:          'desc',
         };
+        let _gdriveClientId = '';
 
         function setState(patch) {
             Object.assign(state, patch);
             render();
+            updateAppBadge();
         }
 
         // ── Overdue helper ───────────────────────────────────────
@@ -2626,6 +2675,20 @@
             const cp = cps[cpIdx];
             if (!cp || !cp.dueDate) return false;
             return new Date(cp.dueDate + 'T23:59:59') < new Date();
+        }
+
+        function getOverdueCheckpointCount() {
+            return state.processes.reduce((sum, p) => sum + (isOverdue(p) ? 1 : 0), 0);
+        }
+
+        async function updateAppBadge() {
+            try {
+                const overdue = getOverdueCheckpointCount();
+                if (navigator.setAppBadge && navigator.clearAppBadge) {
+                    if (overdue > 0) await navigator.setAppBadge(overdue);
+                    else await navigator.clearAppBadge();
+                }
+            } catch (_) {}
         }
 
         // ── DOM refs ──────────────────────────────────────────────
@@ -2651,6 +2714,8 @@
         const timelineView    = document.getElementById('timelineView');
         const tasksLazyLoader = document.getElementById('tasksLazyLoader');
         const procLazyLoader  = document.getElementById('procLazyLoader');
+        const procTemplateSelect = document.getElementById('procTemplateSelect');
+        const gdriveClientInput = document.getElementById('gdriveClientInput');
 
         // ── Schema migration ──────────────────────────────────────
         const migrations = {
@@ -2740,6 +2805,7 @@
                 palette:   state.palette,
                 entries:   state.entries,
                 processes: state.processes,
+                gdriveClientId: _gdriveClientId || '',
             };
             safeStorage.set(STORAGE_KEY, JSON.stringify(payload));
         }
@@ -2755,6 +2821,10 @@
                     loaded.entries   = migrated.entries   || [];
                     loaded.processes = migrated.processes || [];
                     loaded.palette   = migrated.palette   || [...DEFAULT_PALETTE];
+                    if (migrated.gdriveClientId) {
+                        _gdriveClientId = String(migrated.gdriveClientId).trim();
+                        safeStorage.set('gdriveClientId', _gdriveClientId);
+                    }
                 } else {
                     const legacy2 = safeStorage.get('tickedEntries_v2');
                     const legacy1 = safeStorage.get('tickedEntries');
@@ -2777,6 +2847,8 @@
                 processes: loaded.processes,
                 palette:   loaded.palette,
             });
+            _gdriveClientId = _gdriveClientId || (safeStorage.get('gdriveClientId') || '').trim();
+            if (gdriveClientInput) gdriveClientInput.value = _gdriveClientId;
             initPalette();
             save();
         }
@@ -2898,6 +2970,21 @@
         }
 
         // ── Add process ───────────────────────────────────────────
+        const PROCESS_TEMPLATES = {
+            dailyRoutine: {
+                baseName: 'Daily Routine',
+                checkpoints: ['Plan day', 'Focus block', 'Admin tasks', 'Wrap-up']
+            },
+            contentCreation: {
+                baseName: 'Content Creation',
+                checkpoints: ['Research', 'Outline', 'Draft', 'Edit', 'Publish']
+            },
+            bugFix: {
+                baseName: 'Bug Fix',
+                checkpoints: ['Reproduce', 'Root cause', 'Implement fix', 'Test', 'Deploy']
+            },
+        };
+
         function addProcess() {
             const text = procInputText.value.trim();
             if (!text) { showToast('Please enter a process name.', true); return; }
@@ -2923,6 +3010,39 @@
             setState({ processes: [proc, ...state.processes] });
             save();
             procInputText.value = '';
+        }
+
+        function addProcessFromTemplate(templateKey) {
+            if (!templateKey || !PROCESS_TEMPLATES[templateKey]) return;
+            const tpl = PROCESS_TEMPLATES[templateKey];
+            const count = state.processes.filter(p => (p.text || '').startsWith(tpl.baseName)).length + 1;
+            const now = new Date().toISOString();
+            const processName = `${tpl.baseName} #${count}`;
+            const checkpoints = tpl.checkpoints.map((name, idx) => ({
+                id: uuid(),
+                name,
+                timestamp: idx === 0 ? now : '',
+                comment: '',
+                dueDate: '',
+                notify: false,
+            }));
+
+            const proc = {
+                id: uuid(),
+                isoDate: now,
+                text: processName,
+                custom: false,
+                bgColor: '',
+                borderColor: '',
+                tags: [],
+                currentCheckpoint: 0,
+                checkpoints,
+            };
+
+            setState({ processes: [proc, ...state.processes] });
+            save();
+            if (procTemplateSelect) procTemplateSelect.value = '';
+            showToast(`Template added: ${processName}`);
         }
 
         function deleteProcess(id) {
@@ -4055,7 +4175,15 @@
             setTimeout(() => {
                 sendTickedNotification(
                     `Checkpoint: ${cp.name}`,
-                    `Process "${proc.text}" — ${cp.name} is due now.`
+                    `Process "${proc.text}" — ${cp.name} is due now.`,
+                    {
+                        tag: `ticked-checkpoint-${procId}-${cpIdx}`,
+                        actions: [
+                            { action: 'insta-log', title: 'Insta Log' },
+                            { action: 'open', title: 'Open App' }
+                        ],
+                        data: { action: 'insta-log', procId, cpIdx }
+                    }
                 );
             }, delay);
         }
@@ -4369,6 +4497,7 @@
                 palette:    state.palette,
                 entries:    state.entries,
                 processes:  state.processes,
+                gdriveClientId: _gdriveClientId || '',
             };
             const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
             const url  = URL.createObjectURL(blob);
@@ -4390,7 +4519,7 @@
                     const parsed   = JSON.parse(e.target.result);
                     const envelope = Array.isArray(parsed)
                         ? { version: 1, entries: parsed }
-                        : { version: parsed.version || 1, entries: parsed.entries || [], processes: parsed.processes || [], palette: parsed.palette };
+                        : { version: parsed.version || 1, entries: parsed.entries || [], processes: parsed.processes || [], palette: parsed.palette, gdriveClientId: parsed.gdriveClientId || '' };
                     const migrated = migrate(envelope);
 
                     // Import entries
@@ -4410,6 +4539,11 @@
 
                     // Import palette if present
                     const newPalette = migrated.palette || state.palette;
+                    if (migrated.gdriveClientId) {
+                        _gdriveClientId = String(migrated.gdriveClientId).trim();
+                        safeStorage.set('gdriveClientId', _gdriveClientId);
+                        if (gdriveClientInput) gdriveClientInput.value = _gdriveClientId;
+                    }
 
                     setState({ entries: merged, processes: mergedProcs, palette: newPalette });
                     initPalette();
@@ -4518,6 +4652,7 @@
         const GDRIVE_FILENAME = 'ticked-backup.json';
         let _gdriveTokenClient = null;
         let _gdriveAccessToken = null;
+        let _gdriveModalResolve = null;
 
         function loadGoogleIdentityServices() {
             return new Promise((resolve, reject) => {
@@ -4530,25 +4665,56 @@
             });
         }
 
-        function getGdriveClientId() {
-            let clientId = safeStorage.get('gdriveClientId') || '';
-            if (!clientId) {
-                clientId = prompt(
-                    'Google Drive sync requires a Google Cloud OAuth2 Client ID.\n\n' +
-                    '1. Go to console.cloud.google.com\n' +
-                    '2. Create a project & enable Google Drive API\n' +
-                    '3. Create OAuth2 credentials (Web app type)\n' +
-                    '4. Paste the Client ID below:\n\n' +
-                    '(Stored locally in your browser, never shared)'
-                );
-                if (clientId) safeStorage.set('gdriveClientId', clientId.trim());
+        function openGdriveClientModal() {
+            return new Promise(resolve => {
+                _gdriveModalResolve = resolve;
+                if (gdriveClientInput) {
+                    gdriveClientInput.value = _gdriveClientId || (safeStorage.get('gdriveClientId') || '').trim();
+                    setTimeout(() => gdriveClientInput.focus(), 10);
+                }
+                document.getElementById('gdriveClientModal').classList.add('open');
+                document.body.classList.add('sheet-open');
+            });
+        }
+
+        function closeGdriveClientModal(saveValue) {
+            const modal = document.getElementById('gdriveClientModal');
+            if (modal) modal.classList.remove('open');
+            document.body.classList.remove('sheet-open');
+
+            let resolved = null;
+            if (saveValue) {
+                const clientId = (gdriveClientInput?.value || '').trim();
+                if (!clientId) {
+                    showToast('Google Drive Client ID required.', true);
+                    if (gdriveClientInput) gdriveClientInput.focus();
+                    return;
+                }
+                _gdriveClientId = clientId;
+                safeStorage.set('gdriveClientId', clientId);
+                _gdriveAccessToken = null;
+                _gdriveTokenClient = null;
+                save();
+                resolved = clientId;
             }
-            return clientId ? clientId.trim() : null;
+            if (_gdriveModalResolve) {
+                _gdriveModalResolve(resolved);
+                _gdriveModalResolve = null;
+            }
+        }
+
+        async function ensureGdriveClientId() {
+            _gdriveClientId = (_gdriveClientId || safeStorage.get('gdriveClientId') || '').trim();
+            if (_gdriveClientId) {
+                if (gdriveClientInput) gdriveClientInput.value = _gdriveClientId;
+                return _gdriveClientId;
+            }
+            return await openGdriveClientModal();
         }
 
         async function gdriveAuth() {
             if (_gdriveAccessToken) return _gdriveAccessToken;
-            const clientId = getGdriveClientId();
+            const clientId = await ensureGdriveClientId();
             if (!clientId) { showToast('Google Drive Client ID required.', true); return null; }
 
             await loadGoogleIdentityServices();
@@ -4597,6 +4763,7 @@
                 palette: state.palette,
                 entries: state.entries,
                 processes: state.processes,
+                gdriveClientId: _gdriveClientId || '',
             };
             const jsonStr = JSON.stringify(payload, null, 2);
 
@@ -4651,7 +4818,7 @@
                 const parsed = await resp.json();
                 const envelope = Array.isArray(parsed)
                     ? { version: 1, entries: parsed }
-                    : { version: parsed.version || 1, entries: parsed.entries || [], processes: parsed.processes || [], palette: parsed.palette };
+                    : { version: parsed.version || 1, entries: parsed.entries || [], processes: parsed.processes || [], palette: parsed.palette, gdriveClientId: parsed.gdriveClientId || '' };
                 const migrated = migrate(envelope);
 
                 const incoming = (migrated.entries || []).filter(e => e.isoDate || e.timestamp);
@@ -4665,6 +4832,11 @@
                 const mergedProcs = [...state.processes, ...newProcs].sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
 
                 const newPalette = migrated.palette || state.palette;
+                if (migrated.gdriveClientId) {
+                    _gdriveClientId = String(migrated.gdriveClientId).trim();
+                    safeStorage.set('gdriveClientId', _gdriveClientId);
+                    if (gdriveClientInput) gdriveClientInput.value = _gdriveClientId;
+                }
 
                 setState({ entries: merged, processes: mergedProcs, palette: newPalette });
                 initPalette();
@@ -4686,64 +4858,11 @@
         procInputText.addEventListener('keypress', e => { if (e.key === 'Enter') addProcess(); });
 
         // ── Init ──────────────────────────────────────────────────
-        window.onload = () => { load(); initTooltip(); initKofi(); initPWA(); initReminder(); initExternalLinkHandler(); };
+        window.onload = () => { load(); initTooltip(); initKofi(); initPWA(); initExternalLinkHandler(); };
 
-        // ── PWA ───────────────────────────────────────────────────
-        function initPWA() {
-            if ('serviceWorker' in navigator) {
-                // Helper: wait for SW to reach active state before storing ref
-                function waitForActive(reg) {
-                    return new Promise(resolve => {
-                        if (reg.active) { resolve(reg); return; }
-                        const sw = reg.installing || reg.waiting;
-                        if (!sw) { resolve(reg); return; }
-                        sw.addEventListener('statechange', function onState() {
-                            if (sw.state === 'activated') {
-                                sw.removeEventListener('statechange', onState);
-                                resolve(reg);
-                            }
-                        });
-                        setTimeout(() => resolve(reg), 3000);
-                    });
-                }
-
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => waitForActive(reg))
-                    .then(reg => { _swRegistration = reg; })
-                    .catch(() => {});
-
-                // Listen for messages from SW (notification action taps)
-                navigator.serviceWorker.addEventListener('message', e => {
-                    if (e.data && e.data.type === 'ticked-action') {
-                        if (e.data.action === 'log') {
-                            addEntry();
-                            showToast('Logged from notification ✓');
-                        } else if (e.data.action === 'silent-log') {
-                            // Silently create entry without opening/focusing the app
-                            addEntry();
-                        }
-                    }
-                });
-            }
-
-            // Handle #action= hash on load (when opened from notification)
-            if (location.hash.includes('action=silent-log')) {
-                setTimeout(() => {
-                    addEntry();
-                    history.replaceState(null, '', location.pathname);
-                }, 300);
-            } else if (location.hash.includes('action=log')) {
-                setTimeout(() => {
-                    addEntry();
-                    showToast('Logged from notification ✓');
-                    history.replaceState(null, '', location.pathname);
-                }, 300);
-            }
-        }
-
-        // ── Notification system ──────────────────────────────────
+        // ── PWA + Notification system ────────────────────────────
         let _swRegistration = null;
-        let _reminderInterval = null;
+        const INSTA_LOG_TEXT = '✅ Insta-log from notification';
 
         async function requestNotificationPermission() {
             if (!('Notification' in window)) {
@@ -4764,7 +4883,7 @@
             return false;
         }
 
-        async function sendTickedNotification(title, body) {
+        async function sendTickedNotification(title, body, config = {}) {
             const ok = await requestNotificationPermission();
             if (!ok) return;
 
@@ -4772,13 +4891,14 @@
                 body: body || 'Tap to log a new entry',
                 icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230d0f14'/%3E%3Crect x='24' y='24' width='464' height='464' rx='64' fill='none' stroke='%2300e5a0' stroke-width='12'/%3E%3Cpath d='M140 256l80 90 152-160' stroke='%2300e5a0' stroke-width='44' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
                 badge: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='16' fill='%230d0f14'/%3E%3Cpath d='M24 48l20 22 28-30' stroke='%2300e5a0' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
-                tag: 'ticked-reminder',
+                tag: config.tag || 'ticked-checkpoint',
                 renotify: true,
-                requireInteraction: true,  // keep expanded so action buttons stay visible
-                actions: [
-                    { action: 'log', title: '✓ Log Now' },
+                requireInteraction: true,
+                actions: config.actions || [
+                    { action: 'insta-log', title: 'Insta Log' },
                     { action: 'open', title: 'Open App' }
                 ],
+                data: config.data || {},
                 vibrate: [100, 50, 100],
             };
 
@@ -4798,7 +4918,7 @@
 
             if (reg && reg.active) {
                 try {
-                    await reg.showNotification(title || 'Ticked Reminder', options);
+                    await reg.showNotification(title || 'Ticked', options);
                     return;
                 } catch(e) { /* fallback below */ }
             }
@@ -4807,45 +4927,106 @@
             try {
                 delete options.actions; // basic Notification doesn't support actions
                 delete options.requireInteraction;
-                new Notification(title || 'Ticked Reminder', options);
+                new Notification(title || 'Ticked', options);
             } catch(e) {}
         }
 
-        function toggleReminder() {
-            const btn = document.getElementById('reminderBtn');
-            if (_reminderInterval) {
-                clearInterval(_reminderInterval);
-                _reminderInterval = null;
-                btn.classList.remove('active');
-                btn.title = 'Enable hourly log reminders';
-                showToast('Reminders off');
-                safeStorage.set('tickedReminder', 'off');
-            } else {
-                requestNotificationPermission().then(ok => {
-                    if (!ok) return;
-                    _reminderInterval = setInterval(() => {
-                        sendTickedNotification('Ticked', 'Time to log! Tap "Log Now" to add an entry.');
-                    }, 60 * 60 * 1000); // hourly
-                    btn.classList.add('active');
-                    btn.title = 'Disable hourly log reminders';
-                    showToast('Hourly reminders on — you\'ll get a "Log Now" button in notifications');
-                    safeStorage.set('tickedReminder', 'on');
-                    // Send a test notification after SW is fully active
-                    setTimeout(() => {
-                        sendTickedNotification('Ticked', 'Reminders active! Consider making a backup of the contents.');
-                    }, 500);
-                });
+        function instaLogCheckpoint(procId, cpIdx, opts = {}) {
+            const proc = state.processes.find(p => p.id === procId);
+            if (!proc) return false;
+            const cps = [...(proc.checkpoints || [])];
+            const checkpoint = cps[cpIdx];
+            if (!checkpoint) return false;
+            if (!checkpoint.timestamp) checkpoint.timestamp = new Date().toISOString();
+            const nextCheckpoint = Math.min(cpIdx + 1, Math.max(0, cps.length - 1));
+
+            const procs = state.processes.map(p => p.id === procId ? { ...p, checkpoints: cps, currentCheckpoint: nextCheckpoint } : p);
+            const entry = {
+                id: uuid(),
+                isoDate: new Date().toISOString(),
+                text: INSTA_LOG_TEXT,
+                custom: false,
+                bgColor: '',
+                borderColor: '',
+                tags: []
+            };
+            setState({ processes: procs, entries: [entry, ...state.entries] });
+            save();
+            if (!opts.silent) {
+                showToast('Insta Log complete ✓');
             }
+            return true;
         }
 
-        function initReminder() {
-            if (safeStorage.get('tickedReminder') === 'on' && 'Notification' in window && Notification.permission === 'granted') {
-                _reminderInterval = setInterval(() => {
-                    sendTickedNotification('Ticked', 'Time to log! Tap "Log Now" to add an entry.');
-                }, 60 * 60 * 1000);
-                const btn = document.getElementById('reminderBtn');
-                if (btn) btn.classList.add('active');
+        async function initPWA() {
+            if ('serviceWorker' in navigator) {
+                const swSource = `
+const CACHE_NAME = 'ticked-offline-v4';
+const OFFLINE_ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-maskable-192.png', './icon-maskable-512.png'];
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(OFFLINE_ASSETS)).catch(() => {}));
+  self.skipWaiting();
+});
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))));
+  self.clients.claim();
+});
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(req, { ignoreSearch: false });
+    if (cached) return cached;
+    try {
+      const net = await fetch(req);
+      if (net && net.ok && !req.url.includes('accounts.google.com')) cache.put(req, net.clone());
+      return net;
+    } catch {
+      return (await cache.match('./index.html')) || Response.error();
+    }
+  })());
+});
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  const action = event.action || data.action || 'open';
+  const hash = action === 'insta-log' ? '#action=insta-log&proc=' + encodeURIComponent(data.procId || '') + '&cp=' + encodeURIComponent(String(data.cpIdx ?? '')) : '#action=open';
+  event.waitUntil((async () => {
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of allClients) {
+      c.postMessage({ type: 'ticked-action', action, procId: data.procId, cpIdx: data.cpIdx });
+      if ('focus' in c) return c.focus();
+    }
+    if (self.clients.openWindow) return self.clients.openWindow('./' + hash);
+  })());
+});
+                `;
+                const swBlobUrl = URL.createObjectURL(new Blob([swSource], { type: 'text/javascript' }));
+                try {
+                    _swRegistration = await navigator.serviceWorker.register(swBlobUrl, { scope: './' });
+                } catch (_) {}
+                URL.revokeObjectURL(swBlobUrl);
+
+                navigator.serviceWorker.addEventListener('message', e => {
+                    if (e.data && e.data.type === 'ticked-action' && e.data.action === 'insta-log') {
+                        const ok = instaLogCheckpoint(e.data.procId, Number(e.data.cpIdx), { silent: false });
+                        if (!ok) showToast('Checkpoint no longer available.', true);
+                    }
+                });
             }
+
+            const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+            if (hash.get('action') === 'insta-log') {
+                const procId = hash.get('proc');
+                const cpIdx = Number(hash.get('cp'));
+                setTimeout(() => {
+                    const ok = instaLogCheckpoint(procId, cpIdx, { silent: false });
+                    if (!ok) showToast('Checkpoint no longer available.', true);
+                    history.replaceState(null, '', location.pathname);
+                }, 260);
+            }
+            updateAppBadge();
         }
 
         // ── External link handler ─────────────────────────────────
