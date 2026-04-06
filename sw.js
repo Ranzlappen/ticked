@@ -1,13 +1,12 @@
-const CACHE = 'ticked-v5';
+const CACHE = 'ticked-v6';
 const PRECACHE = [
     './',
     './index.html',
+    './styles.css',
+    './app.js',
     './manifest.json',
     './icon-192.png',
     './icon-512.png',
-    './court.html',
-    './court.css',
-    './court.js',
 ];
 
 self.addEventListener('install', e => {
