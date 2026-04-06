@@ -1547,9 +1547,11 @@ function openCheckpointDetail(procId, cpIdx) {
         closeSheet();
         showToast('Checkpoint updated ✓');
 
-        // Schedule notification if enabled
+        // Schedule or cancel notification
         if (notifyToggle.checked && remindInput.value) {
             scheduleCheckpointNotification(procId, cpIdx);
+        } else {
+            cancelCheckpointNotification(procId, cpIdx);
         }
     });
 
@@ -1587,7 +1589,15 @@ function openCheckpointDetail(procId, cpIdx) {
     openSheet();
 }
 
+const _reminderTimeouts = new Map();
+
 function scheduleCheckpointNotification(procId, cpIdx) {
+    const key = `${procId}-${cpIdx}`;
+    // Clear any existing timeout for this checkpoint
+    if (_reminderTimeouts.has(key)) {
+        clearTimeout(_reminderTimeouts.get(key));
+        _reminderTimeouts.delete(key);
+    }
     const proc = state.processes.find(p => p.id === procId);
     if (!proc) return;
     const cp = (proc.checkpoints || [])[cpIdx];
@@ -1596,7 +1606,8 @@ function scheduleCheckpointNotification(procId, cpIdx) {
     const delay = targetTime - Date.now();
     if (delay <= 0) return; // already past
     if (delay > 24 * 60 * 60 * 1000) return; // too far out for a simple timeout
-    setTimeout(() => {
+    const tid = setTimeout(() => {
+        _reminderTimeouts.delete(key);
         sendTickedNotification(
             `Checkpoint: ${cp.name}`,
             `Process "${proc.text}" — ${cp.name} is due now.`,
@@ -1610,6 +1621,36 @@ function scheduleCheckpointNotification(procId, cpIdx) {
             }
         );
     }, delay);
+    _reminderTimeouts.set(key, tid);
+}
+
+function cancelCheckpointNotification(procId, cpIdx) {
+    const key = `${procId}-${cpIdx}`;
+    if (_reminderTimeouts.has(key)) {
+        clearTimeout(_reminderTimeouts.get(key));
+        _reminderTimeouts.delete(key);
+    }
+    // Also close any existing notification with this tag
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(reg =>
+            reg.getNotifications({ tag: `ticked-checkpoint-${procId}-${cpIdx}` })
+               .then(list => list.forEach(n => n.close()))
+               .catch(() => {})
+        ).catch(() => {});
+    }
+}
+
+function scheduleAllPendingReminders() {
+    if (!state.processes) return;
+    for (const proc of state.processes) {
+        if (!proc.checkpoints) continue;
+        for (let i = 0; i < proc.checkpoints.length; i++) {
+            const cp = proc.checkpoints[i];
+            if (cp.notify && cp.remindAt) {
+                scheduleCheckpointNotification(proc.id, i);
+            }
+        }
+    }
 }
 
 // ── Timeline renderer ─────────────────────────────────────
@@ -2423,11 +2464,11 @@ function initPersistentLogBell() {
 async function showPersistentLogNotification() {
     const ok = await requestNotificationPermission();
     if (!ok) return;
-    await sendTickedNotification('Ticked', 'Quick log is ready — tap Insta Log anytime.', {
+    await sendTickedNotification('Ticked', 'Quick log is ready — tap Log now anytime.', {
         tag: PERSISTENT_LOG_NOTIFICATION_TAG,
         renotify: false,
         actions: [
-            { action: 'quick-log', title: 'Insta Log' },
+            { action: 'quick-log', title: 'Log now' },
             { action: 'open', title: 'Open App' }
         ],
         data: { action: 'quick-log', keepAlive: true },
@@ -2450,71 +2491,13 @@ function togglePersistentLogNotification() {
     syncPersistentLogBell();
 }
 
+let _deferredInstallPrompt = null;
+
 async function initPWA() {
     if ('serviceWorker' in navigator) {
-        const swSource = `
-const CACHE_NAME = 'ticked-offline-v5';
-const OFFLINE_ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-maskable-192.png', './icon-maskable-512.png'];
-self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(OFFLINE_ASSETS)).catch(() => {}));
-  self.skipWaiting();
-});
-self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))));
-  self.clients.claim();
-});
-self.addEventListener('fetch', event => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(req, { ignoreSearch: false });
-    if (cached) return cached;
-    try {
-      const net = await fetch(req);
-      if (net && net.ok && !req.url.includes('accounts.google.com')) cache.put(req, net.clone());
-      return net;
-    } catch {
-      return (await cache.match('./index.html')) || Response.error();
-    }
-  })());
-});
-self.addEventListener('notificationclick', event => {
-  const note = event.notification;
-  const data = event.notification.data || {};
-  const action = event.action || data.action || 'open';
-  let hash = '#action=open';
-  if (action === 'insta-log') hash = '#action=insta-log&proc=' + encodeURIComponent(data.procId || '') + '&cp=' + encodeURIComponent(String(data.cpIdx ?? ''));
-  if (action === 'quick-log') hash = '#action=quick-log';
-  event.waitUntil((async () => {
-    if (action === 'quick-log' && data.keepAlive) {
-      await self.registration.showNotification(note.title, {
-body: note.body,
-icon: note.icon,
-badge: note.badge,
-tag: note.tag,
-renotify: false,
-requireInteraction: true,
-actions: note.actions || [],
-data
-      });
-    } else {
-      note.close();
-    }
-    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const c of allClients) {
-      c.postMessage({ type: 'ticked-action', action, procId: data.procId, cpIdx: data.cpIdx, keepAlive: !!data.keepAlive });
-      if ('focus' in c) return c.focus();
-    }
-    if (self.clients.openWindow) return self.clients.openWindow('./' + hash);
-  })());
-});
-        `;
-        const swBlobUrl = URL.createObjectURL(new Blob([swSource], { type: 'text/javascript' }));
         try {
-            _swRegistration = await navigator.serviceWorker.register(swBlobUrl, { scope: './' });
+            _swRegistration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
         } catch (_) {}
-        URL.revokeObjectURL(swBlobUrl);
 
         navigator.serviceWorker.addEventListener('message', e => {
             if (e.data && e.data.type === 'ticked-action' && e.data.action === 'insta-log') {
@@ -2529,6 +2512,15 @@ data
         });
     }
 
+    // Native install prompt support
+    window.addEventListener('beforeinstallprompt', e => {
+        _deferredInstallPrompt = e;
+    });
+    window.addEventListener('appinstalled', () => {
+        _deferredInstallPrompt = null;
+    });
+
+    // Handle hash-based actions from notification clicks (when app was not open)
     const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
     if (hash.get('action') === 'insta-log') {
         const procId = hash.get('proc');
@@ -2546,6 +2538,7 @@ data
         }, 220);
     }
     updateAppBadge();
+    scheduleAllPendingReminders();
 }
 
 // ── External link handler ─────────────────────────────────

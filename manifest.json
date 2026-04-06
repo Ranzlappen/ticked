@@ -4,6 +4,7 @@
   "description": "A minimal timestamped log & process tracker",
   "start_url": "./",
   "scope": "./",
+  "id": "./",
   "display": "standalone",
   "background_color": "#0d0f14",
   "theme_color": "#0d0f14",
