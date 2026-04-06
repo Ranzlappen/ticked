@@ -1,90 +1,49 @@
-# Ranzlappen Projects
+# Ticked
 
-A small collection of lightweight, single-file HTML web apps.
+**Process & Workflow Tracker**
 
-All projects are designed to be **fast**, **offline-capable**, and **easy to use** — just open the HTML file in any browser.
+Ticked helps you quickly log and track work through checkpoints and stages. Fast, offline-capable, and easy to use — just open in any browser.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F1140LWT)
 
-## Projects
+**Live Demo:** [ranzlappen.github.io/ticked](https://ranzlappen.github.io/ticked/)
 
-### Ticked
-**Process & Workflow Tracker**
+## Key Features
 
-Ticked helps you quickly log and track work through checkpoints and stages.
-
-**Summary:**
-Click to expand details
-
-**Key Features:**
 - Checkpoints & progress tracking
 - Smart filters (All / Edited / Overdue) and sorting
 - Resizable note panel
 - Silent instant logging
 - Fully responsive (phone to desktop)
 - Persistent localStorage — no account needed
+- PWA support — installable, works offline
+- Add to Home Screen on mobile for an app-like experience
 
-**Live Demo:** [Ticked](https://ranzlappen.github.io/ticked/)
+## How to Use
 
----
-
-### Twitch Mood Radar
-**Real-time Twitch Chat Mood Analyzer**
-
-Visualizes the emotional tone of Twitch chat in real time with sliders, bubbles, pie charts, timeline and more.
-
-**Summary:**
-Click to expand details
-
-**Key Features:**
-- Live chat connection + mood detection
-- Approval slider, mood bubbles, pie chart, timeline
-- Resizable sections with persistent layout
-- Channel history with dropdown
-- Disconnect detection + auto-reconnect
-- Offline capable once saved as .html
-
-**Live Demo:** [Twitch Mood Radar](https://storage.googleapis.com/ranzlappen/twitch-mood-radar.html)
-
----
-
-### Worldmap
-**Global Data Visualization**
-
-Interactive world map with refined data points and multiple layers for exploring global/civilizational information.
-
-**Summary:**
-Click to expand details
-
-**Key Features:**
-- Improved map visualization
-- Coherent, researched data entries
-- Multiple meaningful layers
-- Highly responsive layout (mobile to desktop)
-- Lazy loading for better performance
-- Clean text (no special/Unicode characters)
-
-**Live Demo:** [Worldmap](https://storage.googleapis.com/ranzlappen/Copy%20Copy%20untitled.html) *(update link if you have a permanent one)*
-
-## How to Use Offline
-
-1. Visit any project link above
-2. Use the built-in **Download .html** or **Source Code** option
-3. Save the file to your device
-4. Open the saved `.html` file in any browser — works completely offline
-
-You can also "Add to Home Screen" on mobile for an app-like experience.
+1. Visit the [live demo](https://ranzlappen.github.io/ticked/) or open `index.html` in any browser
+2. Create processes and track them through checkpoints
+3. Your data is saved automatically in localStorage — no account needed
 
 ## Technical Notes
 
-- All projects are **single-file HTML + CSS + JavaScript** (no frameworks)
+- Vanilla HTML + CSS + JavaScript (no frameworks, no build tools)
 - Data persists via `localStorage`
+- PWA with service worker for offline support
 - Designed for minimal size and high performance
-- External links always open in your default browser
+
+## Related Projects
+
+Other tools by ranzlappen:
+
+- [Court Procedure Algorithm Guide](https://github.com/ranzlappen/court-procedure-guide) — Autism-friendly real-time court procedure guide
+- [Twitch Mood Radar](https://github.com/ranzlappen/twitch-mood-radar) — Real-time Twitch chat mood analyzer
+- [Global Connections Worldmap](https://github.com/ranzlappen/worldmap) — Interactive world map visualization
+- [IntuiNO](https://github.com/ranzlappen/intuino) — Anti-UX satirical educational experience
 
 ## Support
 
-If you enjoy these tools:
+If you enjoy this tool:
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F1140LWT)
 
