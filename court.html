@@ -88,6 +88,11 @@
       <option value="defendant">👤 Defendant</option>
       <option value="witness">🗣️ Witness</option>
     </select>
+    <select class="jurisdiction-select" id="jurisdictionSelect">
+      <option value="both" selected>🏛️ All Jurisdictions</option>
+      <option value="federal">Federal</option>
+      <option value="state">State</option>
+    </select>
     <div class="toggle-group" id="themeToggle">
       <button class="active" data-theme="dark">🌙 Dark</button>
       <button data-theme="light">☀️ Light</button>
@@ -245,8 +250,8 @@
         <ul>
           <li><strong>Probable cause standard (criminal):</strong> Much lower than trial. The judge only needs to find that a reasonable person would believe a crime was committed and this defendant committed it. Hearsay IS allowed in probable cause affidavits. (See <em>Illinois v. Gates</em>, 462 U.S. 213 (1983).)</li>
           <li><strong>Complaint allegations (civil):</strong> Taken as true for purposes of deciding whether the case can proceed. No evidence is presented — just the written allegations.</li>
-          <li><strong>FRE reference:</strong> The Federal Rules of Evidence (FRE) do not generally apply at this stage. <em>FRE 1101(d)(3)</em> exempts preliminary examinations in criminal cases from most evidence rules.</li>
-          <li><strong>State variation:</strong> Some states require a preliminary hearing within a set number of days (e.g., 10-14 days) if the defendant is in custody. Others use grand jury indictment instead.</li>
+          <li class="federal-note"><strong>FRE reference:</strong> The Federal Rules of Evidence (FRE) do not generally apply at this stage. <em>FRE 1101(d)(3)</em> exempts preliminary examinations in criminal cases from most evidence rules.</li>
+          <li class="state-note"><strong>State variation:</strong> Some states require a preliminary hearing within a set number of days (e.g., 10-14 days) if the defendant is in custody. Others use grand jury indictment instead.</li>
         </ul>
       </div>
 
@@ -487,8 +492,8 @@
           <ul>
             <li><strong>No evidence is presented at arraignment.</strong> This is a procedural hearing, not an evidentiary one.</li>
             <li><strong>Exception — bail hearings:</strong> Prosecutors may present evidence (criminal history, flight risk factors) to support bail requests. The rules of evidence are relaxed — hearsay and proffer (attorney's summary of what evidence would show) are typically allowed.</li>
-            <li><strong>Guilty plea requirement:</strong> If the defendant pleads guilty, the judge must establish a <span class="term" data-term="factual-basis">factual basis</span> — the prosecution briefly states what they would prove at trial. This is NOT full evidence presentation. (<em>Federal Rule of Criminal Procedure 11(b)(3)</em>)</li>
-            <li><strong>State variation:</strong> Some states combine the initial appearance and arraignment into one hearing. Others hold them separately. Federal courts under FRCP Rule 10 require arraignment in open court.</li>
+            <li class="federal-note"><strong>Guilty plea requirement:</strong> If the defendant pleads guilty, the judge must establish a <span class="term" data-term="factual-basis">factual basis</span> — the prosecution briefly states what they would prove at trial. This is NOT full evidence presentation. (<em>Federal Rule of Criminal Procedure 11(b)(3)</em>)</li>
+            <li class="state-note"><strong>State variation:</strong> Some states combine the initial appearance and arraignment into one hearing. Others hold them separately. Federal courts under FRCP Rule 10 require arraignment in open court.</li>
           </ul>
         </div>
 
@@ -698,7 +703,7 @@
             <li><strong>Privilege protections apply:</strong> Attorney-client privilege, spousal privilege, doctor-patient privilege, and work product doctrine all limit what must be disclosed.</li>
             <li><strong>Expert witness disclosures:</strong> Both sides must disclose expert witnesses and provide their reports, opinions, and qualifications. (<em>FRCP Rule 26(a)(2)</em>; <em>FRE 702</em> governs admissibility at trial.)</li>
             <li><strong>Depositions:</strong> Witnesses testify under oath outside court. Deposition testimony can be used at trial if the witness is unavailable (<em>FRE 804(b)(1)</em>) or to impeach (contradict) their live testimony (<em>FRE 801(d)(1)</em>).</li>
-            <li><strong>State variation:</strong> Criminal discovery rules vary widely. Some states have "open file" policies (prosecution shares everything). Others are far more restrictive. Federal criminal discovery is governed by <em>FRCP Criminal Rule 16</em>, which is narrower than civil discovery.</li>
+            <li class="state-note"><strong>State variation:</strong> Criminal discovery rules vary widely. Some states have "open file" policies (prosecution shares everything). Others are far more restrictive. Federal criminal discovery is governed by <em>FRCP Criminal Rule 16</em>, which is narrower than civil discovery.</li>
           </ul>
         </div>
 
@@ -882,7 +887,7 @@
             <li><strong>FRE 404(b) (Other acts):</strong> Evidence of other crimes or bad acts is not admissible to prove character but MAY be admissible to prove motive, opportunity, intent, preparation, plan, knowledge, identity, absence of mistake, or lack of accident.</li>
             <li><strong>FRE 702 (Expert testimony):</strong> Expert testimony is admissible if: (1) the expert is qualified, (2) the testimony is based on sufficient facts, (3) the testimony is the product of reliable methods, and (4) the methods were reliably applied.</li>
             <li><strong>Exclusionary rule (criminal):</strong> Evidence obtained in violation of the Constitution must be excluded. Applies to the evidence itself AND the "fruit of the poisonous tree" (evidence discovered because of the illegal action).</li>
-            <li><strong>State variation:</strong> Some states use the <em>Frye</em> standard for expert testimony (general acceptance in the scientific community) instead of <em>Daubert</em> (reliability). Some states have broader exclusionary rule exceptions.</li>
+            <li class="state-note"><strong>State variation:</strong> Some states use the <em>Frye</em> standard for expert testimony (general acceptance in the scientific community) instead of <em>Daubert</em> (reliability). Some states have broader exclusionary rule exceptions.</li>
           </ul>
         </div>
 
@@ -1059,7 +1064,7 @@
             <li><strong>FRE 410 — Plea negotiations are inadmissible.</strong> Statements made during plea bargaining CANNOT be used against the defendant at trial if the deal falls through. This is a critical protection.</li>
             <li><strong>Exception:</strong> If the defendant waives FRE 410 protections as part of a "proffer agreement" (cooperation deal), their statements CAN be used if they later testify inconsistently.</li>
             <li><strong>Factual basis requirement:</strong> The prosecution must briefly describe what the evidence would show at trial. This is NOT full evidence presentation — it's a summary.</li>
-            <li><strong>State variation:</strong> Some states allow judges to participate in plea negotiations (e.g., suggesting a sentence). Federal judges are prohibited from doing so under FRCP Rule 11(c)(1).</li>
+            <li class="state-note"><strong>State variation:</strong> Some states allow judges to participate in plea negotiations (e.g., suggesting a sentence). Federal judges are prohibited from doing so under FRCP Rule 11(c)(1).</li>
           </ul>
         </div>
 
@@ -1339,7 +1344,7 @@
           <ul>
             <li><strong>No evidence is presented during voir dire.</strong> Attorneys may only reference the general nature of the case, not specific evidence or witness testimony.</li>
             <li><strong>Batson v. Kentucky (1986):</strong> Peremptory challenges cannot be used to exclude jurors based on race. Extended to gender (<em>J.E.B. v. Alabama</em>, 1994) and ethnicity.</li>
-            <li><strong>State variation:</strong> Some states have extended Batson protections to religion, sexual orientation, or other characteristics. Washington State (GR 37) uses an objective observer standard instead of requiring proof of discriminatory intent.</li>
+            <li class="state-note"><strong>State variation:</strong> Some states have extended Batson protections to religion, sexual orientation, or other characteristics. Washington State (GR 37) uses an objective observer standard instead of requiring proof of discriminatory intent.</li>
           </ul>
         </div>
 
@@ -1704,7 +1709,7 @@
             <li><strong>FRE 801-807 (Hearsay):</strong> Out-of-court statements offered for truth are generally inadmissible. 30+ exceptions exist (excited utterance, dying declaration, business records, prior testimony, etc.).</li>
             <li><strong>FRE 901 (Authentication):</strong> Every exhibit must be authenticated — someone must testify that it is what it claims to be. Photos, documents, recordings, and physical evidence all need authentication.</li>
             <li><strong>FRE 1001-1008 (Best evidence):</strong> To prove the contents of a writing, recording, or photo, the original must be produced (with exceptions for duplicates and unavailable originals).</li>
-            <li><strong>State variation:</strong> Most states follow rules similar to the FRE but with differences. California uses its own Evidence Code. Texas has the Texas Rules of Evidence. Check your jurisdiction.</li>
+            <li class="state-note"><strong>State variation:</strong> Most states follow rules similar to the FRE but with differences. California uses its own Evidence Code. Texas has the Texas Rules of Evidence. Check your jurisdiction.</li>
           </ul>
         </div>
 
@@ -2282,11 +2287,11 @@
         <div class="section-block evidence">
           <div class="sec-title">📜 Evidence Rules at Sentencing</div>
           <ul>
-            <li><strong>Relaxed evidence rules.</strong> The Federal Rules of Evidence do NOT strictly apply at sentencing. (<em>FRE 1101(d)(3)</em>) The judge may consider hearsay, uncharged conduct, and information from the PSI.</li>
-            <li><strong>Relevant conduct (USSG §1B1.3):</strong> The judge may consider conduct beyond the specific counts of conviction — including uncharged and acquitted conduct — when calculating the guideline range. This is controversial but legal. (<em>United States v. Watts</em>, 1997)</li>
+            <li class="federal-note"><strong>Relaxed evidence rules.</strong> The Federal Rules of Evidence do NOT strictly apply at sentencing. (<em>FRE 1101(d)(3)</em>) The judge may consider hearsay, uncharged conduct, and information from the PSI.</li>
+            <li class="federal-note"><strong>Relevant conduct (USSG §1B1.3):</strong> The judge may consider conduct beyond the specific counts of conviction — including uncharged and acquitted conduct — when calculating the guideline range. This is controversial but legal. (<em>United States v. Watts</em>, 1997)</li>
             <li><strong>Burden of proof at sentencing:</strong> Disputed facts must be proven by a preponderance of the evidence (more likely than not), NOT beyond a reasonable doubt. Exception: facts that increase the mandatory minimum or statutory maximum must be found by the jury beyond a reasonable doubt (<em>Alleyne v. United States</em>, 2013; <em>Apprendi v. New Jersey</em>, 2000).</li>
             <li><strong>Victim impact evidence:</strong> Allowed under the Crime Victims' Rights Act. Victims may testify about the crime's impact on their lives.</li>
-            <li><strong>State variation:</strong> State sentencing varies enormously. Some states have determinate sentencing (fixed ranges). Others have indeterminate sentencing (e.g., "5-15 years" with parole board deciding release). Some use sentencing grids. Some give judges nearly unlimited discretion.</li>
+            <li class="state-note"><strong>State variation:</strong> State sentencing varies enormously. Some states have determinate sentencing (fixed ranges). Others have indeterminate sentencing (e.g., "5-15 years" with parole board deciding release). Some use sentencing grids. Some give judges nearly unlimited discretion.</li>
           </ul>
         </div>
 

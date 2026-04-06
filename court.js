@@ -267,6 +267,28 @@ function applyRoleFilter() {
   }
 }
 
+/* ===== JURISDICTION SELECTOR ===== */
+const jurisdictionSelect = document.getElementById('jurisdictionSelect');
+if (jurisdictionSelect) {
+  // Restore saved preference
+  const savedData = loadData();
+  if (savedData.jurisdiction && savedData.jurisdiction !== 'both') {
+    jurisdictionSelect.value = savedData.jurisdiction;
+    document.body.classList.add('jurisdiction-' + savedData.jurisdiction);
+  }
+
+  jurisdictionSelect.addEventListener('change', () => {
+    const val = jurisdictionSelect.value;
+    document.body.classList.remove('jurisdiction-federal', 'jurisdiction-state');
+    if (val !== 'both') {
+      document.body.classList.add('jurisdiction-' + val);
+    }
+    const d = loadData();
+    d.jurisdiction = val;
+    saveData(d);
+  });
+}
+
 /* ===== SEARCH ===== */
 const searchInput = document.getElementById('searchInput');
 const searchClearBtn = document.getElementById('clearSearch');
