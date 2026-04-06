@@ -42,6 +42,28 @@
   <a href="#p5-briefing" class="sub">Briefing</a>
   <a href="#p5-oral-arg" class="sub">Oral Argument</a>
   <a href="#glossary">Glossary</a>
+
+  <div class="sidebar-title" style="margin-top:16px;">Personal</div>
+  <details class="sidebar-panel" id="progressPanel">
+    <summary>Progress Tracker</summary>
+    <div class="panel-body">
+      <div class="progress-bar-mini"><div class="fill" id="progressFill"></div></div>
+      <ul class="progress-list">
+        <li><label><input type="checkbox" data-phase="phase1"> Phase 1: Initiation</label></li>
+        <li><label><input type="checkbox" data-phase="phase2"> Phase 2: Pre-Trial</label></li>
+        <li><label><input type="checkbox" data-phase="phase3"> Phase 3: Trial</label></li>
+        <li><label><input type="checkbox" data-phase="phase4"> Phase 4: Resolution</label></li>
+        <li><label><input type="checkbox" data-phase="phase5"> Phase 5: Appeals</label></li>
+      </ul>
+    </div>
+  </details>
+  <details class="sidebar-panel" id="bookmarksPanel">
+    <summary>Bookmarks</summary>
+    <div class="panel-body">
+      <ul class="bookmarks-list" id="bookmarksList"></ul>
+      <div class="bookmarks-empty" id="bookmarksEmpty">No bookmarks yet. Click 🔖 on any section to bookmark it.</div>
+    </div>
+  </details>
 </nav>
 
 <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation">☰</button>
@@ -294,6 +316,10 @@
   </div>
 </div>
 </div>
+<details class="phase-notes">
+  <summary>My Notes — Phase 1: Case Initiation</summary>
+  <textarea data-phase="phase1" placeholder="Type your personal notes for Phase 1: Case Initiation here..."></textarea>
+</details>
 <!-- END PHASE 1 -->
 
 <!-- =====================================================================
@@ -1177,6 +1203,10 @@
   </div>
 </div>
 </div>
+<details class="phase-notes">
+  <summary>My Notes — Phase 2: Pre-Trial</summary>
+  <textarea data-phase="phase2" placeholder="Type your personal notes for Phase 2: Pre-Trial here..."></textarea>
+</details>
 <!-- END PHASE 2 -->
 
 <!-- =====================================================================
@@ -2107,6 +2137,10 @@
   </div>
 </div>
 </div>
+<details class="phase-notes">
+  <summary>My Notes — Phase 3: Trial</summary>
+  <textarea data-phase="phase3" placeholder="Type your personal notes for Phase 3: Trial here..."></textarea>
+</details>
 <!-- END PHASE 3 -->
 
 <!-- =====================================================================
@@ -2372,6 +2406,10 @@
   </div>
 </div>
 </div>
+<details class="phase-notes">
+  <summary>My Notes — Phase 4: Resolution</summary>
+  <textarea data-phase="phase4" placeholder="Type your personal notes for Phase 4: Resolution here..."></textarea>
+</details>
 <!-- END PHASE 4 -->
 
 <!-- =====================================================================
@@ -2550,6 +2588,10 @@
   </div>
 </div>
 </div>
+<details class="phase-notes">
+  <summary>My Notes — Phase 5: Appeals</summary>
+  <textarea data-phase="phase5" placeholder="Type your personal notes for Phase 5: Appeals here..."></textarea>
+</details>
 <!-- END PHASE 5 -->
 
 <!-- =====================================================================
