@@ -19,6 +19,8 @@ const IntuiNO = {
     swipeCardIndex: 0,
     pinchScale: 1,
     menuOpen: false,
+    bannerDismissals: 0,
+    bannerInterval: null,
   },
 
   // ─── LEVEL DEFINITIONS ───
@@ -69,6 +71,7 @@ const IntuiNO = {
     settingsSurvivor: { icon: '⚙️', text: 'Settings Survivor — Survived Level 5' },
     chaosChampion: { icon: '👑', text: 'Chaos Champion — Completed all 5 levels' },
     shakeItOff:   { icon: '📱', text: 'Shake It Off — Triggered Good UX Mode' },
+    bannerSurvivor: { icon: '🍪', text: 'Cookie Monster — Dismissed 3 intrusive banners' },
   },
 
   swipeCards: [
@@ -103,7 +106,9 @@ const IntuiNO = {
     const el = document.getElementById('chaos-score-val');
     if (el) {
       el.textContent = this.state.chaosScore;
-      gsap.fromTo(el, { scale: 1.4, color: '#ff00e5' }, { scale: 1, color: '#a855f7', duration: 0.4, ease: 'back.out(2)' });
+      if (typeof gsap !== 'undefined') {
+        gsap.fromTo(el, { scale: 1.4, color: '#ff00e5' }, { scale: 1, color: '#a855f7', duration: 0.4, ease: 'back.out(2)' });
+      }
     }
     if (this.state.chaosScore >= 10) this.unlockAchievement('firstChaos');
     this.updateHubStats();
@@ -144,10 +149,15 @@ const IntuiNO = {
     t.className = `toast toast-${type}`;
     t.textContent = msg;
     c.appendChild(t);
-    gsap.fromTo(t, { opacity: 0, x: 60, scale: 0.9 }, { opacity: 1, x: 0, scale: 1, duration: 0.35, ease: 'back.out(2)' });
-    setTimeout(() => {
-      gsap.to(t, { opacity: 0, x: 60, duration: 0.3, onComplete: () => t.remove() });
-    }, 3000);
+    if (typeof gsap !== 'undefined') {
+      gsap.fromTo(t, { opacity: 0, x: 60, scale: 0.9 }, { opacity: 1, x: 0, scale: 1, duration: 0.35, ease: 'back.out(2)' });
+      setTimeout(() => {
+        gsap.to(t, { opacity: 0, x: 60, duration: 0.3, onComplete: () => t.remove() });
+      }, 3000);
+    } else {
+      t.style.opacity = '1';
+      setTimeout(() => t.remove(), 3000);
+    }
   },
 
   // ─── ACHIEVEMENTS ───
@@ -173,20 +183,35 @@ const IntuiNO = {
     if (!nxt || screen === this.state.currentScreen) return;
 
     const topbar = document.getElementById('topbar');
-    if (screen !== 'hero') {
-      gsap.to(topbar, { y: 0, duration: 0.4, ease: 'power2.out' });
+    const hasGsap = typeof gsap !== 'undefined';
+
+    if (screen !== 'hero' && topbar) {
+      if (hasGsap) {
+        gsap.to(topbar, { y: 0, duration: 0.4, ease: 'power2.out' });
+      } else {
+        topbar.style.transform = 'translateY(0)';
+      }
     }
 
-    gsap.to(cur, { opacity: 0, y: -30, duration: 0.3, ease: 'power2.in', onComplete: () => {
+    const finishTransition = () => {
       cur.classList.add('hidden');
       nxt.classList.remove('hidden');
-      gsap.fromTo(nxt, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
+      if (hasGsap) {
+        gsap.fromTo(nxt, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
+      } else {
+        nxt.style.opacity = '1';
+      }
       this.state.currentScreen = screen;
-
       if (screen === 'hub') this.renderHub();
       if (screen === 'level4') this.startLevel4();
       if (screen === 'level5') this.startLevel5();
-    }});
+    };
+
+    if (hasGsap) {
+      gsap.to(cur, { opacity: 0, y: -30, duration: 0.3, ease: 'power2.in', onComplete: finishTransition });
+    } else {
+      finishTransition();
+    }
   },
 
   // ─── HUB ───
@@ -305,14 +330,16 @@ const IntuiNO = {
 
   // ─── HERO ───
   initHero() {
-    gsap.fromTo('.orb-1', { x: 0, y: 0 }, { x: 30, y: -20, duration: 6, repeat: -1, yoyo: true, ease: 'sine.inOut' });
-    gsap.fromTo('.orb-2', { x: 0, y: 0 }, { x: -25, y: 15, duration: 8, repeat: -1, yoyo: true, ease: 'sine.inOut' });
-    gsap.fromTo('.orb-3', { x: 0, y: 0 }, { x: 15, y: 25, duration: 7, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+    if (typeof gsap !== 'undefined') {
+      gsap.fromTo('.orb-1', { x: 0, y: 0 }, { x: 30, y: -20, duration: 6, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+      gsap.fromTo('.orb-2', { x: 0, y: 0 }, { x: -25, y: 15, duration: 8, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+      gsap.fromTo('.orb-3', { x: 0, y: 0 }, { x: 15, y: 25, duration: 7, repeat: -1, yoyo: true, ease: 'sine.inOut' });
 
-    const tl = gsap.timeline({ delay: 0.3 });
-    tl.fromTo('#screen-hero h1', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' })
-      .fromTo('#screen-hero p', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.15, ease: 'power2.out' }, '-=0.3')
-      .fromTo('#hero-cta', { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' }, '-=0.2');
+      const tl = gsap.timeline({ delay: 0.3 });
+      tl.fromTo('#screen-hero h1', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' })
+        .fromTo('#screen-hero p', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.15, ease: 'power2.out' }, '-=0.3')
+        .fromTo('#hero-cta', { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' }, '-=0.2');
+    }
 
     document.getElementById('hero-cta').addEventListener('click', () => {
       this.addChaos(5);
@@ -737,6 +764,66 @@ const IntuiNO = {
     });
   },
 
+  // ─── INTRUSIVE BANNER ───
+  initBanner() {
+    const banner = document.getElementById('intrusive-banner');
+    if (!banner) return;
+    let bannerVisible = false;
+    const hasGsap = typeof gsap !== 'undefined';
+
+    const showBanner = () => {
+      if (bannerVisible || this.state.currentScreen === 'hero') return;
+      bannerVisible = true;
+      if (hasGsap) {
+        gsap.to(banner, { y: 0, duration: 0.5, ease: 'power2.out' });
+      } else {
+        banner.style.transform = 'translateY(0)';
+      }
+    };
+
+    const hideBanner = () => {
+      bannerVisible = false;
+      if (hasGsap) {
+        gsap.to(banner, { y: '100%', duration: 0.4, ease: 'power2.in' });
+      } else {
+        banner.style.transform = 'translateY(100%)';
+      }
+    };
+
+    document.getElementById('banner-close').addEventListener('click', () => {
+      this.addChaos(2);
+      this.toast('The X button is purely decorative.', 'warn');
+    });
+
+    document.getElementById('banner-accept').addEventListener('click', () => {
+      this.addChaos(3);
+      this.toast('You accepted everything. Banner remains.', 'warn');
+    });
+
+    document.getElementById('banner-reject').addEventListener('click', () => {
+      this.addChaos(3);
+      this.toast('Rejection rejected. Banner remains.', 'error');
+    });
+
+    document.getElementById('banner-expand').addEventListener('click', () => {
+      this.addChaos(5);
+      this.state.bannerDismissals++;
+      this.toast('Expanding actually closed it. You\'re learning anti-UX.', 'success');
+      hideBanner();
+      if (this.state.bannerDismissals >= 3) this.unlockAchievement('bannerSurvivor');
+    });
+
+    const scheduleNext = () => {
+      const delay = 15000 + Math.random() * 5000;
+      this.state.bannerInterval = setTimeout(() => {
+        showBanner();
+        scheduleNext();
+      }, delay);
+    };
+
+    setTimeout(() => scheduleNext(), 10000);
+  },
+
   // ─── GLOBAL LISTENERS ───
   initGlobalListeners() {
     // All back buttons and data-nav links
@@ -754,16 +841,21 @@ const IntuiNO = {
     this.load();
     document.getElementById('chaos-score-val').textContent = this.state.chaosScore;
 
-    this.initHero();
-    this.initTheme();
-    this.initMenu();
-    this.initLevel1();
-    this.initLevel2();
-    this.initLevel3();
-    this.initLevel4();
-    this.initLevel5();
-    this.initShake();
-    this.initGlobalListeners();
+    const safeInit = (fn, name) => {
+      try { fn.call(this); } catch (e) { console.warn(`IntuiNO: ${name} failed:`, e); }
+    };
+
+    safeInit(this.initHero, 'initHero');
+    safeInit(this.initTheme, 'initTheme');
+    safeInit(this.initMenu, 'initMenu');
+    safeInit(this.initLevel1, 'initLevel1');
+    safeInit(this.initLevel2, 'initLevel2');
+    safeInit(this.initLevel3, 'initLevel3');
+    safeInit(this.initLevel4, 'initLevel4');
+    safeInit(this.initLevel5, 'initLevel5');
+    safeInit(this.initShake, 'initShake');
+    safeInit(this.initGlobalListeners, 'initGlobalListeners');
+    safeInit(this.initBanner, 'initBanner');
   }
 };
 
