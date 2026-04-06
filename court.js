@@ -434,16 +434,32 @@ if (themeToggleGroup) {
 /* ===== SIDEBAR TOGGLE (Mobile) ===== */
 const sidebarToggle = document.getElementById('sidebarToggle');
 const sidebar = document.querySelector('.sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+function closeSidebar() {
+  if (sidebar) sidebar.classList.remove('open');
+  if (sidebarOverlay) sidebarOverlay.classList.remove('show');
+}
+function openSidebar() {
+  if (sidebar) sidebar.classList.add('open');
+  if (sidebarOverlay) sidebarOverlay.classList.add('show');
+}
+
 if (sidebarToggle && sidebar) {
   sidebarToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('open');
+    if (sidebar.classList.contains('open')) closeSidebar();
+    else openSidebar();
   });
   // Close sidebar when clicking a link on mobile
   sidebar.querySelectorAll('a').forEach(a => {
     a.addEventListener('click', () => {
-      if (window.innerWidth <= 900) sidebar.classList.remove('open');
+      if (window.innerWidth <= 900) closeSidebar();
     });
   });
+}
+// Tap overlay to close sidebar
+if (sidebarOverlay) {
+  sidebarOverlay.addEventListener('click', closeSidebar);
 }
 
 /* ===== SCROLL SPY — Track active sub-section within visible tab ===== */
