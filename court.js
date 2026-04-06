@@ -122,6 +122,47 @@ const GLOSSARY = {
   }
 };
 
+/* ===== TAB SWITCHING ===== */
+function switchTab(phaseId) {
+  document.querySelectorAll('.phase-tab').forEach(tab => tab.classList.remove('active'));
+  const target = document.getElementById(phaseId);
+  if (target) target.classList.add('active');
+
+  // Update progress bar buttons
+  const progressBtns = document.querySelectorAll('#phaseProgress button[data-target]');
+  progressBtns.forEach(b => b.classList.remove('active'));
+  const progBtn = document.querySelector(`#phaseProgress button[data-target="${phaseId}"]`);
+  if (progBtn) progBtn.classList.add('active');
+
+  // Update sidebar active state
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+  const sideLink = document.querySelector(`.sidebar a[href="#${phaseId}"]`);
+  if (sideLink) sideLink.classList.add('active');
+
+  // Update URL hash without scrolling
+  history.replaceState(null, '', '#' + phaseId);
+
+  // Scroll to top of main content
+  const main = document.querySelector('main');
+  if (main) main.scrollTop = 0;
+  window.scrollTo({ top: document.querySelector('.top-bar')?.offsetTop || 0 });
+}
+
+// Handle URL hash on load and back/forward
+function initTabFromHash() {
+  const hash = location.hash.slice(1);
+  if (hash && document.getElementById(hash)?.classList.contains('phase-tab')) {
+    switchTab(hash);
+  }
+}
+window.addEventListener('hashchange', () => {
+  const hash = location.hash.slice(1);
+  if (hash && document.getElementById(hash)?.classList.contains('phase-tab')) {
+    switchTab(hash);
+  }
+});
+initTabFromHash();
+
 /* ===== PHASE ACCORDION TOGGLE ===== */
 function togglePhase(hdr) {
   const card = hdr.closest('.phase-card');
@@ -254,6 +295,10 @@ function doSearch() {
   const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(`(${escaped})`, 'gi');
 
+  // Temporarily show all tabs so we can search across them
+  const allTabs = document.querySelectorAll('.phase-tab');
+  allTabs.forEach(tab => tab.style.display = 'block');
+
   const main = document.querySelector('main');
   const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT, null);
   const textNodes = [];
@@ -282,9 +327,15 @@ function doSearch() {
     node.parentNode.replaceChild(frag, node);
   });
 
-  // Open parent accordions for first match
+  // Restore tab visibility
+  allTabs.forEach(tab => tab.style.display = '');
+
+  // Switch to the tab containing the first match and open its accordion
   const firstMark = main.querySelector('mark.search-highlight');
   if (firstMark) {
+    const phaseTab = firstMark.closest('.phase-tab');
+    if (phaseTab) switchTab(phaseTab.id);
+
     let el = firstMark;
     while (el) {
       if (el.classList && el.classList.contains('phase-card') && !el.classList.contains('open')) {
@@ -313,16 +364,16 @@ document.querySelectorAll('.sidebar a[href^="#"]').forEach(link => {
     const target = document.getElementById(id);
     if (!target) return;
 
-    // Open the phase
+    // Find which phase-tab this target belongs to
+    const phaseTab = target.closest('.phase-tab') || target;
+    if (phaseTab && phaseTab.classList.contains('phase-tab')) {
+      switchTab(phaseTab.id);
+    }
+
+    // Open sub-phase accordion if needed
     const card = target.querySelector('.phase-card') || target.closest('.phase-card');
     if (card && !card.classList.contains('open')) {
       const hdr = card.querySelector('.phase-hdr');
-      if (hdr) togglePhase(hdr);
-    }
-    // Open parent phase if sub-phase
-    const parentCard = target.closest('.phase > .phase-card');
-    if (parentCard && !parentCard.classList.contains('open')) {
-      const hdr = parentCard.querySelector(':scope > .phase-hdr');
       if (hdr) togglePhase(hdr);
     }
 
@@ -338,19 +389,7 @@ document.querySelectorAll('.sidebar a[href^="#"]').forEach(link => {
 const progressBtns = document.querySelectorAll('#phaseProgress button[data-target]');
 progressBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    const id = btn.dataset.target;
-    const target = document.getElementById(id);
-    if (!target) return;
-
-    const card = target.querySelector('.phase-card');
-    if (card && !card.classList.contains('open')) {
-      const hdr = card.querySelector('.phase-hdr');
-      if (hdr) togglePhase(hdr);
-    }
-    setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
-
-    progressBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    switchTab(btn.dataset.target);
   });
 });
 
@@ -385,24 +424,22 @@ if (sidebarToggle && sidebar) {
   });
 }
 
-/* ===== SCROLL SPY — Track active section ===== */
-const phases = document.querySelectorAll('.phase[id]');
+/* ===== SCROLL SPY — Track active sub-section within visible tab ===== */
+const subPhases = document.querySelectorAll('.phase-tab.active .sub-phase[id]');
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       const id = entry.target.id;
-      document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-      const link = document.querySelector(`.sidebar a[href="#${id}"]`);
-      if (link) link.classList.add('active');
-
-      progressBtns.forEach(b => b.classList.remove('active'));
-      const progBtn = document.querySelector(`#phaseProgress button[data-target="${id}"]`);
-      if (progBtn) progBtn.classList.add('active');
+      document.querySelectorAll('.sidebar a').forEach(a => {
+        if (a.getAttribute('href') === '#' + id) a.classList.add('active');
+        else if (!a.closest('.sidebar-nav-sub')) a.classList.remove('active');
+      });
     }
   });
 }, { rootMargin: '-20% 0px -70% 0px' });
 
-phases.forEach(phase => observer.observe(phase));
+// Observe sub-phases in all tabs
+document.querySelectorAll('.sub-phase[id]').forEach(el => observer.observe(el));
 
 /* ===== INIT ===== */
 console.log('%c⚖️ Court Procedure Algorithm Guide loaded!', 'color:#5eead4; font-size:16px; font-weight:bold');

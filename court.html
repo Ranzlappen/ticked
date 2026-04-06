@@ -76,9 +76,9 @@
     </div>
   </div>
   <div class="phase-progress" id="phaseProgress">
-    <button data-target="phase1">1. Initiation</button>
+    <button data-target="phase1" class="active">1. Initiation</button>
     <button data-target="phase2">2. Pre-Trial</button>
-    <button data-target="phase3" class="active">3. Trial</button>
+    <button data-target="phase3">3. Trial</button>
     <button data-target="phase4">4. Resolution</button>
     <button data-target="phase5">5. Appeals</button>
   </div>
@@ -98,7 +98,7 @@
 <!-- =====================================================================
      PHASE 1: CASE INITIATION
      ===================================================================== -->
-<div class="phase" id="phase1">
+<div class="phase phase-tab active" id="phase1">
 <div class="phase-card">
   <div class="phase-hdr" onclick="togglePhase(this)">
     <span class="icon">📋</span>
@@ -299,7 +299,7 @@
 <!-- =====================================================================
      PHASE 2: PRE-TRIAL
      ===================================================================== -->
-<div class="phase" id="phase2">
+<div class="phase phase-tab" id="phase2">
 <div class="phase-card">
   <div class="phase-hdr" onclick="togglePhase(this)">
     <span class="icon">⚙️</span>
@@ -1182,7 +1182,7 @@
 <!-- =====================================================================
      PHASE 3: TRIAL
      ===================================================================== -->
-<div class="phase" id="phase3">
+<div class="phase phase-tab" id="phase3">
 <div class="phase-card">
   <div class="phase-hdr" onclick="togglePhase(this)">
     <span class="icon">⚖️</span>
@@ -2112,7 +2112,7 @@
 <!-- =====================================================================
      PHASE 4: RESOLUTION & SENTENCING
      ===================================================================== -->
-<div class="phase" id="phase4">
+<div class="phase phase-tab" id="phase4">
 <div class="phase-card">
   <div class="phase-hdr" onclick="togglePhase(this)">
     <span class="icon">⚖️</span>
@@ -2377,7 +2377,7 @@
 <!-- =====================================================================
      PHASE 5: APPEALS
      ===================================================================== -->
-<div class="phase" id="phase5">
+<div class="phase phase-tab" id="phase5">
 <div class="phase-card">
   <div class="phase-hdr" onclick="togglePhase(this)">
     <span class="icon">📤</span>
@@ -2555,7 +2555,7 @@
 <!-- =====================================================================
      GLOSSARY SECTION
      ===================================================================== -->
-<div class="phase" id="glossary">
+<div class="phase phase-tab" id="glossary">
 <div class="phase-card">
   <div class="phase-hdr" onclick="togglePhase(this)">
     <span class="icon">📖</span>
