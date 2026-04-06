@@ -555,7 +555,7 @@ body:not(.disconnected) {
 .feed-user { color:var(--accent); min-width:66px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .feed-msg { color:#6a6a8e; word-break:break-word; white-space:normal }
 .feed-meta { display:flex; align-items:center; gap:5px; flex-shrink:0 }
-.feed-mood { font-size:.68em; padding:1px 4px; border-radius:4px; white-space:nowrap; text-align:center; display:inline-block; min-width:52px }
+.feed-mood { font-size:.68em; padding:1px 4px; border-radius:4px; white-space:nowrap; text-align:center; display:inline-block; min-width:52px; max-width:72px; overflow:hidden; text-overflow:ellipsis }
 .feed-apv { display:flex; align-items:center; gap:3px }
 .feed-apv-bar { width:28px; height:4px; border-radius:2px; background:var(--border); overflow:hidden; flex-shrink:0 }
 .feed-apv-fill { height:100%; border-radius:2px; transition:width .3s }
@@ -607,6 +607,14 @@ body:not(.disconnected) {
 .feed-font-slider-val {
   font-size:.62em; color:var(--accent); min-width:22px; text-align:right;
 }
+
+.filtered-feed-filter-wrap input[type=text] {
+  background:#080814; border:1px solid var(--border); border-radius:6px;
+  color:var(--text); font-family:'Share Tech Mono',monospace;
+  outline:none; transition:border-color .2s,box-shadow .2s;
+}
+.filtered-feed-filter-wrap input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 8px rgba(0,255,229,.15) }
+.filtered-feed-filter-wrap input[type=text].regex-error { border-color:var(--accent2); box-shadow:0 0 8px rgba(255,45,120,.2) }
 
 /* Inside resizable cards, collapsible-body must participate in flex so charts fill remaining space */
 .collapsible-body { display:flex; flex-direction:column }
@@ -755,6 +763,7 @@ body:not(.disconnected) {
   height:200px;
 }
 .feed-card.resizable #feedList,
+.feed-card.resizable #filteredFeedList,
 .feed-card.resizable #outlierFeedList {
   flex:1;
   overflow-y:auto;
@@ -878,6 +887,15 @@ body.preset-custom #customLayoutContainer { display:block }
           oninput="updateLabelScale(this.value)"/>
         <span id="labelScaleVal" style="font-size:.72em;color:var(--accent);min-width:28px;text-align:right"></span>
       </div>
+      <div class="settings-section-label" style="margin-top:6px">DECAY</div>
+      <div style="padding:4px 10px 8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:.66em;color:var(--muted);letter-spacing:.06em;white-space:nowrap">HALF-LIFE</span>
+          <input type="range" id="hlSlider" min="1" max="60" value="10" step="1" style="flex:1;width:auto" oninput="updateHalfLife(this.value)"/>
+          <span id="hlVal" style="font-size:.72em;color:var(--accent);min-width:26px;text-align:right">10s</span>
+          <button class="help-btn" id="decayInfoBtn" onclick="showDecayRecommendation()" title="Decay recommendations based on throughput">i</button>
+        </div>
+      </div>
       <div class="settings-section-label" style="margin-top:6px">TIMELINE SETTINGS</div>
       <div style="padding:4px 10px 2px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
@@ -919,12 +937,6 @@ body.preset-custom #customLayoutContainer { display:block }
       oninput="openChannelHistory()"
       onkeydown="handleChannelKey(event)"/>
     <div class="channel-history-dropdown" id="channelHistoryDropdown"></div>
-  </div>
-  <div class="hl-wrap">
-    <span>decay</span>
-    <input type="range" id="hlSlider" min="1" max="60" value="10" step="1" oninput="updateHalfLife(this.value)"/>
-    <span id="hlVal">10s</span>
-    <button class="help-btn" onclick="showHelp('decay')" title="What is decay?">?</button>
   </div>
   <label class="bot-toggle-wrap" title="Filter detected bot messages from all scoring">
     <input type="checkbox" id="botToggle" checked onchange="botFilterEnabled = this.checked"/>
@@ -974,11 +986,11 @@ body.preset-custom #customLayoutContainer { display:block }
   </div>
   <div class="chart-card resizable" id="radarCard">
     <div class="chart-title card-title">
-      KEYWORD WEB - TOP TERMS
-      <button class="help-btn" onclick="showHelp('radar')" title="How the keyword web works">?</button>
+      MOOD WEB - INTERACTIVE
+      <button class="help-btn" onclick="showHelp('radar')" title="How the mood web works">?</button>
     </div>
     <div class="collapsible-body" id="radarCard-body">
-      <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+      <div class="chart-wrap"><canvas id="moodWebCanvas"></canvas></div>
     </div>
   </div>
 </div>
@@ -1029,6 +1041,16 @@ body.preset-custom #customLayoutContainer { display:block }
   </div>
 </div>
 
+<!-- THROUGHPUT TIMELINE -->
+<div class="timeline-card resizable" id="throughputTimelineCard">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+    <div class="card-title" style="margin-bottom:0">THROUGHPUT TIMELINE</div>
+  </div>
+  <div class="collapsible-body" id="throughputTimelineCard-body">
+    <div class="timeline-wrap"><canvas id="throughputTimelineChart"></canvas></div>
+  </div>
+</div>
+
 <!-- Divider before timeline -->
 <div class="section-divider"></div>
 
@@ -1067,6 +1089,31 @@ body.preset-custom #customLayoutContainer { display:block }
   </div>
   <div class="collapsible-body" id="feedCard-body">
     <div id="feedList"></div>
+  </div>
+</div>
+
+<div class="feed-card resizable" id="filteredFeedCard">
+  <div class="feed-title-row">
+    <div class="feed-title" style="margin-bottom:0">
+      FILTERED FEED
+      <button class="help-btn" onclick="showHelp('filteredFeed')" title="About the filtered feed">?</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap">
+      <div class="feed-font-slider-wrap" title="Adjust filtered feed font size">
+        <span class="feed-font-slider-label">SIZE</span>
+        <input type="range" id="filteredFeedFontSlider" min="0.1" max="20" step="0.05" value="2"
+          oninput="updateFilteredFeedFontSize(this.value)"/>
+        <span class="feed-font-slider-val" id="filteredFeedFontVal">2.00</span>
+      </div>
+      <div class="filtered-feed-filter-wrap">
+        <input type="text" id="filteredFeedRegex" placeholder="regex filter" spellcheck="false" autocomplete="off"
+          oninput="updateFilteredFeedRegex(this.value)"
+          style="padding-left:12px;width:140px;font-size:.78em"/>
+      </div>
+    </div>
+  </div>
+  <div class="collapsible-body" id="filteredFeedCard-body">
+    <div id="filteredFeedList"></div>
   </div>
 </div>
 
@@ -1128,8 +1175,9 @@ function applyPreset(preset) {
   setTimeout(resizeBubbleCanvas, 50);
   // Resize charts
   if (pieChart)              pieChart.resize();
-  if (radarChart)            radarChart.resize();
+  resizeMoodWeb();
   if (approvalTimelineChart) approvalTimelineChart.resize();
+  if (throughputTimelineChart) throughputTimelineChart.resize();
   if (timelineLinearChart)   timelineLinearChart.resize();
   if (timelineLogChart)      timelineLogChart.resize();
 }
@@ -1175,9 +1223,15 @@ const HELP_CONTENT = {
 <p>Message length affects scoring. Longer messages with clear sentiment get higher weight. Very short messages contribute less.</p>`
   },
   radar: {
-    title: 'LIVE KEYWORD WEB',
-    body: `<p>The spiderweb chart shows the top 8 most-used sentiment keywords in the current time window.</p>
-<p>Each axis is a real term from chat. The size of each spoke shows how dominant that term is relative to the others right now. As chat evolves, axes change entirely.</p>`
+    title: 'INTERACTIVE MOOD WEB',
+    body: `<p>The mood web visualizes all active moods as interconnected nodes.</p>
+<ul>
+  <li><strong>Nodes</strong> — Each node is a mood currently active in chat. Node size reflects its weighted percentage.</li>
+  <li><strong>Connections</strong> — Lines connect moods that co-occur frequently. Thicker lines mean stronger co-occurrence.</li>
+  <li><strong>Hover</strong> — Hover over a node to highlight it and its connections. Shows exact percentage.</li>
+  <li><strong>Click</strong> — Click a node to pin-highlight it. Click again or click elsewhere to unpin.</li>
+  <li><strong>Colors</strong> — Each node uses the mood's signature color from the legend.</li>
+</ul>`
   },
   bubbles: {
     title: 'CONSENSUS BUBBLES',
@@ -1204,6 +1258,16 @@ const HELP_CONTENT = {
   <li><strong>Approval bar</strong> - Small colored bar: cyan = approving, orange = dissenting</li>
   <li><strong>BOT tag</strong> - Messages flagged as likely automated are shown dimmed and excluded from all scoring</li>
 </ul>`
+  },
+  filteredFeed: {
+    title: 'FILTERED FEED',
+    body: `<p>A secondary live feed that shows only messages matching your regex filter in real time.</p>
+<ul>
+  <li><strong>Regex input</strong> - Type a JavaScript-compatible regular expression. Messages whose text matches the pattern are shown.</li>
+  <li><strong>Real-time</strong> - The filter applies to each new incoming message as it arrives.</li>
+  <li><strong>Formatting</strong> - Identical to the main Live Feed: mood tag, approval bar, and bot detection are all shown.</li>
+</ul>
+<p>Leave the filter empty to see all messages (same as the main feed).</p>`
   },
   outlier: {
     title: 'STANDOUT MESSAGES',
@@ -1665,7 +1729,7 @@ function updateLabelScale(v) {
 // =============================================================
 //  CHARTS
 // =============================================================
-let pieChart, radarChart, timelineLinearChart, timelineLogChart, approvalTimelineChart;
+let pieChart, timelineLinearChart, timelineLogChart, approvalTimelineChart, throughputTimelineChart;
 
 const pieLabelPlugin = {
   id: 'pieLabels',
@@ -1724,21 +1788,7 @@ function initCharts() {
     }
   });
 
-  radarChart = new Chart(document.getElementById('radarChart'), {
-    type: 'radar',
-    data: {
-      labels:['-','-','-','-','-','-','-','-'],
-      datasets:[{ label:'Term Weight', data:[0,0,0,0,0,0,0,0], fill:true,
-        backgroundColor:'rgba(0,255,229,.09)', borderColor:'#00ffe5', borderWidth:2.5,
-        pointBackgroundColor:'#00ffe5', pointBorderColor:'#06060f', pointRadius:4, pointHoverRadius:7 }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      animation:{duration:400, easing:'easeOutCubic'},
-      scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'rgba(255,255,255,.055)'},angleLines:{color:'rgba(255,255,255,.065)'},pointLabels:{color:'#7a7aaa',font:{family:'Share Tech Mono',size:10,weight:'700'}}}},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` "${c.chart.data.labels[c.dataIndex]}": ${c.parsed.r.toFixed(0)}`}, backgroundColor:'#0d0d1f', borderColor:'#1a1a36', borderWidth:1}}
-    }
-  });
+  initMoodWeb();
 
   // Approval tick marks
   const tickContainer = document.getElementById('approvalTicks');
@@ -1840,6 +1890,32 @@ function initCharts() {
             if(v===100) return 'APPROVAL';
             return v+'%';
           }}
+        }
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#0d0d1f',borderColor:'#1a1a36',borderWidth:1}
+      }
+    }
+  });
+
+  // Throughput timeline — single line showing msg/s over time (same style as approval)
+  throughputTimelineChart = new Chart(document.getElementById('throughputTimelineChart'), {
+    type:'line',
+    data:{ labels:Array(TIMELINE_POINTS).fill(''), datasets:[{
+      label:'THROUGHPUT', data:Array(TIMELINE_POINTS).fill(null),
+      borderColor:'#00ffe5', backgroundColor:'rgba(0,255,229,.08)',
+      borderWidth:2, pointRadius:0, tension:0.45, fill:true
+    }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#2e2e58',maxRotation:0,font:{size:8}}},
+        y:{
+          type:'linear', min:0,
+          grid:{color:'rgba(255,255,255,.04)'},
+          ticks:{color:'#2e2e58',font:{size:8},callback:function(v){ return v+' msg/s'; }}
         }
       },
       plugins:{
@@ -2008,6 +2084,211 @@ function bubAnimLoop() {
 }
 
 // =============================================================
+//  MOOD WEB — interactive canvas-based mood visualization
+// =============================================================
+let moodWebCanvas, moodWebCtx;
+let moodWebNodes = [];
+let moodWebHovered = null;
+let moodWebPinned = null;
+let moodWebPct = null;
+
+// Co-occurrence matrix: tracks how often mood pairs appear together
+const moodCoOccurrence = {};
+for (const m1 of MOODS) { moodCoOccurrence[m1] = {}; for (const m2 of MOODS) moodCoOccurrence[m1][m2] = 0; }
+let lastCoOccMoods = [];
+
+function trackMoodCoOccurrence(mood) {
+  const now = Date.now();
+  lastCoOccMoods.push({ mood, ts: now });
+  // Keep a 5s sliding window of recent moods
+  while (lastCoOccMoods.length && now - lastCoOccMoods[0].ts > 5000) lastCoOccMoods.shift();
+  // Increment co-occurrence for all pairs in window
+  const recent = [...new Set(lastCoOccMoods.map(m => m.mood))];
+  for (let i = 0; i < recent.length; i++) {
+    for (let j = i+1; j < recent.length; j++) {
+      moodCoOccurrence[recent[i]][recent[j]] += 0.1;
+      moodCoOccurrence[recent[j]][recent[i]] += 0.1;
+    }
+  }
+}
+
+function initMoodWeb() {
+  moodWebCanvas = document.getElementById('moodWebCanvas');
+  if (!moodWebCanvas) return;
+  moodWebCtx = moodWebCanvas.getContext('2d');
+  resizeMoodWeb();
+  window.addEventListener('resize', resizeMoodWeb);
+
+  // Initialize node positions in a circle
+  const activeMoods = MOODS.filter(m => m !== 'neutral');
+  const cx = moodWebCanvas.offsetWidth / 2;
+  const cy = moodWebCanvas.offsetHeight / 2;
+  const radius = Math.min(cx, cy) * 0.6;
+  moodWebNodes = activeMoods.map((mood, i) => {
+    const angle = (i / activeMoods.length) * Math.PI * 2 - Math.PI / 2;
+    return {
+      mood,
+      x: cx + Math.cos(angle) * radius,
+      y: cy + Math.sin(angle) * radius,
+      targetX: cx + Math.cos(angle) * radius,
+      targetY: cy + Math.sin(angle) * radius,
+      r: 18,
+      targetR: 18,
+      pct: 0
+    };
+  });
+
+  moodWebCanvas.addEventListener('mousemove', onMoodWebHover);
+  moodWebCanvas.addEventListener('mouseleave', () => { moodWebHovered = null; });
+  moodWebCanvas.addEventListener('click', onMoodWebClick);
+
+  moodWebAnimLoop();
+}
+
+function resizeMoodWeb() {
+  if (!moodWebCanvas) return;
+  const parent = moodWebCanvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  if (parent) {
+    const pw = parent.clientWidth;
+    const ph = parent.clientHeight || moodWebCanvas.offsetHeight;
+    if (pw > 0) moodWebCanvas.style.width = pw + 'px';
+    if (ph > 0) moodWebCanvas.style.height = ph + 'px';
+  }
+  moodWebCanvas.width = moodWebCanvas.offsetWidth * dpr;
+  moodWebCanvas.height = moodWebCanvas.offsetHeight * dpr;
+  moodWebCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Recalculate node positions
+  const W = moodWebCanvas.offsetWidth, H = moodWebCanvas.offsetHeight;
+  const cx = W / 2, cy = H / 2;
+  const radius = Math.min(cx, cy) * 0.6;
+  const activeMoods = MOODS.filter(m => m !== 'neutral');
+  for (let i = 0; i < moodWebNodes.length; i++) {
+    const angle = (i / activeMoods.length) * Math.PI * 2 - Math.PI / 2;
+    moodWebNodes[i].targetX = cx + Math.cos(angle) * radius;
+    moodWebNodes[i].targetY = cy + Math.sin(angle) * radius;
+  }
+}
+
+function onMoodWebHover(e) {
+  const rect = moodWebCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  moodWebHovered = null;
+  for (const node of moodWebNodes) {
+    const dx = mx - node.x, dy = my - node.y;
+    if (dx*dx + dy*dy < node.r*node.r) {
+      moodWebHovered = node;
+      moodWebCanvas.style.cursor = 'pointer';
+      return;
+    }
+  }
+  moodWebCanvas.style.cursor = 'default';
+}
+
+function onMoodWebClick(e) {
+  const rect = moodWebCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  let clicked = null;
+  for (const node of moodWebNodes) {
+    const dx = mx - node.x, dy = my - node.y;
+    if (dx*dx + dy*dy < node.r*node.r) { clicked = node; break; }
+  }
+  if (clicked && moodWebPinned === clicked) moodWebPinned = null;
+  else moodWebPinned = clicked;
+}
+
+function updateMoodWeb(pct) {
+  moodWebPct = pct;
+  const maxPct = Math.max(...MOODS.filter(m => m !== 'neutral').map(m => pct[m] || 0), 1);
+  for (const node of moodWebNodes) {
+    const p = pct[node.mood] || 0;
+    node.pct = p;
+    node.targetR = Math.max(14, 14 + (p / maxPct) * 30);
+  }
+}
+
+function moodWebAnimLoop() {
+  requestAnimationFrame(moodWebAnimLoop);
+  if (!moodWebCanvas || !moodWebCtx) return;
+  const W = moodWebCanvas.offsetWidth, H = moodWebCanvas.offsetHeight;
+  if (!W || !H) return;
+  moodWebCtx.clearRect(0, 0, W, H);
+
+  // Smooth position and size transitions
+  for (const node of moodWebNodes) {
+    node.x += (node.targetX - node.x) * 0.06;
+    node.y += (node.targetY - node.y) * 0.06;
+    node.r += (node.targetR - node.r) * 0.08;
+  }
+
+  const highlighted = moodWebPinned || moodWebHovered;
+
+  // Draw connection lines between moods with co-occurrence
+  for (let i = 0; i < moodWebNodes.length; i++) {
+    for (let j = i+1; j < moodWebNodes.length; j++) {
+      const a = moodWebNodes[i], b = moodWebNodes[j];
+      const coOcc = (moodCoOccurrence[a.mood]?.[b.mood] || 0);
+      // Also draw lines when both moods have significant presence
+      const sharedStrength = Math.min(a.pct, b.pct) / 100;
+      const strength = Math.min(1, coOcc * 0.05 + sharedStrength * 2);
+      if (strength < 0.05) continue;
+
+      const isHighlighted = highlighted && (highlighted === a || highlighted === b);
+      const alpha = isHighlighted ? Math.min(0.7, strength * 0.8) : Math.min(0.25, strength * 0.3);
+      const lineWidth = isHighlighted ? Math.min(3, 0.5 + strength * 3) : Math.min(2, 0.3 + strength * 2);
+
+      moodWebCtx.beginPath();
+      moodWebCtx.moveTo(a.x, a.y);
+      moodWebCtx.lineTo(b.x, b.y);
+      moodWebCtx.strokeStyle = `rgba(255,255,255,${alpha})`;
+      moodWebCtx.lineWidth = lineWidth;
+      moodWebCtx.stroke();
+    }
+  }
+
+  // Draw nodes
+  for (const node of moodWebNodes) {
+    const col = MOOD_COLORS[node.mood] || '#2e3d5e';
+    const isActive = highlighted === node;
+    const isDimmed = highlighted && highlighted !== node;
+
+    // Outer glow
+    if (isActive) {
+      moodWebCtx.beginPath();
+      moodWebCtx.arc(node.x, node.y, node.r + 6, 0, Math.PI*2);
+      moodWebCtx.fillStyle = hexAlpha(col, 0.15);
+      moodWebCtx.fill();
+    }
+
+    // Main circle
+    moodWebCtx.beginPath();
+    moodWebCtx.arc(node.x, node.y, node.r, 0, Math.PI*2);
+    moodWebCtx.fillStyle = hexAlpha(col, isDimmed ? 0.15 : (isActive ? 0.55 : 0.3));
+    moodWebCtx.fill();
+    moodWebCtx.strokeStyle = hexAlpha(col, isDimmed ? 0.3 : (isActive ? 1.0 : 0.7));
+    moodWebCtx.lineWidth = isActive ? 2.5 : 1.5;
+    moodWebCtx.stroke();
+
+    // Label
+    if (node.r >= 12) {
+      const fontSize = Math.max(8, Math.min(node.r * 0.55 * labelScale, 14 * labelScale));
+      moodWebCtx.font = `bold ${Math.round(fontSize)}px 'Share Tech Mono', monospace`;
+      moodWebCtx.textAlign = 'center';
+      moodWebCtx.textBaseline = 'middle';
+      moodWebCtx.fillStyle = isDimmed ? 'rgba(255,255,255,0.3)' : (isActive ? '#fff' : 'rgba(255,255,255,0.85)');
+      moodWebCtx.fillText(node.mood.toUpperCase(), node.x, node.y - (isActive ? 5 : 0), node.r * 2);
+      if (isActive && node.pct > 0) {
+        const smallFont = Math.max(7, Math.round(fontSize * 0.75));
+        moodWebCtx.font = `${smallFont}px 'Share Tech Mono', monospace`;
+        moodWebCtx.fillStyle = 'rgba(255,255,255,0.7)';
+        moodWebCtx.fillText(node.pct.toFixed(1) + '%', node.x, node.y + 7);
+      }
+    }
+  }
+}
+
+// =============================================================
 //  VISUALS UPDATE
 // =============================================================
 function updateVisuals() {
@@ -2020,17 +2301,9 @@ function updateVisuals() {
   if (pct) { pieChart.data.datasets[0].data = MOODS.map(m=>pct[m]); pieChart.update('none'); }
 
   const kwList = computeKeywordWeights(now);
-  const top8 = kwList.slice(0,8);
-  if (top8.length >= 3) {
-    const maxKW = top8[0].score||1;
-    radarChart.data.labels = top8.map(k=>k.label);
-    radarChart.data.datasets[0].data = top8.map(k=>Math.round(k.score/maxKW*100));
-    const rc = MOOD_COLORS[top8[0]?.mood||dominant];
-    radarChart.data.datasets[0].borderColor = rc;
-    radarChart.data.datasets[0].backgroundColor = hexAlpha(rc,0.1);
-    radarChart.data.datasets[0].pointBackgroundColor = rc;
-    radarChart.update('none');
-  }
+
+  // Update mood web with current weighted moods
+  if (pct) updateMoodWeb(pct);
 
   updateBubbles(kwList.slice(0,28).map((k,i)=>({...k,count:i+1})));
 
@@ -2155,6 +2428,59 @@ function pushApprovalTimelineSnapshot() {
   approvalTimelineChart.update('none');
 }
 
+function pushThroughputTimelineSnapshot() {
+  if (!throughputTimelineChart) return;
+  const now = Date.now();
+  const cut3 = now - 3000;
+  // Use tsThroughput already maintained in updateVisuals
+  const mps = parseFloat((tsThroughput.filter(t => t >= cut3).length / 3).toFixed(1));
+  const label = new Date().toLocaleTimeString([],{minute:'2-digit',second:'2-digit'});
+  throughputTimelineChart.data.labels.push(label);
+  throughputTimelineChart.data.labels.shift();
+  throughputTimelineChart.data.datasets[0].data.push(mps);
+  throughputTimelineChart.data.datasets[0].data.shift();
+  // Tint line color based on throughput intensity
+  let lineCol;
+  if (mps > 30) lineCol = '#ff4800';
+  else if (mps > 15) lineCol = '#ffe600';
+  else lineCol = '#00ffe5';
+  throughputTimelineChart.data.datasets[0].borderColor = lineCol;
+  throughputTimelineChart.data.datasets[0].backgroundColor = hexAlpha(lineCol, 0.08);
+  throughputTimelineChart.update('none');
+}
+
+function showDecayRecommendation() {
+  const now = Date.now();
+  const cut3 = now - 3000;
+  const currentMps = parseFloat((tsThroughput.filter(t => t >= cut3).length / 3).toFixed(1));
+  let rec, details;
+  if (currentMps < 2) {
+    rec = '20-40s';
+    details = 'Low throughput (' + currentMps.toFixed(1) + ' msg/s). Use a higher decay so sparse messages linger long enough for meaningful mood detection.';
+  } else if (currentMps < 10) {
+    rec = '10-20s';
+    details = 'Moderate throughput (' + currentMps.toFixed(1) + ' msg/s). A balanced decay gives responsive charts without excessive volatility.';
+  } else if (currentMps < 30) {
+    rec = '5-10s';
+    details = 'High throughput (' + currentMps.toFixed(1) + ' msg/s). Lower decay keeps charts snappy and reflects fast-moving sentiment shifts.';
+  } else {
+    rec = '2-5s';
+    details = 'Very high throughput (' + currentMps.toFixed(1) + ' msg/s). Use short decay to track rapid swings without chart lag.';
+  }
+  showHelp('_decayRec');
+  document.getElementById('helpTitle').textContent = 'DECAY RECOMMENDATION';
+  document.getElementById('helpBody').innerHTML =
+    '<p><strong>Current throughput:</strong> ' + currentMps.toFixed(1) + ' msg/s</p>' +
+    '<p><strong>Recommended decay:</strong> ' + rec + '</p>' +
+    '<p>' + details + '</p>' +
+    '<p style="margin-top:12px;color:var(--muted);font-size:.85em"><strong>Timeline chart tips:</strong></p>' +
+    '<ul style="color:var(--muted);font-size:.85em">' +
+    '<li><strong>Max Points</strong> — More points = longer history visible, but heavier rendering. 150-300 is ideal for most streams.</li>' +
+    '<li><strong>Interval</strong> — Lower interval = more frequent snapshots. Use 500-1000ms for fast chats, 2000-3000ms for slow ones.</li>' +
+    '<li>If charts feel sluggish, try reducing Max Points or increasing Interval.</li>' +
+    '</ul>';
+}
+
 // =============================================================
 //  FEED
 // =============================================================
@@ -2190,10 +2516,11 @@ function flushFeed() {
       apvTag = `<span class="feed-apv"><span class="feed-apv-bar"><span class="feed-apv-fill" style="width:${apvPct}%;background:${apvColor}"></span></span><span class="feed-apv-num" style="color:${apvColor}">${apvNum}</span></span>`;
     }
     el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${renderEmotes(esc(safeMsg))}</span>${moodTag}${apvTag}`;
-    frag.prepend(el);
+    frag.appendChild(el);
   }
-  list.prepend(frag);
-  while (list.children.length > 60) list.removeChild(list.lastChild);
+  list.appendChild(frag);
+  while (list.children.length > 60) list.removeChild(list.firstChild);
+  list.scrollTop = list.scrollHeight;
 }
 
 // =============================================================
@@ -2225,10 +2552,11 @@ function flushOutlierFeed() {
     const apvNum = approvalVote>0 ? '+'+approvalVote.toFixed(1) : approvalVote.toFixed(1);
     const apvTag = `<span class="feed-apv"><span class="feed-apv-bar"><span class="feed-apv-fill" style="width:${apvPct}%;background:${apvColor}"></span></span><span class="feed-apv-num" style="color:${apvColor}">${apvNum}</span></span>`;
     el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${renderEmotes(esc(safeMsg))}</span>${moodTag}${apvTag}`;
-    frag.prepend(el);
+    frag.appendChild(el);
   }
-  list.prepend(frag);
-  while (list.children.length > 40) list.removeChild(list.lastChild);
+  list.appendChild(frag);
+  while (list.children.length > 40) list.removeChild(list.firstChild);
+  list.scrollTop = list.scrollHeight;
 }
 
 // =============================================================
@@ -2248,12 +2576,13 @@ function processingLoop() {
       if (isBot) {
         botMessagesFiltered++;
         botUsersDetected.add(user);
-        if (i%5===0) addFeedItem(user, msg, 'bot', botScore, 0);
+        if (i%5===0) { addFeedItem(user, msg, 'bot', botScore, 0); addFilteredFeedItem(user, msg, 'bot', botScore, 0); }
         continue;
       }
     }
     const { mood, strength, hits, approvalVote } = classifyMessage(msg);
     scoredMessages.push({ ts, mood, strength });
+    trackMoodCoOccurrence(mood);
     uniqueUsers.add(user);
     totalMessages++;
     msgTimestamps.push(ts);
@@ -2262,7 +2591,7 @@ function processingLoop() {
       if (!keywordStore.has(label)) keywordStore.set(label, []);
       keywordStore.get(label).push({ ts, w:weight, mood:m });
     }
-    if (i%5===0) addFeedItem(user, msg, mood, 0, approvalVote);
+    if (i%5===0) { addFeedItem(user, msg, mood, 0, approvalVote); addFilteredFeedItem(user, msg, mood, 0, approvalVote); }
     // Outlier detection: flag messages whose mood is underrepresented
     if (mood !== 'neutral' && strength >= 1.0 && totalMessages > 20) {
       const pct = computeWeightedMoods(ts);
@@ -2273,7 +2602,7 @@ function processingLoop() {
   }
 
   if (frameIdx%8===0) updateVisuals();
-  if (now-lastTimelineTs >= TIMELINE_INTERVAL) { pushTimelineSnapshot(); pushApprovalTimelineSnapshot(); lastTimelineTs=now; }
+  if (now-lastTimelineTs >= TIMELINE_INTERVAL) { pushTimelineSnapshot(); pushApprovalTimelineSnapshot(); pushThroughputTimelineSnapshot(); lastTimelineTs=now; }
 }
 
 // =============================================================
@@ -2497,7 +2826,7 @@ function setStatus(html, cls) {
 // =============================================================
 const RESIZE_STORAGE_KEY = 'moodradar_sizes_v2';
 const RESIZE_DEBOUNCE_MS = 180;
-const RESIZABLE_IDS = ['pieCard','radarCard','bubbleCard','approvalCard','approvalTimelineCard','timelineLinearCard','timelineLogCard','feedCard','outlierCard'];
+const RESIZABLE_IDS = ['pieCard','radarCard','bubbleCard','approvalCard','approvalTimelineCard','throughputTimelineCard','timelineLinearCard','timelineLogCard','feedCard','filteredFeedCard','outlierCard'];
 
 function saveSizes() {
   const sizes = {};
@@ -2530,8 +2859,9 @@ function restoreSizes() {
 
 function notifyChartResize(cardId) {
   if (cardId === 'pieCard'              && pieChart)             { pieChart.resize(); pieChart.update('none'); }
-  if (cardId === 'radarCard'            && radarChart)           { radarChart.resize(); radarChart.update('none'); }
+  if (cardId === 'radarCard') resizeMoodWeb();
   if (cardId === 'approvalTimelineCard' && approvalTimelineChart) approvalTimelineChart.resize();
+  if (cardId === 'throughputTimelineCard' && throughputTimelineChart) throughputTimelineChart.resize();
   if (cardId === 'timelineLinearCard'   && timelineLinearChart)  timelineLinearChart.resize();
   if (cardId === 'timelineLogCard'      && timelineLogChart)     timelineLogChart.resize();
   if (cardId === 'bubbleCard')                                   resizeBubbleCanvas();
@@ -2666,6 +2996,87 @@ function applyOutlierFontSize() {
 }
 
 // =============================================================
+//  FILTERED FEED — regex-based secondary feed
+// =============================================================
+const FILTERED_FEED_FONT_KEY = 'moodradar_filteredfeedfont_v1';
+let filteredFeedFontSize = (() => {
+  try { const v = parseFloat(localStorage.getItem(FILTERED_FEED_FONT_KEY)); return isNaN(v) ? 2 : Math.min(20, Math.max(0.1, v)); }
+  catch(e) { return 2; }
+})();
+let filteredFeedRegex = null;
+
+function updateFilteredFeedFontSize(v) {
+  filteredFeedFontSize = Math.min(20, Math.max(0.1, parseFloat(v)));
+  document.getElementById('filteredFeedFontVal').textContent = filteredFeedFontSize.toFixed(2);
+  try { localStorage.setItem(FILTERED_FEED_FONT_KEY, filteredFeedFontSize); } catch(e) {}
+  applyFilteredFeedFontSize();
+}
+
+function applyFilteredFeedFontSize() {
+  const list = document.getElementById('filteredFeedList');
+  if (!list) return;
+  list.style.fontSize = filteredFeedFontSize + 'em';
+  list.style.lineHeight = Math.max(1.2, 1.4 + (filteredFeedFontSize - 2) * 0.15).toFixed(2);
+}
+
+function updateFilteredFeedRegex(v) {
+  const input = document.getElementById('filteredFeedRegex');
+  if (!v.trim()) {
+    filteredFeedRegex = null;
+    input.classList.remove('regex-error');
+    return;
+  }
+  try {
+    filteredFeedRegex = new RegExp(v, 'i');
+    input.classList.remove('regex-error');
+  } catch(e) {
+    filteredFeedRegex = null;
+    input.classList.add('regex-error');
+  }
+}
+
+const filteredFeedPending = [];
+let filteredFeedRafId = null;
+
+function addFilteredFeedItem(user, msg, mood, botScore, approvalVote) {
+  if (filteredFeedRegex && !filteredFeedRegex.test(msg)) return;
+  if (!filteredFeedRegex) return; // only show when filter is active
+  filteredFeedPending.push({ user, msg, mood, botScore:botScore||0, approvalVote:approvalVote||0 });
+  if (!filteredFeedRafId) filteredFeedRafId = requestAnimationFrame(flushFilteredFeed);
+}
+
+function flushFilteredFeed() {
+  filteredFeedRafId = null;
+  const list = document.getElementById('filteredFeedList');
+  const frag = document.createDocumentFragment();
+  for (const { user, msg, mood, botScore, approvalVote } of filteredFeedPending.splice(0,25)) {
+    const el = document.createElement('div');
+    const isBot = mood === 'bot';
+    el.className = 'feed-item' + (isBot?' feed-bot':'');
+    const safeUser = sanitize(user);
+    const safeMsg  = sanitize(msg);
+    const moodTag = isBot
+      ? `<span class="feed-mood mood-bot">BOT ${botScore}</span>`
+      : `<span class="feed-mood mood-${mood}">${mood}</span>`;
+    let apvTag = '';
+    if (!isBot) {
+      const apvPct = Math.round(Math.min(100, Math.max(0, (approvalVote+8)/16*100)));
+      let apvColor;
+      if (approvalVote>1) apvColor='#00ffe5';
+      else if (approvalVote<-1) apvColor='#ff4800';
+      else apvColor='#4a4a7a';
+      const apvNum = approvalVote>0 ? '+'+approvalVote.toFixed(1) : approvalVote.toFixed(1);
+      apvTag = `<span class="feed-apv"><span class="feed-apv-bar"><span class="feed-apv-fill" style="width:${apvPct}%;background:${apvColor}"></span></span><span class="feed-apv-num" style="color:${apvColor}">${apvNum}</span></span>`;
+    }
+    el.innerHTML = `<span class="feed-user">${esc(safeUser)}</span><span class="feed-msg">${renderEmotes(esc(safeMsg))}</span>${moodTag}${apvTag}`;
+    frag.appendChild(el);
+  }
+  list.appendChild(frag);
+  while (list.children.length > 60) list.removeChild(list.firstChild);
+  list.scrollTop = list.scrollHeight;
+}
+
+// =============================================================
 //  TIMELINE SETTINGS — max points + update interval
 // =============================================================
 function updateTimelinePoints(v) {
@@ -2683,7 +3094,7 @@ function updateTimelineInterval(v) {
 }
 
 function resizeTimelineData(newPts) {
-  const charts = [timelineLinearChart, timelineLogChart, approvalTimelineChart].filter(Boolean);
+  const charts = [timelineLinearChart, timelineLogChart, approvalTimelineChart, throughputTimelineChart].filter(Boolean);
   for (const chart of charts) {
     const labels = chart.data.labels;
     const datasets = chart.data.datasets;
@@ -2718,13 +3129,15 @@ function renderMoodLegend() {
 const LAYOUT_STORAGE_KEY = 'moodradar_layout_v1';
 const LAYOUT_SECTIONS = [
   { id:'pieCard',             label:'Mood Distribution' },
-  { id:'radarCard',           label:'Keyword Web' },
+  { id:'radarCard',           label:'Mood Web' },
   { id:'bubbleCard',          label:'Consensus Bubbles' },
   { id:'approvalCard',        label:'Approval Meter' },
   { id:'approvalTimelineCard', label:'Approval Timeline' },
+  { id:'throughputTimelineCard', label:'Throughput Timeline' },
   { id:'timelineLinearCard',  label:'Timeline (Linear)' },
   { id:'timelineLogCard',     label:'Timeline (Log)' },
   { id:'feedCard',            label:'Live Feed' },
+  { id:'filteredFeedCard',    label:'Filtered Feed' },
   { id:'outlierCard',         label:'Standout Messages' },
 ];
 
@@ -2847,8 +3260,9 @@ function applyCustomLayout() {
   setTimeout(() => {
     resizeBubbleCanvas();
     if (pieChart) pieChart.resize();
-    if (radarChart) radarChart.resize();
+    resizeMoodWeb();
     if (approvalTimelineChart) approvalTimelineChart.resize();
+    if (throughputTimelineChart) throughputTimelineChart.resize();
     if (timelineLinearChart) timelineLinearChart.resize();
     if (timelineLogChart) timelineLogChart.resize();
   }, 50);
@@ -2879,7 +3293,7 @@ function restoreDefaultDOM() {
   const chartsTop = document.querySelector('.charts-top');
 
   // Collect all card elements by ID (safe references survive DOM moves)
-  const allCardIds = ['pieCard','radarCard','bubbleCard','approvalCard','approvalTimelineCard','timelineLinearCard','timelineLogCard','feedCard','outlierCard'];
+  const allCardIds = ['pieCard','radarCard','bubbleCard','approvalCard','approvalTimelineCard','throughputTimelineCard','timelineLinearCard','timelineLogCard','feedCard','filteredFeedCard','outlierCard'];
   const cards = {};
   for (const id of allCardIds) {
     const el = document.getElementById(id);
@@ -2918,10 +3332,12 @@ function restoreDefaultDOM() {
     dividers[1],
     cards.approvalCard,
     cards.approvalTimelineCard,
+    cards.throughputTimelineCard,
     dividers[2],
     cards.timelineLinearCard,
     cards.timelineLogCard,
     cards.feedCard,
+    cards.filteredFeedCard,
     cards.outlierCard,
   ].filter(Boolean);
 
@@ -2942,6 +3358,12 @@ window.onload = function() {
   if (feedSlider) feedSlider.value = feedFontSize;
   document.getElementById('feedFontVal').textContent = feedFontSize.toFixed(2);
   applyFeedFontSize();
+
+  // Init filtered feed font size slider
+  const filteredFeedSlider = document.getElementById('filteredFeedFontSlider');
+  if (filteredFeedSlider) filteredFeedSlider.value = filteredFeedFontSize;
+  document.getElementById('filteredFeedFontVal').textContent = filteredFeedFontSize.toFixed(2);
+  applyFilteredFeedFontSize();
 
   // Init outlier font size slider
   const outlierSlider = document.getElementById('outlierFontSlider');
