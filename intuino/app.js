@@ -84,8 +84,10 @@ const IntuiNO = {
 
   // ─── PERSISTENCE ───
   save() {
-    const d = { chaosScore: this.state.chaosScore, levelsCompleted: this.state.levelsCompleted, achievements: this.state.achievements, levelProgress: this.state.levelProgress };
-    localStorage.setItem('intuino', JSON.stringify(d));
+    try {
+      const d = { chaosScore: this.state.chaosScore, levelsCompleted: this.state.levelsCompleted, achievements: this.state.achievements, levelProgress: this.state.levelProgress };
+      localStorage.setItem('intuino', JSON.stringify(d));
+    } catch(e) {}
   },
   load() {
     try {
