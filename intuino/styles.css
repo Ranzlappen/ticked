@@ -152,6 +152,15 @@ html:not(.dark) .toggle-slider { background: rgba(0,0,0,.15); }
   to { width: 0%; }
 }
 
+/* ══════════════ INTRUSIVE BANNER ══════════════ */
+#intrusive-banner {
+  will-change: transform;
+}
+html:not(.dark) #intrusive-banner .glass-card {
+  background: rgba(255,255,255,.85);
+  border-color: rgba(168,85,247,.2);
+}
+
 /* ══════════════ RESPONSIVE ══════════════ */
 @media (max-width: 640px) {
   .orb { opacity: .2; }

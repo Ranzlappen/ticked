@@ -75,6 +75,30 @@
   <!-- ══════════════ TOAST CONTAINER ══════════════ -->
   <div id="toast-container" class="fixed bottom-6 right-6 z-[80] flex flex-col gap-3 pointer-events-none"></div>
 
+  <!-- ══════════════ INTRUSIVE BANNER ══════════════ -->
+  <div id="intrusive-banner" class="fixed bottom-0 left-0 right-0 z-[75] translate-y-full">
+    <div class="mx-4 mb-4 md:mx-8 p-5 rounded-2xl glass-card border border-neon-purple/30 shadow-lg shadow-neon-purple/10">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-lg">🍪</span>
+            <h4 class="text-sm font-semibold text-neon-cyan">We Value Your Privacy*</h4>
+            <span class="text-[8px] text-white/15">*We don't</span>
+          </div>
+          <p class="text-xs text-white/40 leading-relaxed mb-3">
+            This site uses cookies, trackers, dark patterns, and emotional manipulation to deliver the worst possible experience. By existing, you consent to everything.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button id="banner-accept" class="px-4 py-1.5 rounded-lg bg-neon-cyan/10 border border-neon-cyan/30 text-neon-cyan text-xs font-medium hover:bg-neon-cyan/20 transition">Accept All</button>
+            <button id="banner-reject" class="px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/40 text-xs hover:bg-white/10 transition">Reject All</button>
+            <button id="banner-expand" class="px-4 py-1.5 rounded-lg bg-neon-magenta/10 border border-neon-magenta/30 text-neon-magenta text-xs font-medium hover:bg-neon-magenta/20 transition">Expand Details</button>
+          </div>
+        </div>
+        <button id="banner-close" class="shrink-0 w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/30 text-sm hover:bg-white/10 transition">✕</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════════ ACHIEVEMENT POPUP ══════════════ -->
   <div id="achievement-popup" class="fixed top-20 left-1/2 -translate-x-1/2 z-[70] opacity-0 pointer-events-none">
     <div class="px-6 py-4 rounded-2xl bg-gradient-to-r from-neon-purple/20 to-neon-magenta/20 border border-neon-purple/40 backdrop-blur-xl flex items-center gap-3">
