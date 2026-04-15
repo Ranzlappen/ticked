@@ -22,7 +22,7 @@ const safeStorage = {
     set(key, value) {
         try { localStorage.setItem(key, value); return true; }
         catch (e) {
-            showToast('Storage full — data may not persist.', true);
+            showToast(t('storageFull'), true);
             return false;
         }
     },
@@ -274,7 +274,7 @@ function load() {
             }
         }
     } catch {
-        showToast('Log data was unreadable — starting fresh.', true);
+        showToast(t('dataUnreadable'), true);
     }
 
     setState({
@@ -316,8 +316,8 @@ function isoToTimeStr(iso) {
 function formatDayLabel(dateStr) {
     const today     = todayDateString();
     const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
-    if (dateStr === today)     return 'Today';
-    if (dateStr === yesterday) return 'Yesterday';
+    if (dateStr === today)     return t('today');
+    if (dateStr === yesterday) return t('yesterday');
     const [y, m, d] = dateStr.split('-').map(Number);
     return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
@@ -422,7 +422,7 @@ function addCustomEntry() {
     const text    = inputText.value.trim();
     const dateVal = document.getElementById('customDate').value;
     const timeVal = document.getElementById('customTime').value;
-    if (!dateVal || !timeVal) { showToast('Please set both date and time.', true); return; }
+    if (!dateVal || !timeVal) { showToast(t('setBothDateTime'), true); return; }
 
     const userTags = parseTagInput('tagInput');
     const entry  = {
@@ -435,7 +435,7 @@ function addCustomEntry() {
     inputText.value = '';
     clearTagInput('tagInput');
     toggleCustomPanel();
-    showToast('✦ Custom entry added');
+    showToast(t('customEntryAdded'));
 }
 
 function deleteEntry(id) {
@@ -461,7 +461,7 @@ const PROCESS_TEMPLATES = {
 
 function addProcess() {
     const text = procInputText.value.trim();
-    if (!text) { showToast('Please enter a process name.', true); return; }
+    if (!text) { showToast(t('pleaseEnterProcessName'), true); return; }
     const userTags = parseTagInput('procTagInput');
     const now = new Date().toISOString();
     const proc = {
@@ -520,7 +520,7 @@ function addProcessFromTemplate(templateKey) {
     setState({ processes: [proc, ...state.processes] });
     save();
     if (procTemplateSelect) procTemplateSelect.value = '';
-    showToast(`Template added: ${processName}`);
+    showToast(t('templateAdded', {name: processName}));
 }
 
 function deleteProcess(id) {
@@ -543,7 +543,7 @@ function updateProcessStage(id, cpIdx) {
     });
     setState({ processes: procs });
     save();
-    if (justCompleted) showToast('🎉 Process completed!');
+    if (justCompleted) showToast(t('processCompleted'));
 }
 
 function reopenProcess(id) {
@@ -553,7 +553,7 @@ function reopenProcess(id) {
     });
     setState({ processes: procs });
     save();
-    showToast('Process reopened');
+    showToast(t('processReopened'));
 }
 
 function isCompleted(p) {
@@ -577,7 +577,7 @@ function addCheckpointToProcess(procId) {
     });
     setState({ processes: procs });
     save();
-    showToast('Checkpoint added ✓');
+    showToast(t('checkpointAdded'));
 }
 
 // ── Filter / Sort ─────────────────────────────────────────
@@ -820,8 +820,9 @@ function createEntryNode(entry, isToday, displayTs, tab) {
         : () => deleteProcess(entry.id);
 
     const swipeRightAction = () => openActionSheet(entry.id, tab);
+    const tapAction = () => openEntryPreview(entry.id, tab);
 
-    initSwipe(wrap, card, confirmOverlay, deleteAction, swipeRightAction);
+    initSwipe(wrap, card, confirmOverlay, deleteAction, swipeRightAction, tapAction);
     return { wrap, card };
 }
 
@@ -857,20 +858,20 @@ function updateEntryNode(card, entry, isToday, displayTs) {
     textEl.className = 'entry-text' + (entry.text ? '' : ' no-text');
 
     const textSpan = document.createElement('span');
-    textSpan.textContent = entry.text || '(no text)';
+    textSpan.textContent = entry.text || t('noText');
     textEl.appendChild(textSpan);
 
     if (entry.custom) {
         const badge = document.createElement('span');
         badge.className = 'custom-badge';
-        badge.textContent = 'custom';
+        badge.textContent = t('custom');
         textEl.appendChild(badge);
     }
 
     if (hasEdited) {
         const badge = document.createElement('span');
         badge.className = 'edited-badge';
-        badge.textContent = 'edited';
+        badge.textContent = t('edited');
         textEl.appendChild(badge);
     }
 
@@ -926,20 +927,20 @@ function updateProcessNode(card, proc, isToday, displayTs) {
     const textEl = document.createElement('div');
     textEl.className = 'entry-text';
     const textSpan = document.createElement('span');
-    textSpan.textContent = proc.text || '(no text)';
+    textSpan.textContent = proc.text || t('noText');
     textEl.appendChild(textSpan);
 
     if (completed) {
         const badge = document.createElement('span');
         badge.className = 'completed-badge';
-        badge.textContent = 'completed';
+        badge.textContent = t('completed');
         textEl.appendChild(badge);
     }
 
     if (hasEdited) {
         const badge = document.createElement('span');
         badge.className = 'edited-badge';
-        badge.textContent = 'edited';
+        badge.textContent = t('edited');
         textEl.appendChild(badge);
     }
 
@@ -1068,7 +1069,7 @@ function cancelActiveConfirm() {
     _activeConfirm = null;
 }
 
-function initSwipe(wrap, card, confirmOverlay, onDelete, onSwipeRight) {
+function initSwipe(wrap, card, confirmOverlay, onDelete, onSwipeRight, onTap) {
     const THRESHOLD = SWIPE_THRESHOLD;
     let startX = null, startY = null, curX = 0, locked = false, direction = null;
     let hapticFiredLeft = false, hapticFiredRight = false;
@@ -1201,6 +1202,7 @@ function initSwipe(wrap, card, confirmOverlay, onDelete, onSwipeRight) {
             card.style.transform = '';
             card.style.removeProperty('--swipe-glow');
             wrap.classList.remove('swiping-left', 'will-delete', 'swiping-right', 'will-action');
+            if (!direction && onTap) onTap();
         }
         curX = 0;
         direction = null;
@@ -1297,7 +1299,7 @@ function openActionSheet(id, tab) {
         : state.processes.find(p => p.id === id);
     if (!entry) return;
 
-    document.getElementById('sheetTitle').textContent = 'Actions';
+    document.getElementById('sheetTitle').textContent = t('actions');
     const content = document.getElementById('sheetContent');
     content.innerHTML = '';
 
@@ -1305,32 +1307,32 @@ function openActionSheet(id, tab) {
     opts.className = 'sheet-options';
 
     // Option 1: Set Background Color
-    const opt1 = makeSheetOpt('🎨', 'Set Background', 'Choose from palette', () => {
+    const opt1 = makeSheetOpt('🎨', t('setBackground'), t('chooseFromPalette'), () => {
         showColorPicker(id, tab, 'bg');
     });
     opts.appendChild(opt1);
 
     // Option 2: Set Border Color
-    const opt2 = makeSheetOpt('🖌️', 'Set Border', 'Choose from palette', () => {
+    const opt2 = makeSheetOpt('🖌️', t('setBorderAction'), t('chooseFromPalette'), () => {
         showColorPicker(id, tab, 'border');
     });
     opts.appendChild(opt2);
 
     // Option 3: Change Time
-    const opt3 = makeSheetOpt('🕐', 'Change Time', 'Edit timestamp + mark as edited', () => {
+    const opt3 = makeSheetOpt('🕐', t('changeTime'), t('editTimestampDesc'), () => {
         showTimeEditor(id, tab);
     });
     opts.appendChild(opt3);
 
     // Option 4: Change Text
-    const opt4 = makeSheetOpt('✏️', 'Change Text', 'Edit text + mark as edited', () => {
+    const opt4 = makeSheetOpt('✏️', t('changeText'), t('editTextDesc'), () => {
         showTextEditor(id, tab);
     });
     opts.appendChild(opt4);
 
     // Option 5: Add Checkpoint (processes only)
     if (tab === 'processes') {
-        const opt5 = makeSheetOpt('➕', 'Add Checkpoint', 'Append a new checkpoint to this process', () => {
+        const opt5 = makeSheetOpt('➕', t('addCheckpointAction'), t('appendCheckpointDesc'), () => {
             addCheckpointToProcess(id);
             closeSheet();
         });
@@ -1338,13 +1340,13 @@ function openActionSheet(id, tab) {
 
         // Option 6: Reopen / Mark Complete toggle
         if (isCompleted(entry)) {
-            const opt6 = makeSheetOpt('⟳', 'Reopen Process', 'Clear completed state and resume tracking', () => {
+            const opt6 = makeSheetOpt('⟳', t('reopenProcess'), t('clearCompletedDesc'), () => {
                 reopenProcess(id);
                 closeSheet();
             });
             opts.appendChild(opt6);
         } else {
-            const opt6 = makeSheetOpt('✓', 'Mark Complete', 'Mark this process as completed', () => {
+            const opt6 = makeSheetOpt('✓', t('markComplete'), t('markAsCompletedDesc'), () => {
                 const procs = state.processes.map(p => {
                     if (p.id !== id) return p;
                     return { ...p, completedAt: new Date().toISOString() };
@@ -1352,13 +1354,68 @@ function openActionSheet(id, tab) {
                 setState({ processes: procs });
                 save();
                 closeSheet();
-                showToast('🎉 Process completed!');
+                showToast(t('processCompleted'));
             });
             opts.appendChild(opt6);
         }
     }
 
     content.appendChild(opts);
+    openSheet();
+}
+
+// ── Entry Preview (tap-to-preview) ───────────────────────
+function openEntryPreview(id, tab) {
+    const entry = tab === 'tasks'
+        ? state.entries.find(e => e.id === id)
+        : state.processes.find(p => p.id === id);
+    if (!entry) return;
+
+    document.getElementById('sheetTitle').textContent = t('preview');
+    const content = document.getElementById('sheetContent');
+    content.innerHTML = '';
+
+    const preview = document.createElement('div');
+    preview.className = 'preview-content';
+
+    const textEl = document.createElement('div');
+    textEl.className = 'preview-text' + (entry.text ? '' : ' no-text');
+    textEl.textContent = entry.text || t('noText');
+    preview.appendChild(textEl);
+
+    const tsEl = document.createElement('div');
+    tsEl.className = 'preview-meta';
+    tsEl.textContent = isoToDisplayDate(entry.isoDate);
+    preview.appendChild(tsEl);
+
+    const badges = document.createElement('div');
+    badges.className = 'preview-badges';
+    if (entry.custom) { const b = document.createElement('span'); b.className = 'custom-badge'; b.textContent = t('custom'); badges.appendChild(b); }
+    if (entry.tags && entry.tags.includes('edited')) { const b = document.createElement('span'); b.className = 'edited-badge'; b.textContent = t('edited'); badges.appendChild(b); }
+    if (entry.completedAt) { const b = document.createElement('span'); b.className = 'completed-badge'; b.textContent = t('completed'); badges.appendChild(b); }
+    if (badges.children.length) preview.appendChild(badges);
+
+    const uTags = getUserTags(entry.tags);
+    if (uTags.length > 0) {
+        const tagRow = document.createElement('div');
+        tagRow.className = 'entry-tags';
+        uTags.forEach(tag => { const chip = document.createElement('span'); chip.className = 'entry-tag-chip'; chip.textContent = '#' + tag; tagRow.appendChild(chip); });
+        preview.appendChild(tagRow);
+    }
+
+    if (entry.bgColor || entry.borderColor) {
+        const colorRow = document.createElement('div');
+        colorRow.className = 'preview-colors';
+        [entry.bgColor, entry.borderColor].filter(Boolean).forEach(c => {
+            const sw = document.createElement('span');
+            sw.className = 'preview-color-swatch';
+            sw.style.background = c;
+            colorRow.appendChild(sw);
+        });
+        preview.appendChild(colorRow);
+    }
+
+    content.appendChild(preview);
     openSheet();
 }
 
@@ -1382,13 +1439,13 @@ function showColorPicker(id, tab, mode) {
         : state.processes.find(p => p.id === id);
     if (!entry) return;
 
-    document.getElementById('sheetTitle').textContent = mode === 'bg' ? 'Background Color' : 'Border Color';
+    document.getElementById('sheetTitle').textContent = mode === 'bg' ? t('backgroundColor') : t('borderColorTitle');
     const content = document.getElementById('sheetContent');
     content.innerHTML = '';
 
     const sub = document.createElement('div');
     sub.className = 'sheet-sub-title';
-    sub.textContent = 'Pick from palette or choose custom';
+    sub.textContent = t('pickFromPalette');
     content.appendChild(sub);
 
     const swatches = document.createElement('div');
@@ -1455,7 +1512,7 @@ function applyColor(id, tab, mode, color) {
     });
     setState({ [key]: items });
     save();
-    showToast('Color applied ✓');
+    showToast(t('colorApplied'));
 }
 
 function showTimeEditor(id, tab) {
@@ -1464,7 +1521,7 @@ function showTimeEditor(id, tab) {
         : state.processes.find(p => p.id === id);
     if (!entry) return;
 
-    document.getElementById('sheetTitle').textContent = 'Change Time';
+    document.getElementById('sheetTitle').textContent = t('changeTime');
     const content = document.getElementById('sheetContent');
     content.innerHTML = '';
 
@@ -1497,7 +1554,7 @@ function showTimeEditor(id, tab) {
     applyBtn.textContent = 'Save';
     applyBtn.addEventListener('click', () => {
         if (!dateInput.value || !timeInput.value) {
-            showToast('Set both date and time.', true);
+            showToast(t('setBothDateTime'), true);
             return;
         }
         const key = tab === 'tasks' ? 'entries' : 'processes';
@@ -1510,7 +1567,7 @@ function showTimeEditor(id, tab) {
         setState({ [key]: items });
         save();
         closeSheet();
-        showToast('Time updated ✓');
+        showToast(t('timeUpdated'));
     });
 
     btnRow.appendChild(cancelBtn);
@@ -1524,7 +1581,7 @@ function showTextEditor(id, tab) {
         : state.processes.find(p => p.id === id);
     if (!entry) return;
 
-    document.getElementById('sheetTitle').textContent = 'Change Text';
+    document.getElementById('sheetTitle').textContent = t('changeText');
     const content = document.getElementById('sheetContent');
     content.innerHTML = '';
 
@@ -1561,7 +1618,7 @@ function showTextEditor(id, tab) {
         setState({ [key]: items });
         save();
         closeSheet();
-        showToast('Text updated ✓');
+        showToast(t('textUpdated'));
     });
 
     btnRow.appendChild(cancelBtn);
@@ -1675,7 +1732,7 @@ function openCheckpointDetail(procId, cpIdx) {
     jumpBtn.addEventListener('click', () => {
         updateProcessStage(procId, cpIdx);
         closeSheet();
-        showToast(`Moved to "${cp.name}" ✓`);
+        showToast(t('movedTo', {name: cp.name}));
     });
 
     const saveBtn = document.createElement('button');
@@ -1683,7 +1740,7 @@ function openCheckpointDetail(procId, cpIdx) {
     saveBtn.textContent = 'Save';
     saveBtn.addEventListener('click', () => {
         if (notifyToggle.checked && !remindInput.value) {
-            showToast('Set a reminder date/time before enabling reminder.', true);
+            showToast(t('setReminderFirst'), true);
             return;
         }
         const procs = state.processes.map(p => {
@@ -1702,7 +1759,7 @@ function openCheckpointDetail(procId, cpIdx) {
         setState({ processes: procs });
         save();
         closeSheet();
-        showToast('Checkpoint updated ✓');
+        showToast(t('checkpointUpdated'));
 
         // Schedule or cancel notification
         if (notifyToggle.checked && remindInput.value) {
@@ -1725,7 +1782,7 @@ function openCheckpointDetail(procId, cpIdx) {
         delBtn.style.cssText = 'color:var(--danger);border-color:var(--danger-border);width:100%;';
         delBtn.textContent = 'Delete Checkpoint';
         delBtn.addEventListener('click', () => {
-            if (!confirm(`Delete checkpoint "${cp.name}"?`)) return;
+            if (!confirm(t("deleteCheckpoint") + ": " + cp.name + "?")) return;
             const procs = state.processes.map(p => {
                 if (p.id !== procId) return p;
                 const checkpoints = p.checkpoints.filter((_, i) => i !== cpIdx);
@@ -1737,7 +1794,7 @@ function openCheckpointDetail(procId, cpIdx) {
             setState({ processes: procs });
             save();
             closeSheet();
-            showToast('Checkpoint deleted');
+            showToast(t('checkpointDeleted'));
         });
         deleteRow.appendChild(delBtn);
         content.appendChild(deleteRow);
@@ -1849,7 +1906,7 @@ function renderTimelineView(filtered, today) {
         rule.className = 'tl-day-rule';
         const cnt = document.createElement('span');
         cnt.className = 'tl-day-count';
-        cnt.textContent = entries.length === 1 ? '1 entry' : `${entries.length} entries`;
+        cnt.textContent = entries.length === 1 ? t('oneEntry') : t('nEntries', {n: entries.length});
         header.appendChild(pill); header.appendChild(rule); header.appendChild(cnt);
 
         const track = document.createElement('div');
@@ -1884,13 +1941,13 @@ function renderTimelineView(filtered, today) {
 
             const name  = document.createElement('div');
             name.className = 'tl-card-name' + (entry.text ? '' : ' no-text');
-            name.textContent = entry.text || '(no text)';
+            name.textContent = entry.text || t('noText');
             card.appendChild(name);
 
             if (entry.custom) {
                 const badge = document.createElement('span');
                 badge.className = 'tl-card-badge';
-                badge.textContent = '✦ custom';
+                badge.textContent = '✦ ' + t('custom');
                 card.appendChild(badge);
             }
 
@@ -1900,10 +1957,12 @@ function renderTimelineView(filtered, today) {
                 badge.style.background = 'var(--edited-dim)';
                 badge.style.border = '1px solid var(--edited-border)';
                 badge.style.color = 'var(--edited)';
-                badge.textContent = '✎ edited';
+                badge.textContent = '✎ ' + t('edited');
                 card.appendChild(badge);
             }
 
+            card.addEventListener('click', () => openEntryPreview(entry.id, 'tasks'));
+            card.style.cursor = 'pointer';
             node.appendChild(time); node.appendChild(dot); node.appendChild(stem); node.appendChild(card);
             row.appendChild(node);
         });
@@ -1913,6 +1972,90 @@ function renderTimelineView(filtered, today) {
         dayEl.appendChild(track);
         timelineView.appendChild(dayEl);
         initDragScroll(track);
+    });
+}
+
+// ── Daily View ───────────────────────────────────────────
+const dailyView = document.getElementById('dailyView');
+
+function renderDailyView(filtered, today) {
+    dailyView.innerHTML = '';
+    if (filtered.length === 0) return;
+
+    const dayMap = new Map();
+    const chrono = [...filtered].sort((a, b) => new Date(a.isoDate) - new Date(b.isoDate));
+    chrono.forEach(e => {
+        const d = isoToDateStr(e.isoDate);
+        if (!dayMap.has(d)) dayMap.set(d, []);
+        dayMap.get(d).push(e);
+    });
+
+    [...dayMap.keys()].sort((a, b) => b.localeCompare(a)).forEach(dateStr => {
+        const entries = dayMap.get(dateStr);
+        const isToday = dateStr === today;
+
+        const dayEl = document.createElement('div');
+        dayEl.className = 'daily-day';
+
+        const header = document.createElement('div');
+        header.className = 'daily-day-header';
+        const pill = document.createElement('span');
+        pill.className = 'tl-day-pill' + (isToday ? ' is-today' : '');
+        pill.textContent = formatDayLabel(dateStr);
+        const rule = document.createElement('div');
+        rule.className = 'tl-day-rule';
+        const cnt = document.createElement('span');
+        cnt.className = 'tl-day-count';
+        cnt.textContent = entries.length === 1 ? t('oneEntry') : t('nEntries', { n: entries.length });
+        header.appendChild(pill); header.appendChild(rule); header.appendChild(cnt);
+
+        const cardsContainer = document.createElement('div');
+        cardsContainer.className = 'daily-entries';
+
+        entries.forEach(entry => {
+            const isEntryToday = isoToDateStr(entry.isoDate) === today;
+            const hasEdited = entry.tags && entry.tags.includes('edited');
+
+            const card = document.createElement('div');
+            card.className = 'daily-entry-card' + (isEntryToday ? ' today' : '') + (entry.custom ? ' custom-entry' : '');
+            if (entry.bgColor) card.style.background = entry.bgColor;
+            if (entry.borderColor) { card.style.borderColor = entry.borderColor; if (entry.custom) card.style.borderLeftColor = entry.borderColor; }
+
+            const dot = document.createElement('div');
+            dot.className = 'entry-dot';
+            const body = document.createElement('div');
+            body.className = 'entry-body';
+
+            const textEl = document.createElement('div');
+            textEl.className = 'entry-text' + (entry.text ? '' : ' no-text');
+            const textSpan = document.createElement('span');
+            textSpan.textContent = entry.text || t('noText');
+            textEl.appendChild(textSpan);
+            if (entry.custom) { const b = document.createElement('span'); b.className = 'custom-badge'; b.textContent = t('custom'); textEl.appendChild(b); }
+            if (hasEdited) { const b = document.createElement('span'); b.className = 'edited-badge'; b.textContent = t('edited'); textEl.appendChild(b); }
+
+            const tsEl = document.createElement('div');
+            tsEl.className = 'entry-ts';
+            tsEl.textContent = isoToDisplayDate(entry.isoDate);
+            body.appendChild(textEl); body.appendChild(tsEl);
+
+            const uTags = getUserTags(entry.tags);
+            if (uTags.length > 0) {
+                const tagRow = document.createElement('div');
+                tagRow.className = 'entry-tags';
+                uTags.forEach(tag => { const chip = document.createElement('span'); chip.className = 'entry-tag-chip'; chip.textContent = '#' + tag; tagRow.appendChild(chip); });
+                body.appendChild(tagRow);
+            }
+
+            card.appendChild(dot); card.appendChild(body);
+            card.addEventListener('click', () => openEntryPreview(entry.id, 'tasks'));
+            card.style.cursor = 'pointer';
+            cardsContainer.appendChild(card);
+        });
+
+        dayEl.appendChild(header);
+        dayEl.appendChild(cardsContainer);
+        dailyView.appendChild(dayEl);
     });
 }
 
@@ -1933,24 +2076,29 @@ function render() {
     document.getElementById('tabTasksCount').textContent = entries.length;
     document.getElementById('tabProcessesCount').textContent = processes.length;
     const totalCount = entries.length + processes.length;
-    countBadge.textContent = totalCount === 1 ? '1 entry' : `${totalCount} entries`;
+    countBadge.textContent = totalCount === 1 ? t('oneEntry') : t('nEntries', {n: totalCount});
 
     // ── Tasks tab rendering (skip heavy DOM work if inactive) ──
     if (activeTab === 'tasks') {
         const tasksFiltered = getSorted(getFiltered('tasks'), 'tasks');
         const tasksIsFiltering = searchInput.value.trim() || filterDate.value || state.activeTypeFilter !== 'all' || state.activeTagFilter;
 
-        entryList.style.display   = currentView === 'list'     ? '' : 'none';
-        timelineView.style.display= currentView === 'timeline' ? '' : 'none';
+        entryList.style.display    = currentView === 'list'     ? '' : 'none';
+        timelineView.style.display = currentView === 'timeline' ? '' : 'none';
+        dailyView.style.display    = currentView === 'daily'    ? '' : 'none';
 
         if (currentView === 'list') {
             const visibleTasks = updateLazyState('tasks', tasksFiltered);
             renderListView(visibleTasks, today);
             lazyFallbackHandler();
-        } else {
+        } else if (currentView === 'timeline') {
             _listKeys.clear();
             tasksLazyLoader.style.display = 'none';
             renderTimelineView(tasksFiltered, today);
+        } else if (currentView === 'daily') {
+            _listKeys.clear();
+            tasksLazyLoader.style.display = 'none';
+            renderDailyView(tasksFiltered, today);
         }
 
         const tasksEmpty = entries.length === 0;
@@ -1958,16 +2106,16 @@ function render() {
         emptyState.classList.toggle('visible', tasksEmpty || tasksNoResults);
         if (tasksNoResults) {
             emptyState.querySelector('.empty-icon').textContent = '🔍';
-            emptyState.querySelector('p').textContent = 'No entries match your filters.';
+            emptyState.querySelector('p').textContent = t('noEntriesMatch');
         } else if (tasksEmpty) {
             emptyState.querySelector('.empty-icon').textContent = '🕳️';
-            emptyState.querySelector('p').innerHTML = 'No entries yet.<br>Add a note above to get started.';
+            emptyState.querySelector('p').innerHTML = t('noEntriesYet') + '<br>' + t('addNoteToStart');
         }
 
         clearBtn.style.display = entries.length > 0 ? '' : 'none';
 
         if (tasksIsFiltering && entries.length > 0) {
-            resultsCount.textContent = `${tasksFiltered.length} of ${entries.length} entries`;
+            resultsCount.textContent = t('resultsOf', {filtered: tasksFiltered.length, total: entries.length});
             resultsCount.classList.add('visible');
         } else {
             resultsCount.classList.remove('visible');
@@ -1989,16 +2137,16 @@ function render() {
         procEmptyState.classList.toggle('visible', procsEmpty || procsNoResults);
         if (procsNoResults) {
             procEmptyState.querySelector('.empty-icon').textContent = '🔍';
-            procEmptyState.querySelector('p').textContent = 'No processes match your filters.';
+            procEmptyState.querySelector('p').textContent = t('noProcessesMatch');
         } else if (procsEmpty) {
             procEmptyState.querySelector('.empty-icon').textContent = '⟳';
-            procEmptyState.querySelector('p').innerHTML = 'No processes yet.<br>Add a process above to track workflow checkpoints.';
+            procEmptyState.querySelector('p').innerHTML = t('noProcessesYet') + '<br>' + t('addProcessToStart');
         }
 
         procClearBtn.style.display = processes.length > 0 ? '' : 'none';
 
         if (procsIsFiltering && processes.length > 0) {
-            procResultsCount.textContent = `${procsFiltered.length} of ${processes.length} processes`;
+            procResultsCount.textContent = t('procResultsOf', {filtered: procsFiltered.length, total: processes.length});
             procResultsCount.classList.add('visible');
         } else {
             procResultsCount.classList.remove('visible');
@@ -2019,6 +2167,7 @@ function setView(view) {
     state.currentView = view;
     document.getElementById('viewListBtn').classList.toggle('active', view === 'list');
     document.getElementById('viewTimelineBtn').classList.toggle('active', view === 'timeline');
+    document.getElementById('viewDailyBtn').classList.toggle('active', view === 'daily');
     document.querySelector('#tasksSortControls').style.opacity       = view === 'list' ? '' : '0.35';
     document.querySelector('#tasksSortControls').style.pointerEvents = view === 'list' ? '' : 'none';
     render();
@@ -2146,11 +2295,11 @@ function renderTagFilterChips(tab) {
 
 function clearAll(tab) {
     if (tab === 'tasks') {
-        if (!confirm('Clear all log entries? This cannot be undone.')) return;
+        if (!confirm(t('confirmClearEntries'))) return;
         _listKeys.clear();
         setState({ entries: [] });
     } else {
-        if (!confirm('Clear all processes? This cannot be undone.')) return;
+        if (!confirm(t('confirmClearProcesses'))) return;
         _procKeys.clear();
         setState({ processes: [] });
     }
@@ -2214,7 +2363,7 @@ function mergeImportedData(parsed) {
 // ── Export ─────────────────────────────────────────────────
 function exportJSON() {
     if (state.entries.length === 0 && state.processes.length === 0) {
-        showToast('Nothing to export yet.', true);
+        showToast(t('nothingToExport'), true);
         return;
     }
     const blob = new Blob([JSON.stringify(buildExportPayload(), null, 2)], { type: 'application/json' });
@@ -2224,7 +2373,7 @@ function exportJSON() {
     a.download = `ticked-export-${new Date().toLocaleDateString('en-CA')}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast(`Exported ${state.entries.length + state.processes.length} items ↑`);
+    showToast(t('exported', {n: state.entries.length + state.processes.length}));
 }
 
 // ── Import ─────────────────────────────────────────────────
@@ -2238,11 +2387,11 @@ function importJSON(event) {
             const result = mergeImportedData(parsed);
             const totalNew = result.newEntries + result.newProcs;
             const totalDupe = result.dupeEntries + result.dupeProcs;
-            let msg = `Imported ${totalNew} items`;
-            if (totalDupe > 0) msg += ` (${totalDupe} duplicates skipped)`;
+            let msg = t('imported', {n: totalNew});
+            if (totalDupe > 0) msg += ' ' + t('duplicatesSkipped', {n: totalDupe});
             showToast(msg);
         } catch {
-            showToast('Import failed — invalid file.', true);
+            showToast(t('importFailed'), true);
         }
     };
     reader.readAsText(file);
@@ -2308,11 +2457,11 @@ function closeSourceViewer() {
 }
 
 function copySource() {
-    if (!confirm('This will copy a large amount of text to your clipboard, which may cause lag on phones. Continue?')) return;
+    if (!confirm(t('confirmCopySource'))) return;
     const src = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
     navigator.clipboard.writeText(src).then(
-        () => showToast('Source copied to clipboard ✓'),
-        () => showToast('Copy failed — try manually', true)
+        () => showToast(t('sourceCopied')),
+        () => showToast(t('copyFailed'), true)
     );
 }
 
@@ -2325,7 +2474,7 @@ function downloadOfflineHTML() {
     a.download = `ticked-offline-${new Date().toLocaleDateString('en-CA')}.html`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Offline HTML downloaded ✓');
+    showToast(t('offlineDownloaded'));
 }
 
 // ── Google Drive Sync ─────────────────────────────────────
@@ -2367,7 +2516,7 @@ function closeGdriveClientModal(saveValue) {
     if (saveValue) {
         const clientId = (gdriveClientInput?.value || '').trim();
         if (!clientId) {
-            showToast('Google Drive Client ID required.', true);
+            showToast(t('gdriveIdRequired'), true);
             if (gdriveClientInput) gdriveClientInput.focus();
             return;
         }
@@ -2396,7 +2545,7 @@ async function ensureGdriveClientId() {
 async function gdriveAuth() {
     if (_gdriveAccessToken) return _gdriveAccessToken;
     const clientId = await ensureGdriveClientId();
-    if (!clientId) { showToast('Google Drive Client ID required.', true); return null; }
+    if (!clientId) { showToast(t('gdriveIdRequired'), true); return null; }
 
     await loadGoogleIdentityServices();
 
@@ -2406,7 +2555,7 @@ async function gdriveAuth() {
             scope: GDRIVE_SCOPES,
             callback: (resp) => {
                 if (resp.error) {
-                    showToast('Google auth failed: ' + resp.error, true);
+                    showToast(t('gdriveAuthFailed', {error: resp.error}), true);
                     resolve(null);
                     return;
                 }
@@ -2430,10 +2579,10 @@ async function gdriveFindFile(token) {
 
 async function gdriveUpload() {
     if (state.entries.length === 0 && state.processes.length === 0) {
-        showToast('Nothing to upload yet.', true);
+        showToast(t('nothingToUpload'), true);
         return;
     }
-    showToast('Connecting to Google Drive…');
+    showToast(t('connectingGdrive'));
     const token = await gdriveAuth();
     if (!token) return;
 
@@ -2461,31 +2610,31 @@ async function gdriveUpload() {
         }
 
         if (resp.ok) {
-            showToast('Uploaded ' + (state.entries.length + state.processes.length) + ' items to Google Drive ✓');
+            showToast(t('uploadedGdrive', {n: state.entries.length + state.processes.length}));
         } else {
-            showToast('Upload failed: ' + resp.statusText, true);
+            showToast(t('uploadFailed', {error: resp.statusText}), true);
         }
     } catch (e) {
-        showToast('Upload failed: ' + e.message, true);
+        showToast(t('uploadFailed', {error: e.message}), true);
     }
 }
 
 async function gdriveDownload() {
-    showToast('Connecting to Google Drive…');
+    showToast(t('connectingGdrive'));
     const token = await gdriveAuth();
     if (!token) return;
 
     try {
         const file = await gdriveFindFile(token);
         if (!file) {
-            showToast('No Ticked backup found on Google Drive.', true);
+            showToast(t('noBackupFound'), true);
             return;
         }
 
         const resp = await fetch('https://www.googleapis.com/drive/v3/files/' + file.id + '?alt=media', {
             headers: { Authorization: 'Bearer ' + token }
         });
-        if (!resp.ok) { showToast('Download failed: ' + resp.statusText, true); return; }
+        if (!resp.ok) { showToast(t('downloadFailed', {error: resp.statusText}), true); return; }
 
         const parsed = await resp.json();
         const result = mergeImportedData(parsed);
@@ -2496,7 +2645,7 @@ async function gdriveDownload() {
         if (totalNew === 0 && totalDupe === 0) msg = 'Drive backup is empty';
         showToast(msg);
     } catch (e) {
-        showToast('Sync failed: ' + e.message, true);
+        showToast(t('syncFailed', {error: e.message}), true);
     }
 }
 
@@ -2505,7 +2654,7 @@ inputText.addEventListener('keypress', e => { if (e.key === 'Enter') addEntry();
 procInputText.addEventListener('keypress', e => { if (e.key === 'Enter') addProcess(); });
 
 // ── Init ──────────────────────────────────────────────────
-window.onload = () => { load(); initTooltip(); initKofi(); initStats(); initPWA(); initPersistentLogBell(); initExternalLinkHandler(); };
+window.onload = () => { load(); applySettings(loadSettings()); initTooltip(); initKofi(); initStats(); initPWA(); initPersistentLogBell(); initExternalLinkHandler(); };
 
 // ── PWA + Notification system ────────────────────────────
 let _swRegistration = null;
@@ -2514,20 +2663,20 @@ const PERSISTENT_LOG_NOTIFICATION_TAG = 'ticked-persistent-log';
 
 async function requestNotificationPermission() {
     if (!('Notification' in window)) {
-        showToast('Notifications not supported in this browser.', true);
+        showToast(t('notificationsNotSupported'), true);
         return false;
     }
     if (Notification.permission === 'granted') return true;
     if (Notification.permission === 'denied') {
-        showToast('Notifications blocked. Enable in browser settings.', true);
+        showToast(t('notificationsBlocked'), true);
         return false;
     }
     const result = await Notification.requestPermission();
     if (result === 'granted') {
-        showToast('Notifications enabled ✓');
+        showToast(t('notificationsEnabled'));
         return true;
     }
-    showToast('Notification permission denied.', true);
+    showToast(t('notificationsDenied'), true);
     return false;
 }
 
@@ -2591,7 +2740,7 @@ function addNotificationLogEntry(showToastMessage = false) {
     };
     setState({ entries: [entry, ...state.entries] });
     save();
-    if (showToastMessage) showToast('Logged from notification ✓');
+    if (showToastMessage) showToast(t('loggedFromNotification'));
     return true;
 }
 
@@ -2617,7 +2766,7 @@ function instaLogCheckpoint(procId, cpIdx, opts = {}) {
     setState({ processes: procs, entries: [entry, ...state.entries] });
     save();
     if (!opts.silent) {
-        showToast('Insta Log complete ✓');
+        showToast(t('instaLogComplete'));
     }
     return true;
 }
@@ -2664,11 +2813,11 @@ function togglePersistentLogNotification() {
         if (navigator.serviceWorker && navigator.serviceWorker.ready) {
             navigator.serviceWorker.ready.then(reg => reg.getNotifications({ tag: PERSISTENT_LOG_NOTIFICATION_TAG }).then(list => list.forEach(n => n.close())).catch(() => {})).catch(() => {});
         }
-        showToast('Quick-log notification off');
+        showToast(t('quickLogOff'));
     } else {
         safeStorage.set('persistentLogNotification', 'on');
         showPersistentLogNotification();
-        showToast('Quick-log notification on');
+        showToast(t('quickLogOn'));
     }
     syncPersistentLogBell();
 }
@@ -2684,7 +2833,7 @@ async function initPWA() {
         navigator.serviceWorker.addEventListener('message', e => {
             if (e.data && e.data.type === 'ticked-action' && e.data.action === 'insta-log') {
                 const ok = instaLogCheckpoint(e.data.procId, Number(e.data.cpIdx), { silent: false });
-                if (!ok) showToast('Checkpoint no longer available.', true);
+                if (!ok) showToast(t('checkpointUnavailable'), true);
             } else if (e.data && e.data.type === 'ticked-action' && e.data.action === 'quick-log') {
                 addNotificationLogEntry(true);
                 if (persistentLogEnabled() && e.data.keepAlive) {
@@ -2709,7 +2858,7 @@ async function initPWA() {
         const cpIdx = Number(hash.get('cp'));
         setTimeout(() => {
             const ok = instaLogCheckpoint(procId, cpIdx, { silent: false });
-            if (!ok) showToast('Checkpoint no longer available.', true);
+            if (!ok) showToast(t('checkpointUnavailable'), true);
             history.replaceState(null, '', location.pathname);
         }, 260);
     } else if (hash.get('action') === 'quick-log') {
