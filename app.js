@@ -50,11 +50,13 @@ let state = {
     activeTab:        'tasks',
     // Tasks tab filters/sort
     activeTypeFilter: 'all',
+    activeTagFilter:  '',
     sortField:        'time',
     sortDir:          'desc',
     currentView:      'list',
     // Processes tab filters/sort
     procActiveTypeFilter: 'all',
+    procActiveTagFilter:  '',
     procSortField:        'time',
     procSortDir:          'desc',
 };
@@ -375,16 +377,45 @@ function switchTab(tab) {
     render();
 }
 
+// ── Tag helpers ──────────────────────────────────────────
+function parseTagInput(inputId) {
+    const el = document.getElementById(inputId);
+    if (!el) return [];
+    const raw = el.value.trim();
+    if (!raw) return [];
+    return raw.split(',')
+        .map(t => t.trim().toLowerCase().replace(/^#/, ''))
+        .filter(t => t.length > 0 && t !== 'edited' && t !== 'custom');
+}
+
+function clearTagInput(inputId) {
+    const el = document.getElementById(inputId);
+    if (el) el.value = '';
+}
+
+function getUserTags(tags) {
+    return (tags || []).filter(t => t !== 'edited' && t !== 'custom');
+}
+
+function getAllUserTags(tab) {
+    const items = tab === 'tasks' ? state.entries : state.processes;
+    const tags = new Set();
+    items.forEach(item => getUserTags(item.tags).forEach(t => tags.add(t)));
+    return [...tags].sort();
+}
+
 // ── Add entries ───────────────────────────────────────────
 function addEntry() {
     const text   = inputText.value.trim();
+    const userTags = parseTagInput('tagInput');
     const entry  = {
         id: uuid(), isoDate: new Date().toISOString(), text, custom: false,
-        bgColor: '', borderColor: '', tags: []
+        bgColor: '', borderColor: '', tags: [...userTags]
     };
     setState({ entries: [entry, ...state.entries] });
     save();
     inputText.value = '';
+    clearTagInput('tagInput');
 }
 
 function addCustomEntry() {
@@ -393,14 +424,16 @@ function addCustomEntry() {
     const timeVal = document.getElementById('customTime').value;
     if (!dateVal || !timeVal) { showToast('Please set both date and time.', true); return; }
 
+    const userTags = parseTagInput('tagInput');
     const entry  = {
         id: uuid(), isoDate: buildIso(dateVal, timeVal), text, custom: true,
-        bgColor: '', borderColor: '', tags: ['custom']
+        bgColor: '', borderColor: '', tags: ['custom', ...userTags]
     };
     const sorted = [...state.entries, entry].sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
     setState({ entries: sorted });
     save();
     inputText.value = '';
+    clearTagInput('tagInput');
     toggleCustomPanel();
     showToast('✦ Custom entry added');
 }
@@ -429,6 +462,7 @@ const PROCESS_TEMPLATES = {
 function addProcess() {
     const text = procInputText.value.trim();
     if (!text) { showToast('Please enter a process name.', true); return; }
+    const userTags = parseTagInput('procTagInput');
     const now = new Date().toISOString();
     const proc = {
         id: uuid(),
@@ -437,7 +471,7 @@ function addProcess() {
         custom: false,
         bgColor: '',
         borderColor: '',
-        tags: [],
+        tags: [...userTags],
         currentCheckpoint: 0,
         checkpoints: [{
             id: uuid(),
@@ -452,6 +486,7 @@ function addProcess() {
     setState({ processes: [proc, ...state.processes] });
     save();
     procInputText.value = '';
+    clearTagInput('procTagInput');
 }
 
 function addProcessFromTemplate(templateKey) {
@@ -550,9 +585,10 @@ function getFiltered(tab) {
     if (tab === 'tasks') {
         const query   = searchInput.value.trim().toLowerCase();
         const dateFil = filterDate.value;
-        const { entries, activeTypeFilter } = state;
+        const { entries, activeTypeFilter, activeTagFilter } = state;
 
         return entries.filter(e => {
+            if (activeTagFilter && !getUserTags(e.tags).includes(activeTagFilter)) return false;
             if (activeTypeFilter === 'auto'   && e.custom)  return false;
             if (activeTypeFilter === 'custom' && !e.custom) return false;
             if (activeTypeFilter === 'edited' && !(e.tags && e.tags.includes('edited'))) return false;
@@ -567,13 +603,14 @@ function getFiltered(tab) {
     } else {
         const query   = procSearchInput.value.trim().toLowerCase();
         const dateFil = procFilterDate.value;
-        const { processes, procActiveTypeFilter } = state;
+        const { processes, procActiveTypeFilter, procActiveTagFilter } = state;
 
         return processes.filter(p => {
             if (procActiveTypeFilter === 'active' && isCompleted(p)) return false;
             if (procActiveTypeFilter === 'completed' && !isCompleted(p)) return false;
             if (procActiveTypeFilter === 'edited' && !(p.tags && p.tags.includes('edited'))) return false;
             if (procActiveTypeFilter === 'overdue' && !isOverdue(p)) return false;
+            if (procActiveTagFilter && !getUserTags(p.tags).includes(procActiveTagFilter)) return false;
             if (dateFil && isoToDateStr(p.isoDate) !== dateFil) return false;
             if (query) {
                 const display = isoToDisplayDate(p.isoDate).toLowerCase();
@@ -843,6 +880,21 @@ function updateEntryNode(card, entry, isToday, displayTs) {
 
     body.appendChild(textEl);
     body.appendChild(tsEl);
+
+    // User tags
+    const uTags = getUserTags(entry.tags);
+    if (uTags.length > 0) {
+        const tagRow = document.createElement('div');
+        tagRow.className = 'entry-tags';
+        uTags.forEach(tag => {
+            const chip = document.createElement('span');
+            chip.className = 'entry-tag-chip';
+            chip.textContent = '#' + tag;
+            tagRow.appendChild(chip);
+        });
+        body.appendChild(tagRow);
+    }
+
     card.appendChild(dot);
     card.appendChild(body);
 
@@ -971,6 +1023,21 @@ function updateProcessNode(card, proc, isToday, displayTs) {
 
     body.appendChild(textEl);
     body.appendChild(tsEl);
+
+    // User tags
+    const pTags = getUserTags(proc.tags);
+    if (pTags.length > 0) {
+        const tagRow = document.createElement('div');
+        tagRow.className = 'entry-tags';
+        pTags.forEach(tag => {
+            const chip = document.createElement('span');
+            chip.className = 'entry-tag-chip';
+            chip.textContent = '#' + tag;
+            tagRow.appendChild(chip);
+        });
+        body.appendChild(tagRow);
+    }
+
     body.appendChild(track);
     card.appendChild(dot);
     card.appendChild(body);
@@ -1871,7 +1938,7 @@ function render() {
     // ── Tasks tab rendering (skip heavy DOM work if inactive) ──
     if (activeTab === 'tasks') {
         const tasksFiltered = getSorted(getFiltered('tasks'), 'tasks');
-        const tasksIsFiltering = searchInput.value.trim() || filterDate.value || state.activeTypeFilter !== 'all';
+        const tasksIsFiltering = searchInput.value.trim() || filterDate.value || state.activeTypeFilter !== 'all' || state.activeTagFilter;
 
         entryList.style.display   = currentView === 'list'     ? '' : 'none';
         timelineView.style.display= currentView === 'timeline' ? '' : 'none';
@@ -1911,7 +1978,7 @@ function render() {
     // ── Processes tab rendering (skip heavy DOM work if inactive) ──
     if (activeTab === 'processes') {
         const procsFiltered = getSorted(getFiltered('processes'), 'processes');
-        const procsIsFiltering = procSearchInput.value.trim() || procFilterDate.value || state.procActiveTypeFilter !== 'all';
+        const procsIsFiltering = procSearchInput.value.trim() || procFilterDate.value || state.procActiveTypeFilter !== 'all' || state.procActiveTagFilter;
 
         const visibleProcs = updateLazyState('processes', procsFiltered);
         renderProcessListView(visibleProcs, today);
@@ -1938,6 +2005,10 @@ function render() {
         }
         procFilterActiveDot.classList.toggle('visible', !!procsIsFiltering);
     }
+
+    // ── Tag filter chips ──
+    renderTagFilterChips('tasks');
+    renderTagFilterChips('processes');
 
     // ── Stats section ──
     renderStats();
@@ -2020,6 +2091,7 @@ function clearFilters(tab) {
         searchInput.value  = '';
         filterDate.value   = '';
         state.activeTypeFilter = 'all';
+        state.activeTagFilter = '';
         const panel = document.getElementById('filterPanel');
         panel.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
         panel.querySelector('.filter-chip[data-filter="all"]').classList.add('active');
@@ -2027,11 +2099,49 @@ function clearFilters(tab) {
         procSearchInput.value  = '';
         procFilterDate.value   = '';
         state.procActiveTypeFilter = 'all';
+        state.procActiveTagFilter = '';
         const panel = document.getElementById('procFilterPanel');
         panel.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
         panel.querySelector('.filter-chip[data-filter="all"]').classList.add('active');
     }
     render();
+}
+
+function setTagFilter(tag, tab) {
+    if (tab === 'tasks') {
+        state.activeTagFilter = state.activeTagFilter === tag ? '' : tag;
+    } else {
+        state.procActiveTagFilter = state.procActiveTagFilter === tag ? '' : tag;
+    }
+    render();
+}
+
+function renderTagFilterChips(tab) {
+    const containerId = tab === 'tasks' ? 'filterTagChips' : 'procFilterTagChips';
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const tags = getAllUserTags(tab);
+    const activeTag = tab === 'tasks' ? state.activeTagFilter : state.procActiveTagFilter;
+
+    if (tags.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = '';
+    const label = document.createElement('span');
+    label.className = 'filter-chip-label';
+    label.textContent = 'Tags:';
+    container.appendChild(label);
+
+    tags.forEach(tag => {
+        const chip = document.createElement('button');
+        chip.className = 'filter-chip tag-filter-chip' + (activeTag === tag ? ' active' : '');
+        chip.textContent = '#' + tag;
+        chip.addEventListener('click', () => setTagFilter(tag, tab));
+        container.appendChild(chip);
+    });
 }
 
 function clearAll(tab) {
