@@ -1844,6 +1844,9 @@ function render() {
         procResultsCount.classList.remove('visible');
     }
     procFilterActiveDot.classList.toggle('visible', !!procsIsFiltering);
+
+    // ── Stats section ──
+    renderStats();
 }
 
 // ── UI actions ────────────────────────────────────────────
@@ -2323,7 +2326,7 @@ inputText.addEventListener('keypress', e => { if (e.key === 'Enter') addEntry();
 procInputText.addEventListener('keypress', e => { if (e.key === 'Enter') addProcess(); });
 
 // ── Init ──────────────────────────────────────────────────
-window.onload = () => { load(); initTooltip(); initKofi(); initPWA(); initPersistentLogBell(); initExternalLinkHandler(); };
+window.onload = () => { load(); initTooltip(); initKofi(); initStats(); initPWA(); initPersistentLogBell(); initExternalLinkHandler(); };
 
 // ── PWA + Notification system ────────────────────────────
 let _swRegistration = null;
@@ -2539,6 +2542,120 @@ async function initPWA() {
     }
     updateAppBadge();
     scheduleAllPendingReminders();
+}
+
+// ── Streak & Heatmap ─────────────────────────────────────
+function calculateStreak() {
+    if (state.entries.length === 0) return 0;
+    const dates = new Set(state.entries.map(e => isoToDateStr(e.isoDate)));
+    let streak = 0;
+    const d = new Date();
+    // If today has no entries, start counting from yesterday
+    if (!dates.has(d.toLocaleDateString('en-CA'))) {
+        d.setDate(d.getDate() - 1);
+    }
+    while (dates.has(d.toLocaleDateString('en-CA'))) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+    }
+    return streak;
+}
+
+function getWeekEntryCount() {
+    const now = new Date();
+    const weekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+    return state.entries.filter(e => new Date(e.isoDate) >= weekAgo).length;
+}
+
+function renderHeatmap() {
+    const container = document.getElementById('heatmapContainer');
+    if (!container) return;
+
+    // Count entries per day
+    const counts = {};
+    state.entries.forEach(e => {
+        const d = isoToDateStr(e.isoDate);
+        counts[d] = (counts[d] || 0) + 1;
+    });
+    // Also count process creations
+    state.processes.forEach(p => {
+        const d = isoToDateStr(p.isoDate);
+        counts[d] = (counts[d] || 0) + 1;
+    });
+
+    const maxCount = Math.max(1, ...Object.values(counts));
+
+    // Build 12-week grid (84 days) ending today
+    const today = new Date();
+    const todayStr = today.toLocaleDateString('en-CA');
+    const grid = document.createElement('div');
+    grid.className = 'heatmap-grid';
+
+    // Start from 83 days ago, align to start of that week (Sunday)
+    const start = new Date(today);
+    start.setDate(start.getDate() - 83);
+    // Align to Sunday
+    start.setDate(start.getDate() - start.getDay());
+
+    const cursor = new Date(start);
+    while (cursor <= today) {
+        const dateStr = cursor.toLocaleDateString('en-CA');
+        const count = counts[dateStr] || 0;
+        const cell = document.createElement('div');
+        cell.className = 'heatmap-cell' + (dateStr === todayStr ? ' today' : '');
+
+        // Opacity based on activity level
+        if (count > 0) {
+            const intensity = Math.min(1, count / maxCount);
+            // Map to opacity tiers: 0.15, 0.3, 0.55, 0.8, 1.0
+            const tier = intensity <= 0.2 ? 0.15
+                       : intensity <= 0.4 ? 0.3
+                       : intensity <= 0.6 ? 0.55
+                       : intensity <= 0.8 ? 0.8
+                       : 1.0;
+            cell.style.opacity = tier;
+        }
+
+        cell.title = `${formatDayLabel(dateStr)}: ${count} ${count === 1 ? 'entry' : 'entries'}`;
+        grid.appendChild(cell);
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    container.innerHTML = '';
+    container.appendChild(grid);
+}
+
+function renderStats() {
+    const streak = calculateStreak();
+    const weekCount = getWeekEntryCount();
+
+    const streakEl = document.getElementById('streakDisplay');
+    const weekEl = document.getElementById('weekCountDisplay');
+    if (streakEl) {
+        streakEl.textContent = streak + (streak === 1 ? ' day streak' : ' day streak');
+    }
+    if (weekEl) {
+        weekEl.textContent = weekCount + ' this week';
+    }
+    renderHeatmap();
+}
+
+function toggleStats() {
+    const section = document.getElementById('statsSection');
+    if (!section) return;
+    const isOpen = section.classList.toggle('open');
+    safeStorage.set('statsOpen', isOpen ? 'true' : 'false');
+}
+
+function initStats() {
+    const section = document.getElementById('statsSection');
+    if (!section) return;
+    const wasOpen = safeStorage.get('statsOpen');
+    // Default to open on first use
+    if (wasOpen === null || wasOpen === 'true') {
+        section.classList.add('open');
+    }
+    renderStats();
 }
 
 // ── External link handler ─────────────────────────────────

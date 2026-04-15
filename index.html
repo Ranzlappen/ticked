@@ -58,6 +58,32 @@
             <div class="palette-swatches" id="paletteSwatches"></div>
         </div>
 
+        <!-- Activity Stats -->
+        <div class="stats-section" id="statsSection">
+            <button class="stats-header" id="statsHeader" onclick="toggleStats()">
+                <div class="stats-header-left">
+                    <span class="stats-streak-icon">🔥</span>
+                    <span class="stats-streak-text" id="streakDisplay">0 day streak</span>
+                </div>
+                <div class="stats-header-right">
+                    <span class="stats-week-count" id="weekCountDisplay">0 this week</span>
+                    <span class="chevron" id="statsChevron">▾</span>
+                </div>
+            </button>
+            <div class="stats-body" id="statsBody">
+                <div class="heatmap-container" id="heatmapContainer"></div>
+                <div class="heatmap-legend">
+                    <span class="heatmap-legend-label">Less</span>
+                    <span class="heatmap-cell-legend" style="opacity:0.1"></span>
+                    <span class="heatmap-cell-legend" style="opacity:0.3"></span>
+                    <span class="heatmap-cell-legend" style="opacity:0.55"></span>
+                    <span class="heatmap-cell-legend" style="opacity:0.8"></span>
+                    <span class="heatmap-cell-legend" style="opacity:1"></span>
+                    <span class="heatmap-legend-label">More</span>
+                </div>
+            </div>
+        </div>
+
         <!-- ═══════════ TASKS TAB ═══════════ -->
         <div class="tab-panel active" id="panelTasks">
 
