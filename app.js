@@ -6,6 +6,13 @@ const STORAGE_KEY    = 'ticked_store';
 const SCHEMA_VERSION = 6;
 const DEFAULT_PALETTE = ['#05004d', '#002e0d', '#2b0026', '#363506', '#3b0000'];
 
+// ── Tunable constants ────────────────────────────────────
+const SWIPE_THRESHOLD        = 90;
+const CONFIRM_AUTO_CANCEL_MS = 4000;
+const TOAST_DURATION_MS      = 2800;
+const SEARCH_DEBOUNCE_MS     = 150;
+const REMINDER_MAX_DELAY_MS  = 24 * 60 * 60 * 1000;
+
 // ── Safe localStorage wrapper ─────────────────────────────
 const safeStorage = {
     get(key) {
@@ -53,10 +60,21 @@ let state = {
 };
 let _gdriveClientId = '';
 
+let _renderScheduled = false;
+
 function setState(patch) {
     Object.assign(state, patch);
-    render();
+    scheduleRender();
     updateAppBadge();
+}
+
+function scheduleRender() {
+    if (_renderScheduled) return;
+    _renderScheduled = true;
+    requestAnimationFrame(() => {
+        _renderScheduled = false;
+        render();
+    });
 }
 
 // ── Overdue helper ───────────────────────────────────────
@@ -305,7 +323,15 @@ function showToast(msg, isError = false) {
     t.className = 'toast' + (isError ? ' error' : '');
     void t.offsetWidth;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2800);
+    setTimeout(() => t.classList.remove('show'), TOAST_DURATION_MS);
+}
+
+function debounce(fn, ms) {
+    let timer;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), ms);
+    };
 }
 
 // ── Palette ───────────────────────────────────────────────
@@ -933,7 +959,7 @@ function cancelActiveConfirm() {
 }
 
 function initSwipe(wrap, card, confirmOverlay, onDelete, onSwipeRight) {
-    const THRESHOLD = 90;
+    const THRESHOLD = SWIPE_THRESHOLD;
     let startX = null, startY = null, curX = 0, locked = false, direction = null;
     let hapticFiredLeft = false, hapticFiredRight = false;
 
@@ -1051,7 +1077,7 @@ function initSwipe(wrap, card, confirmOverlay, onDelete, onSwipeRight) {
             if (timerBar) { timerBar.style.animation = 'none'; void timerBar.offsetWidth; timerBar.style.animation = ''; }
 
             // Auto-cancel after 4 seconds
-            const autoTimer = setTimeout(() => cancelActiveConfirm(), 4000);
+            const autoTimer = setTimeout(() => cancelActiveConfirm(), CONFIRM_AUTO_CANCEL_MS);
             _activeConfirm = { wrap, card, timer: autoTimer };
 
         } else if (direction === 'right' && curX >= THRESHOLD) {
@@ -1605,7 +1631,7 @@ function scheduleCheckpointNotification(procId, cpIdx) {
     const targetTime = new Date(cp.remindAt).getTime();
     const delay = targetTime - Date.now();
     if (delay <= 0) return; // already past
-    if (delay > 24 * 60 * 60 * 1000) return; // too far out for a simple timeout
+    if (delay > REMINDER_MAX_DELAY_MS) return; // too far out for a simple timeout
     const tid = setTimeout(() => {
         _reminderTimeouts.delete(key);
         sendTickedNotification(
@@ -1772,78 +1798,82 @@ function render() {
     const { activeTab, entries, processes, currentView } = state;
     const today = todayDateString();
 
-    // Update tab counts
+    // Lightweight updates for both tabs (always needed)
     document.getElementById('tabTasksCount').textContent = entries.length;
     document.getElementById('tabProcessesCount').textContent = processes.length;
-
-    // ── Tasks tab rendering ──
-    const tasksFiltered = getSorted(getFiltered('tasks'), 'tasks');
-    const tasksIsFiltering = searchInput.value.trim() || filterDate.value || state.activeTypeFilter !== 'all';
-
-    entryList.style.display   = currentView === 'list'     ? '' : 'none';
-    timelineView.style.display= currentView === 'timeline' ? '' : 'none';
-
-    if (currentView === 'list') {
-        const visibleTasks = updateLazyState('tasks', tasksFiltered);
-        renderListView(visibleTasks, today);
-        lazyFallbackHandler();
-    } else {
-        _listKeys.clear();
-        tasksLazyLoader.style.display = 'none';
-        renderTimelineView(tasksFiltered, today);
-    }
-
-    const tasksEmpty = entries.length === 0;
-    const tasksNoResults = !tasksEmpty && tasksFiltered.length === 0;
-    emptyState.classList.toggle('visible', tasksEmpty || tasksNoResults);
-    if (tasksNoResults) {
-        emptyState.querySelector('.empty-icon').textContent = '🔍';
-        emptyState.querySelector('p').textContent = 'No entries match your filters.';
-    } else if (tasksEmpty) {
-        emptyState.querySelector('.empty-icon').textContent = '🕳️';
-        emptyState.querySelector('p').innerHTML = 'No entries yet.<br>Add a note above to get started.';
-    }
-
-    clearBtn.style.display = entries.length > 0 ? '' : 'none';
     const totalCount = entries.length + processes.length;
     countBadge.textContent = totalCount === 1 ? '1 entry' : `${totalCount} entries`;
 
-    if (tasksIsFiltering && entries.length > 0) {
-        resultsCount.textContent = `${tasksFiltered.length} of ${entries.length} entries`;
-        resultsCount.classList.add('visible');
-    } else {
-        resultsCount.classList.remove('visible');
+    // ── Tasks tab rendering (skip heavy DOM work if inactive) ──
+    if (activeTab === 'tasks') {
+        const tasksFiltered = getSorted(getFiltered('tasks'), 'tasks');
+        const tasksIsFiltering = searchInput.value.trim() || filterDate.value || state.activeTypeFilter !== 'all';
+
+        entryList.style.display   = currentView === 'list'     ? '' : 'none';
+        timelineView.style.display= currentView === 'timeline' ? '' : 'none';
+
+        if (currentView === 'list') {
+            const visibleTasks = updateLazyState('tasks', tasksFiltered);
+            renderListView(visibleTasks, today);
+            lazyFallbackHandler();
+        } else {
+            _listKeys.clear();
+            tasksLazyLoader.style.display = 'none';
+            renderTimelineView(tasksFiltered, today);
+        }
+
+        const tasksEmpty = entries.length === 0;
+        const tasksNoResults = !tasksEmpty && tasksFiltered.length === 0;
+        emptyState.classList.toggle('visible', tasksEmpty || tasksNoResults);
+        if (tasksNoResults) {
+            emptyState.querySelector('.empty-icon').textContent = '🔍';
+            emptyState.querySelector('p').textContent = 'No entries match your filters.';
+        } else if (tasksEmpty) {
+            emptyState.querySelector('.empty-icon').textContent = '🕳️';
+            emptyState.querySelector('p').innerHTML = 'No entries yet.<br>Add a note above to get started.';
+        }
+
+        clearBtn.style.display = entries.length > 0 ? '' : 'none';
+
+        if (tasksIsFiltering && entries.length > 0) {
+            resultsCount.textContent = `${tasksFiltered.length} of ${entries.length} entries`;
+            resultsCount.classList.add('visible');
+        } else {
+            resultsCount.classList.remove('visible');
+        }
+        filterActiveDot.classList.toggle('visible', !!tasksIsFiltering);
     }
-    filterActiveDot.classList.toggle('visible', !!tasksIsFiltering);
 
-    // ── Processes tab rendering ──
-    const procsFiltered = getSorted(getFiltered('processes'), 'processes');
-    const procsIsFiltering = procSearchInput.value.trim() || procFilterDate.value || state.procActiveTypeFilter !== 'all';
+    // ── Processes tab rendering (skip heavy DOM work if inactive) ──
+    if (activeTab === 'processes') {
+        const procsFiltered = getSorted(getFiltered('processes'), 'processes');
+        const procsIsFiltering = procSearchInput.value.trim() || procFilterDate.value || state.procActiveTypeFilter !== 'all';
 
-    const visibleProcs = updateLazyState('processes', procsFiltered);
-    renderProcessListView(visibleProcs, today);
-    lazyFallbackHandler();
+        const visibleProcs = updateLazyState('processes', procsFiltered);
+        renderProcessListView(visibleProcs, today);
+        lazyFallbackHandler();
 
-    const procsEmpty = processes.length === 0;
-    const procsNoResults = !procsEmpty && procsFiltered.length === 0;
-    procEmptyState.classList.toggle('visible', procsEmpty || procsNoResults);
-    if (procsNoResults) {
-        procEmptyState.querySelector('.empty-icon').textContent = '🔍';
-        procEmptyState.querySelector('p').textContent = 'No processes match your filters.';
-    } else if (procsEmpty) {
-        procEmptyState.querySelector('.empty-icon').textContent = '⟳';
-        procEmptyState.querySelector('p').innerHTML = 'No processes yet.<br>Add a process above to track workflow checkpoints.';
+        const procsEmpty = processes.length === 0;
+        const procsNoResults = !procsEmpty && procsFiltered.length === 0;
+        procEmptyState.classList.toggle('visible', procsEmpty || procsNoResults);
+        if (procsNoResults) {
+            procEmptyState.querySelector('.empty-icon').textContent = '🔍';
+            procEmptyState.querySelector('p').textContent = 'No processes match your filters.';
+        } else if (procsEmpty) {
+            procEmptyState.querySelector('.empty-icon').textContent = '⟳';
+            procEmptyState.querySelector('p').innerHTML = 'No processes yet.<br>Add a process above to track workflow checkpoints.';
+        }
+
+        procClearBtn.style.display = processes.length > 0 ? '' : 'none';
+
+        if (procsIsFiltering && processes.length > 0) {
+            procResultsCount.textContent = `${procsFiltered.length} of ${processes.length} processes`;
+            procResultsCount.classList.add('visible');
+        } else {
+            procResultsCount.classList.remove('visible');
+        }
+        procFilterActiveDot.classList.toggle('visible', !!procsIsFiltering);
     }
-
-    procClearBtn.style.display = processes.length > 0 ? '' : 'none';
-
-    if (procsIsFiltering && processes.length > 0) {
-        procResultsCount.textContent = `${procsFiltered.length} of ${processes.length} processes`;
-        procResultsCount.classList.add('visible');
-    } else {
-        procResultsCount.classList.remove('visible');
-    }
-    procFilterActiveDot.classList.toggle('visible', !!procsIsFiltering);
 }
 
 // ── UI actions ────────────────────────────────────────────
@@ -1902,6 +1932,7 @@ function toggleFilterPanel(tab) {
 }
 
 function applyFilters(tab) { render(); }
+const debouncedApplyFilters = debounce(render, SEARCH_DEBOUNCE_MS);
 
 function setTypeFilter(type, el, tab) {
     if (tab === 'tasks') {
@@ -1949,13 +1980,9 @@ function clearAll(tab) {
     save();
 }
 
-// ── Export ─────────────────────────────────────────────────
-function exportJSON() {
-    if (state.entries.length === 0 && state.processes.length === 0) {
-        showToast('Nothing to export yet.', true);
-        return;
-    }
-    const payload = {
+// ── Export / Import shared helpers ────────────────────────
+function buildExportPayload() {
+    return {
         app:        'Ticked',
         version:    SCHEMA_VERSION,
         exportedAt: new Date().toISOString(),
@@ -1964,7 +1991,56 @@ function exportJSON() {
         processes:  state.processes,
         gdriveClientId: _gdriveClientId || '',
     };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+}
+
+function normalizeImportEnvelope(parsed) {
+    return Array.isArray(parsed)
+        ? { version: 1, entries: parsed }
+        : { version: parsed.version || 1, entries: parsed.entries || [], processes: parsed.processes || [], palette: parsed.palette, gdriveClientId: parsed.gdriveClientId || '' };
+}
+
+function mergeImportedData(parsed) {
+    const migrated = migrate(normalizeImportEnvelope(parsed));
+
+    const incoming = (migrated.entries || []).filter(e => e.isoDate || e.timestamp);
+    const existingIds = new Set(state.entries.map(e => e.id));
+    const newEntries = incoming.filter(e => !existingIds.has(e.id));
+    const mergedEntries = [...state.entries, ...newEntries]
+        .sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
+
+    const incomingProcs = migrated.processes || [];
+    const existingProcIds = new Set(state.processes.map(p => p.id));
+    const newProcs = incomingProcs.filter(p => !existingProcIds.has(p.id));
+    const mergedProcs = [...state.processes, ...newProcs]
+        .sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
+
+    const newPalette = migrated.palette || state.palette;
+
+    if (migrated.gdriveClientId) {
+        _gdriveClientId = String(migrated.gdriveClientId).trim();
+        safeStorage.set('gdriveClientId', _gdriveClientId);
+        if (gdriveClientInput) gdriveClientInput.value = _gdriveClientId;
+    }
+
+    setState({ entries: mergedEntries, processes: mergedProcs, palette: newPalette });
+    initPalette();
+    save();
+
+    return {
+        newEntries: newEntries.length,
+        newProcs: newProcs.length,
+        dupeEntries: incoming.length - newEntries.length,
+        dupeProcs: incomingProcs.length - newProcs.length,
+    };
+}
+
+// ── Export ─────────────────────────────────────────────────
+function exportJSON() {
+    if (state.entries.length === 0 && state.processes.length === 0) {
+        showToast('Nothing to export yet.', true);
+        return;
+    }
+    const blob = new Blob([JSON.stringify(buildExportPayload(), null, 2)], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
@@ -1981,41 +2057,10 @@ function importJSON(event) {
     const reader = new FileReader();
     reader.onload = e => {
         try {
-            const parsed   = JSON.parse(e.target.result);
-            const envelope = Array.isArray(parsed)
-                ? { version: 1, entries: parsed }
-                : { version: parsed.version || 1, entries: parsed.entries || [], processes: parsed.processes || [], palette: parsed.palette, gdriveClientId: parsed.gdriveClientId || '' };
-            const migrated = migrate(envelope);
-
-            // Import entries
-            const incoming = (migrated.entries || []).filter(e => e.isoDate || e.timestamp);
-            const existingIds = new Set(state.entries.map(e => e.id));
-            const newEntries  = incoming.filter(e => !existingIds.has(e.id));
-
-            const merged = [...state.entries, ...newEntries]
-                .sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
-
-            // Import processes
-            const incomingProcs = (migrated.processes || []);
-            const existingProcIds = new Set(state.processes.map(p => p.id));
-            const newProcs = incomingProcs.filter(p => !existingProcIds.has(p.id));
-            const mergedProcs = [...state.processes, ...newProcs]
-                .sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
-
-            // Import palette if present
-            const newPalette = migrated.palette || state.palette;
-            if (migrated.gdriveClientId) {
-                _gdriveClientId = String(migrated.gdriveClientId).trim();
-                safeStorage.set('gdriveClientId', _gdriveClientId);
-                if (gdriveClientInput) gdriveClientInput.value = _gdriveClientId;
-            }
-
-            setState({ entries: merged, processes: mergedProcs, palette: newPalette });
-            initPalette();
-            save();
-
-            const totalNew = newEntries.length + newProcs.length;
-            const totalDupe = (incoming.length - newEntries.length) + (incomingProcs.length - newProcs.length);
+            const parsed = JSON.parse(e.target.result);
+            const result = mergeImportedData(parsed);
+            const totalNew = result.newEntries + result.newProcs;
+            const totalDupe = result.dupeEntries + result.dupeProcs;
             let msg = `Imported ${totalNew} items`;
             if (totalDupe > 0) msg += ` (${totalDupe} duplicates skipped)`;
             showToast(msg);
@@ -2075,8 +2120,6 @@ function getFullSourceURL() {
     return URL.createObjectURL(blob);
 }
 
-let sourcePreviewURL = '';
-
 function openSourceViewer() {
     document.getElementById('sourceModalOverlay').classList.add('open');
     document.body.classList.add('sheet-open');
@@ -2085,10 +2128,6 @@ function openSourceViewer() {
 function closeSourceViewer() {
     document.getElementById('sourceModalOverlay').classList.remove('open');
     document.body.classList.remove('sheet-open');
-    if (sourcePreviewURL) {
-        URL.revokeObjectURL(sourcePreviewURL);
-        sourcePreviewURL = '';
-    }
 }
 
 function copySource() {
@@ -2221,16 +2260,7 @@ async function gdriveUpload() {
     const token = await gdriveAuth();
     if (!token) return;
 
-    const payload = {
-        app: 'Ticked',
-        version: SCHEMA_VERSION,
-        exportedAt: new Date().toISOString(),
-        palette: state.palette,
-        entries: state.entries,
-        processes: state.processes,
-        gdriveClientId: _gdriveClientId || '',
-    };
-    const jsonStr = JSON.stringify(payload, null, 2);
+    const jsonStr = JSON.stringify(buildExportPayload(), null, 2);
 
     try {
         const existing = await gdriveFindFile(token);
@@ -2281,34 +2311,9 @@ async function gdriveDownload() {
         if (!resp.ok) { showToast('Download failed: ' + resp.statusText, true); return; }
 
         const parsed = await resp.json();
-        const envelope = Array.isArray(parsed)
-            ? { version: 1, entries: parsed }
-            : { version: parsed.version || 1, entries: parsed.entries || [], processes: parsed.processes || [], palette: parsed.palette, gdriveClientId: parsed.gdriveClientId || '' };
-        const migrated = migrate(envelope);
-
-        const incoming = (migrated.entries || []).filter(e => e.isoDate || e.timestamp);
-        const existingIds = new Set(state.entries.map(e => e.id));
-        const newEntries = incoming.filter(e => !existingIds.has(e.id));
-        const merged = [...state.entries, ...newEntries].sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
-
-        const incomingProcs = migrated.processes || [];
-        const existingProcIds = new Set(state.processes.map(p => p.id));
-        const newProcs = incomingProcs.filter(p => !existingProcIds.has(p.id));
-        const mergedProcs = [...state.processes, ...newProcs].sort((a, b) => new Date(b.isoDate) - new Date(a.isoDate));
-
-        const newPalette = migrated.palette || state.palette;
-        if (migrated.gdriveClientId) {
-            _gdriveClientId = String(migrated.gdriveClientId).trim();
-            safeStorage.set('gdriveClientId', _gdriveClientId);
-            if (gdriveClientInput) gdriveClientInput.value = _gdriveClientId;
-        }
-
-        setState({ entries: merged, processes: mergedProcs, palette: newPalette });
-        initPalette();
-        save();
-
-        const totalNew = newEntries.length + newProcs.length;
-        const totalDupe = (incoming.length - newEntries.length) + (incomingProcs.length - newProcs.length);
+        const result = mergeImportedData(parsed);
+        const totalNew = result.newEntries + result.newProcs;
+        const totalDupe = result.dupeEntries + result.dupeProcs;
         let msg = 'Synced ' + totalNew + ' new items from Drive';
         if (totalDupe > 0) msg += ' (' + totalDupe + ' already existed)';
         if (totalNew === 0 && totalDupe === 0) msg = 'Drive backup is empty';
