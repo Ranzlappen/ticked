@@ -801,6 +801,18 @@ input[type="datetime-local"]:focus { border-color: var(--accent); }
     color: var(--edited);
 }
 
+.filter-chip.completed-chip.active {
+    background: var(--accent-dim);
+    border-color: rgba(0, 229, 160, 0.55);
+    color: var(--accent);
+}
+
+.filter-chip.active-chip.active {
+    background: rgba(91, 160, 208, 0.10);
+    border-color: rgba(91, 160, 208, 0.55);
+    color: #5ba0d0;
+}
+
 .filter-chip.overdue-chip.active {
     background: var(--danger-dim);
     border-color: var(--danger-border);
@@ -1201,6 +1213,31 @@ input[type="datetime-local"]:focus { border-color: var(--accent); }
     text-transform: uppercase;
     flex-shrink: 0;
     font-style: normal;
+}
+
+.completed-badge {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid rgba(0, 229, 160, 0.55);
+    border-radius: 4px;
+    padding: 1px 5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    font-style: normal;
+}
+
+/* Completed process card */
+.entry-item.process-completed {
+    opacity: 0.6;
+    border-left: 3px solid var(--accent);
+}
+
+.entry-item.process-completed .entry-dot {
+    background: var(--accent);
+    box-shadow: none;
 }
 
 .entry-ts {
