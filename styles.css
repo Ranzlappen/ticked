@@ -2482,3 +2482,160 @@ input[type="datetime-local"]:focus { border-color: var(--accent); }
     .section-actions { flex-wrap: wrap; gap: 6px; }
     .palette-section { flex-wrap: wrap; gap: 8px; }
 }
+
+/* ── Settings gear button ── */
+.palette-gear-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all var(--transition);
+    flex-shrink: 0;
+    margin-left: auto;
+}
+.palette-gear-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    transform: rotate(30deg);
+}
+
+/* ── Settings modal fields ── */
+.settings-field {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+.settings-field:last-child { margin-bottom: 0; }
+.settings-field label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.settings-select {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: border-color var(--transition);
+    -webkit-appearance: none;
+    appearance: none;
+}
+.settings-select:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+/* ── Daily View ── */
+.daily-outer { position: relative; }
+.daily-day { margin-bottom: 28px; }
+.daily-day:last-child { margin-bottom: 0; }
+.daily-day-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.daily-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.daily-entry-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 12px;
+    transition: border-color var(--transition), background var(--transition);
+    cursor: pointer;
+}
+.daily-entry-card.today {
+    background: var(--today-bg);
+    border-color: var(--today-border);
+}
+.daily-entry-card.custom-entry {
+    border-left: 3px solid var(--custom);
+    padding-left: 14px;
+}
+.daily-entry-card .entry-text {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+    line-height: 1.5;
+}
+.daily-entry-card:hover {
+    border-color: rgba(0, 229, 160, 0.35);
+}
+.daily-entry-card .entry-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+    margin-top: 5px;
+    flex-shrink: 0;
+}
+.daily-entry-card.custom-entry .entry-dot {
+    background: var(--custom);
+    box-shadow: 0 0 0 3px var(--custom-dim);
+}
+
+/* ── Entry Preview in Sheet ── */
+.preview-content {
+    padding: 4px 0 8px;
+    display: grid;
+    gap: 12px;
+}
+.preview-text {
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+.preview-text.no-text {
+    color: var(--text-muted);
+    font-style: italic;
+    font-weight: 400;
+}
+.preview-meta {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+.preview-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.preview-colors {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.preview-color-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.12);
+}
