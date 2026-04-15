@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════
 
 const STORAGE_KEY    = 'ticked_store';
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 const DEFAULT_PALETTE = ['#05004d', '#002e0d', '#2b0026', '#363506', '#3b0000'];
 
 // ── Tunable constants ────────────────────────────────────
@@ -207,6 +207,16 @@ const migrations = {
                     ...cp,
                     remindAt: cp.remindAt || '',
                 })),
+            })),
+        };
+    },
+    7(store) {
+        return {
+            ...store,
+            version: 7,
+            processes: (store.processes || []).map(p => ({
+                ...p,
+                completedAt: p.completedAt || '',
             })),
         };
     }
@@ -484,12 +494,35 @@ function deleteProcess(id) {
 }
 
 function updateProcessStage(id, cpIdx) {
+    let justCompleted = false;
     const procs = state.processes.map(p => {
-        if (p.id === id) return { ...p, currentCheckpoint: cpIdx };
-        return p;
+        if (p.id !== id) return p;
+        const updated = { ...p, currentCheckpoint: cpIdx };
+        // Auto-complete when reaching the last checkpoint
+        const lastIdx = (p.checkpoints || []).length - 1;
+        if (cpIdx >= lastIdx && lastIdx >= 0 && !p.completedAt) {
+            updated.completedAt = new Date().toISOString();
+            justCompleted = true;
+        }
+        return updated;
     });
     setState({ processes: procs });
     save();
+    if (justCompleted) showToast('🎉 Process completed!');
+}
+
+function reopenProcess(id) {
+    const procs = state.processes.map(p => {
+        if (p.id !== id) return p;
+        return { ...p, completedAt: '' };
+    });
+    setState({ processes: procs });
+    save();
+    showToast('Process reopened');
+}
+
+function isCompleted(p) {
+    return !!p.completedAt;
 }
 
 function addCheckpointToProcess(procId) {
@@ -537,6 +570,8 @@ function getFiltered(tab) {
         const { processes, procActiveTypeFilter } = state;
 
         return processes.filter(p => {
+            if (procActiveTypeFilter === 'active' && isCompleted(p)) return false;
+            if (procActiveTypeFilter === 'completed' && !isCompleted(p)) return false;
             if (procActiveTypeFilter === 'edited' && !(p.tags && p.tags.includes('edited'))) return false;
             if (procActiveTypeFilter === 'overdue' && !isOverdue(p)) return false;
             if (dateFil && isoToDateStr(p.isoDate) !== dateFil) return false;
@@ -820,7 +855,8 @@ function updateEntryNode(card, entry, isToday, displayTs) {
 
 function updateProcessNode(card, proc, isToday, displayTs) {
     const hasEdited = proc.tags && proc.tags.includes('edited');
-    card.className = 'entry-item' + (isToday ? ' today' : '');
+    const completed = isCompleted(proc);
+    card.className = 'entry-item' + (isToday ? ' today' : '') + (completed ? ' process-completed' : '');
 
     if (proc.bgColor) card.style.background = proc.bgColor;
     else card.style.background = '';
@@ -840,6 +876,13 @@ function updateProcessNode(card, proc, isToday, displayTs) {
     const textSpan = document.createElement('span');
     textSpan.textContent = proc.text || '(no text)';
     textEl.appendChild(textSpan);
+
+    if (completed) {
+        const badge = document.createElement('span');
+        badge.className = 'completed-badge';
+        badge.textContent = 'completed';
+        textEl.appendChild(badge);
+    }
 
     if (hasEdited) {
         const badge = document.createElement('span');
@@ -1225,6 +1268,27 @@ function openActionSheet(id, tab) {
             closeSheet();
         });
         opts.appendChild(opt5);
+
+        // Option 6: Reopen / Mark Complete toggle
+        if (isCompleted(entry)) {
+            const opt6 = makeSheetOpt('⟳', 'Reopen Process', 'Clear completed state and resume tracking', () => {
+                reopenProcess(id);
+                closeSheet();
+            });
+            opts.appendChild(opt6);
+        } else {
+            const opt6 = makeSheetOpt('✓', 'Mark Complete', 'Mark this process as completed', () => {
+                const procs = state.processes.map(p => {
+                    if (p.id !== id) return p;
+                    return { ...p, completedAt: new Date().toISOString() };
+                });
+                setState({ processes: procs });
+                save();
+                closeSheet();
+                showToast('🎉 Process completed!');
+            });
+            opts.appendChild(opt6);
+        }
     }
 
     content.appendChild(opts);
