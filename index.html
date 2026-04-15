@@ -37,18 +37,18 @@
                     <h1>Tick<span>ed</span></h1>
                 </div>
             </div>
-            <button class="source-toggle" id="sourceToggle" onclick="openSourceViewer()" title="View page source &amp; download offline copy">&lt;/&gt;</button>
-            <button class="kofi-toggle" id="kofiToggle" onclick="toggleKofi()" title="Toggle support badge">☕</button>
+            <button class="source-toggle" id="sourceToggle" onclick="openSourceViewer()" data-i18n-title="viewSourceTitle" title="View page source &amp; download offline copy">&lt;/&gt;</button>
+            <button class="kofi-toggle" id="kofiToggle" onclick="toggleKofi()" data-i18n-title="toggleSupport" title="Toggle support badge">☕</button>
             <span class="entry-count-badge" id="countBadge" data-i18n="nEntries">0 entries</span>
         </header>
 
         <!-- Tab Navigation -->
         <div class="tab-nav">
             <button class="tab-btn active" id="tabTasksBtn" onclick="switchTab('tasks')">
-                ✔ Log <span class="tab-count" id="tabTasksCount">0</span>
+                <span data-i18n="logTab">✔ Log</span> <span class="tab-count" id="tabTasksCount">0</span>
             </button>
             <button class="tab-btn" id="tabProcessesBtn" onclick="switchTab('processes')">
-                ⟳ Processes <span class="tab-count" id="tabProcessesCount">0</span>
+                <span data-i18n="processesTab">⟳ Processes</span> <span class="tab-count" id="tabProcessesCount">0</span>
             </button>
         </div>
 
@@ -56,7 +56,7 @@
         <div class="palette-section">
             <span class="palette-label" data-i18n="palette">Palette</span>
             <div class="palette-swatches" id="paletteSwatches"></div>
-            <button class="palette-gear-btn" id="settingsGearBtn" onclick="openSettingsModal()" title="Settings">
+            <button class="palette-gear-btn" id="settingsGearBtn" onclick="openSettingsModal()" data-i18n-title="settings" title="Settings">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                     <path d="M8 10a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" stroke-width="1.3"/>
                     <path d="M13.7 6.3l-1-.2a4.8 4.8 0 00-.5-1.2l.5-.9a.5.5 0 00-.1-.6l-.9-.9a.5.5 0 00-.6-.1l-.9.5a4.8 4.8 0 00-1.2-.5l-.2-1a.5.5 0 00-.5-.4H7a.5.5 0 00-.5.4l-.2 1c-.4.1-.8.3-1.2.5l-.9-.5a.5.5 0 00-.6.1l-.9.9a.5.5 0 00-.1.6l.5.9c-.2.4-.4.8-.5 1.2l-1 .2a.5.5 0 00-.4.5v1.3a.5.5 0 00.4.5l1 .2c.1.4.3.8.5 1.2l-.5.9a.5.5 0 00.1.6l.9.9a.5.5 0 00.6.1l.9-.5c.4.2.8.4 1.2.5l.2 1a.5.5 0 00.5.4h1.3a.5.5 0 00.5-.4l.2-1c.4-.1.8-.3 1.2-.5l.9.5a.5.5 0 00.6-.1l.9-.9a.5.5 0 00.1-.6l-.5-.9c.2-.4.4-.8.5-1.2l1-.2a.5.5 0 00.4-.5V6.7a.5.5 0 00-.4-.4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -79,13 +79,13 @@
             <div class="stats-body" id="statsBody">
                 <div class="heatmap-container" id="heatmapContainer"></div>
                 <div class="heatmap-legend">
-                    <span class="heatmap-legend-label">Less</span>
+                    <span class="heatmap-legend-label" data-i18n="less">Less</span>
                     <span class="heatmap-cell-legend" style="opacity:0.1"></span>
                     <span class="heatmap-cell-legend" style="opacity:0.3"></span>
                     <span class="heatmap-cell-legend" style="opacity:0.55"></span>
                     <span class="heatmap-cell-legend" style="opacity:0.8"></span>
                     <span class="heatmap-cell-legend" style="opacity:1"></span>
-                    <span class="heatmap-legend-label">More</span>
+                    <span class="heatmap-legend-label" data-i18n="more">More</span>
                 </div>
             </div>
         </div>
@@ -97,33 +97,33 @@
             <div class="input-card">
                 <div class="input-row">
                     <div class="input-wrap">
-                        <input type="text" id="inputText" placeholder="Enter a note (optional)…">
+                        <input type="text" id="inputText" data-i18n-placeholder="enterNote" placeholder="Enter a note (optional)…">
                     </div>
                     <div class="btn-group">
-                        <button class="custom-trigger-btn" id="customTriggerBtn" onclick="toggleCustomPanel()" title="Add custom-timestamped entry">
+                        <button class="custom-trigger-btn" id="customTriggerBtn" onclick="toggleCustomPanel()" data-i18n-title="addCustomTitle" title="Add custom-timestamped entry">
                             ✦
                         </button>
                         <button class="add-btn" onclick="addEntry()">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-                            Log Entry
+                            <span data-i18n="logEntry">Log Entry</span>
                         </button>
                     </div>
                 </div>
 
                 <div class="custom-panel" id="customPanel">
                     <div class="custom-panel-inner">
-                        <div class="custom-panel-label">Custom timestamp</div>
+                        <div class="custom-panel-label" data-i18n="customTimestamp">Custom timestamp</div>
                         <div class="custom-fields">
                             <input type="date" id="customDate" />
                             <input type="time" id="customTime" />
-                            <button class="custom-add-btn" onclick="addCustomEntry()">Log ✦</button>
+                            <button class="custom-add-btn" onclick="addCustomEntry()" data-i18n="logCustom">Log ✦</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="tag-input-row" id="tagInputRow">
                     <span class="tag-input-label">#</span>
-                    <input type="text" id="tagInput" placeholder="Tags (comma-separated)…" class="tag-text-input">
+                    <input type="text" id="tagInput" data-i18n-placeholder="tagsPlaceholder" placeholder="Tags (comma-separated)…" class="tag-text-input">
                 </div>
 
                 <p class="hint" data-i18n="hintLog">↵ Press Enter to log · timestamp is added automatically</p>
@@ -132,27 +132,27 @@
             <!-- Section header -->
             <div class="section-header">
                 <div style="display:flex;align-items:center;gap:12px;">
-                    <span class="section-title">Log</span>
+                    <span class="section-title" data-i18n="log">Log</span>
                     <div class="sort-controls" id="tasksSortControls">
                         <button class="sort-btn active" id="sortTimeBtn" onclick="setSort('time','tasks')">
-                            Time <span class="sort-dir" id="sortTimeDir">↓</span>
+                            <span data-i18n="time">Time</span> <span class="sort-dir" id="sortTimeDir">↓</span>
                         </button>
                         <span class="sort-sep">·</span>
                         <button class="sort-btn" id="sortTextBtn" onclick="setSort('text','tasks')">
-                            Name <span class="sort-dir" id="sortTextDir">↓</span>
+                            <span data-i18n="name">Name</span> <span class="sort-dir" id="sortTextDir">↓</span>
                         </button>
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;">
                     <div class="view-toggle">
-                        <button class="view-toggle-btn active" id="viewListBtn" onclick="setView('list')" title="List view">
+                        <button class="view-toggle-btn active" id="viewListBtn" onclick="setView('list')" data-i18n-title="listView" title="List view">
                             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                                 <rect x="0" y="1" width="13" height="1.8" rx="0.9" fill="currentColor"/>
                                 <rect x="0" y="5.6" width="13" height="1.8" rx="0.9" fill="currentColor"/>
                                 <rect x="0" y="10.2" width="13" height="1.8" rx="0.9" fill="currentColor"/>
                             </svg>
                         </button>
-                        <button class="view-toggle-btn" id="viewTimelineBtn" onclick="setView('timeline')" title="Timeline view">
+                        <button class="view-toggle-btn" id="viewTimelineBtn" onclick="setView('timeline')" data-i18n-title="timelineView" title="Timeline view">
                             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                                 <circle cx="2" cy="6.5" r="1.5" fill="currentColor"/>
                                 <circle cx="6.5" cy="6.5" r="1.5" fill="currentColor"/>
@@ -161,7 +161,7 @@
                                 <line x1="8" y1="6.5" x2="9.5" y2="6.5" stroke="currentColor" stroke-width="1.2"/>
                             </svg>
                         </button>
-                        <button class="view-toggle-btn" id="viewDailyBtn" onclick="setView('daily')" title="Daily view">
+                        <button class="view-toggle-btn" id="viewDailyBtn" onclick="setView('daily')" data-i18n-title="dailyView" title="Daily view">
                             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                                 <rect x="1" y="2" width="11" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3" fill="none"/>
                                 <line x1="1" y1="5" x2="12" y2="5" stroke="currentColor" stroke-width="1.2"/>
@@ -173,10 +173,10 @@
                     <div class="info-btn">
                         <span class="question-mark" tabindex="0" role="button" aria-label="Storage info">?</span>
                         <div class="tooltip" role="tooltip">
-                            <div class="tooltip-title">💾 How data is saved</div>
-                            <p>Your log entries are saved in your <strong>browser's localStorage</strong> — they persist across page refreshes and browser restarts on this device.</p>
-                            <p><strong>To keep data long-term:</strong> avoid clearing your browser's site data for this page, and don't use incognito mode.</p>
-                            <p><strong>Back up anytime</strong> using the Export button — saves a <strong>.json</strong> file you can re-import later.</p>
+                            <div class="tooltip-title" data-i18n="tooltipTitle">💾 How data is saved</div>
+                            <p data-i18n-html="tooltipP1">Your log entries are saved in your <strong>browser's localStorage</strong> — they persist across page refreshes and browser restarts on this device.</p>
+                            <p data-i18n-html="tooltipP2"><strong>To keep data long-term:</strong> avoid clearing your browser's site data for this page, and don't use incognito mode.</p>
+                            <p data-i18n-html="tooltipP3"><strong>Back up anytime</strong> using the Export button — saves a <strong>.json</strong> file you can re-import later.</p>
                         </div>
                     </div>
                 </div>
@@ -190,33 +190,33 @@
                             <circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/>
                             <path d="M8 8l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                         </svg>
-                        Search &amp; Filter
+                        <span data-i18n="searchFilter">Search &amp; Filter</span>
                         <span class="chevron">▾</span>
                     </button>
                     <div class="filter-active-dot" id="filterActiveDot"></div>
                 </div>
 
                 <div class="toolbar-group">
-                    <button class="icon-btn" title="Import JSON" onclick="document.getElementById('importFileInput').click()">
+                    <button class="icon-btn" data-i18n-title="importJson" title="Import JSON" onclick="document.getElementById('importFileInput').click()">
                         <svg width="13" height="13" viewBox="0 0 11 11" fill="none">
                             <path d="M5.5 1v6M2.5 5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M1 9h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                         </svg>
                     </button>
                     <input type="file" id="importFileInput" accept=".json" onchange="importJSON(event)">
-                    <button class="icon-btn" title="Export JSON" onclick="exportJSON()">
+                    <button class="icon-btn" data-i18n-title="exportJson" title="Export JSON" onclick="exportJSON()">
                         <svg width="13" height="13" viewBox="0 0 11 11" fill="none">
                             <path d="M5.5 7V1M2.5 3l3-3 3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M1 9h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                         </svg>
                     </button>
-                    <button class="icon-btn" id="logNotifyBtn" title="Show persistent quick-log notification" onclick="togglePersistentLogNotification()">
+                    <button class="icon-btn" id="logNotifyBtn" data-i18n-title="showNotification" title="Show persistent quick-log notification" onclick="togglePersistentLogNotification()">
                         <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                             <path d="M8 1.5a4.5 4.5 0 00-4.5 4.5c0 2.1-.7 3.4-1.3 4.1a.5.5 0 00.4.9h10.8a.5.5 0 00.4-.9c-.6-.7-1.3-2-1.3-4.1A4.5 4.5 0 008 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M6.5 12.5a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
                         </svg>
                     </button>
-                    <button class="icon-btn gdrive-btn" id="gdriveUploadBtn" title="Upload to Google Drive" onclick="gdriveUpload()">
+                    <button class="icon-btn gdrive-btn" id="gdriveUploadBtn" data-i18n-title="uploadGdrive" title="Upload to Google Drive" onclick="gdriveUpload()">
                         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                             <path d="M7 9V2M4.5 4.5L7 2l2.5 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M2 9.5v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -224,7 +224,7 @@
                             <path d="M10.3 3h1.4M11 2.3v1.4" stroke="currentColor" stroke-width="0.6" stroke-linecap="round"/>
                         </svg>
                     </button>
-                    <button class="icon-btn gdrive-btn" id="gdriveDownloadBtn" title="Download from Google Drive" onclick="gdriveDownload()">
+                    <button class="icon-btn gdrive-btn" id="gdriveDownloadBtn" data-i18n-title="downloadGdrive" title="Download from Google Drive" onclick="gdriveDownload()">
                         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                             <path d="M7 2v7M4.5 6.5L7 9l2.5-2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M2 9.5v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -233,7 +233,7 @@
                         </svg>
                     </button>
                     <div class="toolbar-divider"></div>
-                    <button class="clear-btn" id="clearBtn" onclick="clearAll('tasks')" style="display:none;">Clear all</button>
+                    <button class="clear-btn" id="clearBtn" onclick="clearAll('tasks')" style="display:none;" data-i18n="clearAll">Clear all</button>
                 </div>
             </div>
 
@@ -246,19 +246,19 @@
                                 <circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.5"/>
                                 <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                             </svg>
-                            <input type="text" id="searchInput" placeholder="Search by name, date, or time…" oninput="debouncedApplyFilters()">
+                            <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search by name, date, or time…" oninput="debouncedApplyFilters()">
                         </div>
                         <div class="filter-date-wrap">
                             <input type="date" id="filterDate" onchange="applyFilters('tasks')">
                         </div>
                     </div>
                     <div class="filter-chips">
-                        <span class="filter-chip-label">Show:</span>
-                        <button class="filter-chip active" data-filter="all" onclick="setTypeFilter('all', this, 'tasks')">All</button>
-                        <button class="filter-chip" data-filter="auto" onclick="setTypeFilter('auto', this, 'tasks')">Auto-logged</button>
-                        <button class="filter-chip custom-chip" data-filter="custom" onclick="setTypeFilter('custom', this, 'tasks')">✦ Custom</button>
-                        <button class="filter-chip edited-chip" data-filter="edited" onclick="setTypeFilter('edited', this, 'tasks')">✎ Edited</button>
-                        <button class="filter-clear-link" onclick="clearFilters('tasks')">Clear filters</button>
+                        <span class="filter-chip-label" data-i18n="show">Show:</span>
+                        <button class="filter-chip active" data-filter="all" onclick="setTypeFilter('all', this, 'tasks')" data-i18n="all">All</button>
+                        <button class="filter-chip" data-filter="auto" onclick="setTypeFilter('auto', this, 'tasks')" data-i18n="autoLogged">Auto-logged</button>
+                        <button class="filter-chip custom-chip" data-filter="custom" onclick="setTypeFilter('custom', this, 'tasks')" data-i18n="customFilter">✦ Custom</button>
+                        <button class="filter-chip edited-chip" data-filter="edited" onclick="setTypeFilter('edited', this, 'tasks')" data-i18n="editedFilter">✎ Edited</button>
+                        <button class="filter-clear-link" onclick="clearFilters('tasks')" data-i18n="clearFilters">Clear filters</button>
                     </div>
                     <div class="filter-tag-chips" id="filterTagChips"></div>
                 </div>
@@ -277,7 +277,7 @@
 
             <!-- Entry list -->
             <ul class="entry-list" id="entryList"></ul>
-            <div class="lazy-loader" id="tasksLazyLoader" aria-hidden="true"><span>Loading more entries…</span></div>
+            <div class="lazy-loader" id="tasksLazyLoader" aria-hidden="true"><span data-i18n="loadingMore">Loading more entries…</span></div>
 
             <!-- Timeline view -->
             <div id="timelineView" class="timeline-outer" style="display:none;"></div>
@@ -291,24 +291,24 @@
             <div class="input-card">
                 <div class="input-row">
                     <div class="input-wrap">
-                        <input type="text" id="procInputText" placeholder="Enter process name…">
+                        <input type="text" id="procInputText" data-i18n-placeholder="enterProcessName" placeholder="Enter process name…">
                     </div>
                     <div class="btn-group">
                         <select id="procTemplateSelect" class="filter-chip" onchange="addProcessFromTemplate(this.value)">
-                            <option value="">Templates</option>
-                            <option value="dailyRoutine">Daily Routine</option>
-                            <option value="contentCreation">Content Creation</option>
-                            <option value="bugFix">Bug Fix</option>
+                            <option value="" data-i18n="templates">Templates</option>
+                            <option value="dailyRoutine" data-i18n="dailyRoutine">Daily Routine</option>
+                            <option value="contentCreation" data-i18n="contentCreation">Content Creation</option>
+                            <option value="bugFix" data-i18n="bugFix">Bug Fix</option>
                         </select>
                         <button class="add-btn" onclick="addProcess()">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-                            Add Process
+                            <span data-i18n="addProcess">Add Process</span>
                         </button>
                     </div>
                 </div>
                 <div class="tag-input-row" id="procTagInputRow">
                     <span class="tag-input-label">#</span>
-                    <input type="text" id="procTagInput" placeholder="Tags (comma-separated)…" class="tag-text-input">
+                    <input type="text" id="procTagInput" data-i18n-placeholder="tagsPlaceholder" placeholder="Tags (comma-separated)…" class="tag-text-input">
                 </div>
 
                 <p class="hint" data-i18n="hintProcess">↵ Press Enter to add · processes track work through checkpoints</p>
@@ -317,14 +317,14 @@
             <!-- Section header for processes -->
             <div class="section-header">
                 <div style="display:flex;align-items:center;gap:12px;">
-                    <span class="section-title">Processes</span>
+                    <span class="section-title" data-i18n="processes">Processes</span>
                     <div class="sort-controls" id="procSortControls">
                         <button class="sort-btn active" id="procSortTimeBtn" onclick="setSort('time','processes')">
-                            Time <span class="sort-dir" id="procSortTimeDir">↓</span>
+                            <span data-i18n="time">Time</span> <span class="sort-dir" id="procSortTimeDir">↓</span>
                         </button>
                         <span class="sort-sep">·</span>
                         <button class="sort-btn" id="procSortTextBtn" onclick="setSort('text','processes')">
-                            Name <span class="sort-dir" id="procSortTextDir">↓</span>
+                            <span data-i18n="name">Name</span> <span class="sort-dir" id="procSortTextDir">↓</span>
                         </button>
                     </div>
                 </div>
@@ -338,14 +338,14 @@
                             <circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.4"/>
                             <path d="M8 8l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                         </svg>
-                        Search &amp; Filter
+                        <span data-i18n="searchFilter">Search &amp; Filter</span>
                         <span class="chevron">▾</span>
                     </button>
                     <div class="filter-active-dot" id="procFilterActiveDot"></div>
                 </div>
 
                 <div class="toolbar-group">
-                    <button class="clear-btn" id="procClearBtn" onclick="clearAll('processes')" style="display:none;">Clear all</button>
+                    <button class="clear-btn" id="procClearBtn" onclick="clearAll('processes')" style="display:none;" data-i18n="clearAll">Clear all</button>
                 </div>
             </div>
 
@@ -358,20 +358,20 @@
                                 <circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.5"/>
                                 <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                             </svg>
-                            <input type="text" id="procSearchInput" placeholder="Search processes…" oninput="debouncedApplyFilters()">
+                            <input type="text" id="procSearchInput" data-i18n-placeholder="searchProcesses" placeholder="Search processes…" oninput="debouncedApplyFilters()">
                         </div>
                         <div class="filter-date-wrap">
                             <input type="date" id="procFilterDate" onchange="applyFilters('processes')">
                         </div>
                     </div>
                     <div class="filter-chips">
-                        <span class="filter-chip-label">Show:</span>
-                        <button class="filter-chip active" data-filter="all" onclick="setTypeFilter('all', this, 'processes')">All</button>
-                        <button class="filter-chip active-chip" data-filter="active" onclick="setTypeFilter('active', this, 'processes')">⟳ Active</button>
-                        <button class="filter-chip completed-chip" data-filter="completed" onclick="setTypeFilter('completed', this, 'processes')">✓ Completed</button>
-                        <button class="filter-chip edited-chip" data-filter="edited" onclick="setTypeFilter('edited', this, 'processes')">✎ Edited</button>
-                        <button class="filter-chip overdue-chip" data-filter="overdue" onclick="setTypeFilter('overdue', this, 'processes')">⚠ Overdue</button>
-                        <button class="filter-clear-link" onclick="clearFilters('processes')">Clear filters</button>
+                        <span class="filter-chip-label" data-i18n="show">Show:</span>
+                        <button class="filter-chip active" data-filter="all" onclick="setTypeFilter('all', this, 'processes')" data-i18n="all">All</button>
+                        <button class="filter-chip active-chip" data-filter="active" onclick="setTypeFilter('active', this, 'processes')" data-i18n="activeFilter">⟳ Active</button>
+                        <button class="filter-chip completed-chip" data-filter="completed" onclick="setTypeFilter('completed', this, 'processes')" data-i18n="completedFilter">✓ Completed</button>
+                        <button class="filter-chip edited-chip" data-filter="edited" onclick="setTypeFilter('edited', this, 'processes')" data-i18n="editedFilter">✎ Edited</button>
+                        <button class="filter-chip overdue-chip" data-filter="overdue" onclick="setTypeFilter('overdue', this, 'processes')" data-i18n="overdueFilter">⚠ Overdue</button>
+                        <button class="filter-clear-link" onclick="clearFilters('processes')" data-i18n="clearFilters">Clear filters</button>
                     </div>
                     <div class="filter-tag-chips" id="procFilterTagChips"></div>
                 </div>
@@ -390,7 +390,7 @@
 
             <!-- Process list -->
             <ul class="entry-list" id="processList"></ul>
-            <div class="lazy-loader" id="procLazyLoader" aria-hidden="true"><span>Loading more processes…</span></div>
+            <div class="lazy-loader" id="procLazyLoader" aria-hidden="true"><span data-i18n="loadingMoreProcesses">Loading more processes…</span></div>
         </div>
 
     </div>
@@ -398,18 +398,18 @@
     <div class="source-modal-overlay" id="gdriveClientModal" onclick="if(event.target===this)closeGdriveClientModal(false)">
         <div class="source-modal" style="max-width:560px;">
             <div class="source-modal-header">
-                <span class="source-modal-title">Google Drive Client ID</span>
+                <span class="source-modal-title" data-i18n="gdriveClientIdTitle">Google Drive Client ID</span>
                 <button class="source-modal-close" onclick="closeGdriveClientModal(false)" title="Close">✕</button>
             </div>
             <div class="source-modal-body">
-                <p class="source-modal-text">Paste your Google OAuth Client ID. It is stored only in localStorage on this device and reused for upload/download.</p>
+                <p class="source-modal-text" data-i18n="gdriveModalText">Paste your Google OAuth Client ID. It is stored only in localStorage on this device and reused for upload/download.</p>
                 <div class="gdrive-modal-field">
-                    <label for="gdriveClientInput">Client ID</label>
+                    <label for="gdriveClientInput" data-i18n="clientId">Client ID</label>
                     <input type="text" id="gdriveClientInput" placeholder="1234567890-abc123.apps.googleusercontent.com">
                 </div>
                 <div class="sheet-btn-row" style="margin-top:8px;">
-                    <button class="sheet-btn secondary" onclick="closeGdriveClientModal(false)">Cancel</button>
-                    <button class="sheet-btn primary" onclick="closeGdriveClientModal(true)">Save</button>
+                    <button class="sheet-btn secondary" onclick="closeGdriveClientModal(false)" data-i18n="cancel">Cancel</button>
+                    <button class="sheet-btn primary" onclick="closeGdriveClientModal(true)" data-i18n="save">Save</button>
                 </div>
             </div>
         </div>
@@ -419,16 +419,16 @@
     <div class="source-modal-overlay" id="sourceModalOverlay" onclick="if(event.target===this)closeSourceViewer()">
         <div class="source-modal">
             <div class="source-modal-header">
-                <span class="source-modal-title">&lt;/&gt; Page Source</span>
+                <span class="source-modal-title" data-i18n="pageSource">&lt;/&gt; Page Source</span>
                 <div class="source-modal-actions">
-                    <button class="source-modal-btn" onclick="copySource()" title="Copy source to clipboard">📋 Copy</button>
-                    <button class="source-modal-btn" onclick="downloadOfflineHTML()" title="Download as standalone HTML file">💾 Download .html</button>
+                    <button class="source-modal-btn" onclick="copySource()" title="Copy source to clipboard" data-i18n="copyBtn">📋 Copy</button>
+                    <button class="source-modal-btn" onclick="downloadOfflineHTML()" title="Download as standalone HTML file" data-i18n="downloadHtml">💾 Download .html</button>
                 </div>
                 <button class="source-modal-close" onclick="closeSourceViewer()" title="Close">✕</button>
             </div>
             <div class="source-modal-body">
-                <p class="source-modal-text">To keep this page lean, source is no longer embedded inline here. Use one of the actions below to access the complete HTML source.</p>
-                <a class="source-link" id="sourceOpenLink" href="https://ranzlappen.github.io/ticked/" target="_blank" rel="noopener">↗ Open source code</a>
+                <p class="source-modal-text" data-i18n="sourceModalText">To keep this page lean, source is no longer embedded inline here. Use one of the actions below to access the complete HTML source.</p>
+                <a class="source-link" id="sourceOpenLink" href="https://ranzlappen.github.io/ticked/" target="_blank" rel="noopener" data-i18n="openSourceCode">↗ Open source code</a>
             </div>
         </div>
     </div>

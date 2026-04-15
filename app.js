@@ -475,7 +475,7 @@ function addProcess() {
         currentCheckpoint: 0,
         checkpoints: [{
             id: uuid(),
-            name: 'Start',
+            name: t('start'),
             timestamp: now,
             comment: '',
             dueDate: '',
@@ -566,7 +566,7 @@ function addCheckpointToProcess(procId) {
         const cps = [...p.checkpoints];
         cps.push({
             id: uuid(),
-            name: `Checkpoint ${cps.length + 1}`,
+            name: t('checkpointN', {n: cps.length + 1}),
             timestamp: new Date().toISOString(),
             comment: '',
             dueDate: '',
@@ -981,7 +981,7 @@ function updateProcessNode(card, proc, isToday, displayTs) {
 
         const label = document.createElement('div');
         label.className = 'cp-label';
-        label.textContent = cp.name || `CP ${i + 1}`;
+        label.textContent = cp.name || t('cpLabel', {n: i + 1});
 
         if (cp.dueDate) {
             const due = document.createElement('div');
@@ -1485,12 +1485,12 @@ function showColorPicker(id, tab, mode) {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'sheet-btn secondary';
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = t('cancel');
     cancelBtn.addEventListener('click', closeSheet);
 
     const applyBtn = document.createElement('button');
     applyBtn.className = 'sheet-btn primary';
-    applyBtn.textContent = 'Apply';
+    applyBtn.textContent = t('apply');
     applyBtn.addEventListener('click', () => {
         applyColor(id, tab, mode, selected);
         closeSheet();
@@ -1546,12 +1546,12 @@ function showTimeEditor(id, tab) {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'sheet-btn secondary';
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = t('cancel');
     cancelBtn.addEventListener('click', closeSheet);
 
     const applyBtn = document.createElement('button');
     applyBtn.className = 'sheet-btn primary';
-    applyBtn.textContent = 'Save';
+    applyBtn.textContent = t('save');
     applyBtn.addEventListener('click', () => {
         if (!dateInput.value || !timeInput.value) {
             showToast(t('setBothDateTime'), true);
@@ -1591,7 +1591,7 @@ function showTextEditor(id, tab) {
     const textInput = document.createElement('input');
     textInput.type = 'text';
     textInput.value = entry.text;
-    textInput.placeholder = 'Enter text…';
+    textInput.placeholder = t('enterTextPlaceholder');
 
     form.appendChild(textInput);
     content.appendChild(form);
@@ -1601,12 +1601,12 @@ function showTextEditor(id, tab) {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'sheet-btn secondary';
-    cancelBtn.textContent = 'Cancel';
+    cancelBtn.textContent = t('cancel');
     cancelBtn.addEventListener('click', closeSheet);
 
     const applyBtn = document.createElement('button');
     applyBtn.className = 'sheet-btn primary';
-    applyBtn.textContent = 'Save';
+    applyBtn.textContent = t('save');
     applyBtn.addEventListener('click', () => {
         const key = tab === 'tasks' ? 'entries' : 'processes';
         const items = state[key].map(e => {
@@ -1641,7 +1641,7 @@ function openCheckpointDetail(procId, cpIdx) {
 
     const curCp = proc.currentCheckpoint ?? 0;
 
-    document.getElementById('sheetTitle').textContent = cp.name || `Checkpoint ${cpIdx + 1}`;
+    document.getElementById('sheetTitle').textContent = cp.name || t('checkpointN', {n: cpIdx + 1});
     const content = document.getElementById('sheetContent');
     content.innerHTML = '';
 
@@ -1649,8 +1649,8 @@ function openCheckpointDetail(procId, cpIdx) {
     const sub = document.createElement('div');
     sub.className = 'sheet-sub-title';
     sub.textContent = cpIdx === curCp
-        ? '● Current checkpoint'
-        : cpIdx < curCp ? '✓ Completed' : '○ Upcoming';
+        ? t('currentCheckpointStatus')
+        : cpIdx < curCp ? t('completedCheckpointStatus') : t('upcomingCheckpointStatus');
     content.appendChild(sub);
 
     const form = document.createElement('div');
@@ -1660,32 +1660,32 @@ function openCheckpointDetail(procId, cpIdx) {
     const nameLabel = document.createElement('div');
     nameLabel.className = 'sheet-sub-title';
     nameLabel.style.textAlign = 'left';
-    nameLabel.textContent = 'Name';
+    nameLabel.textContent = t('checkpointNameLabel');
     form.appendChild(nameLabel);
 
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.value = cp.name || '';
-    nameInput.placeholder = 'Checkpoint name…';
+    nameInput.placeholder = t('checkpointNamePlaceholder');
     form.appendChild(nameInput);
 
     // Comment
     const commentLabel = document.createElement('div');
     commentLabel.className = 'sheet-sub-title';
     commentLabel.style.textAlign = 'left';
-    commentLabel.textContent = 'Comment / Note';
+    commentLabel.textContent = t('commentNote');
     form.appendChild(commentLabel);
 
     const textarea = document.createElement('textarea');
     textarea.value = cp.comment || '';
-    textarea.placeholder = 'Add a note for this checkpoint…';
+    textarea.placeholder = t('addNotePlaceholder');
     form.appendChild(textarea);
 
     // Due date
     const dateLabel = document.createElement('div');
     dateLabel.className = 'sheet-sub-title';
     dateLabel.style.textAlign = 'left';
-    dateLabel.textContent = 'Due Date';
+    dateLabel.textContent = t('dueDate');
     form.appendChild(dateLabel);
 
     const dateInput = document.createElement('input');
@@ -1696,7 +1696,7 @@ function openCheckpointDetail(procId, cpIdx) {
     const remindLabel = document.createElement('div');
     remindLabel.className = 'sheet-sub-title';
     remindLabel.style.textAlign = 'left';
-    remindLabel.textContent = 'Reminder Time';
+    remindLabel.textContent = t('reminderTime');
     form.appendChild(remindLabel);
 
     const remindInput = document.createElement('input');
@@ -1710,7 +1710,7 @@ function openCheckpointDetail(procId, cpIdx) {
     const notifyLabel = document.createElement('div');
     notifyLabel.className = 'sheet-sub-title';
     notifyLabel.style.cssText = 'text-align:left;margin:0;';
-    notifyLabel.textContent = 'Enable reminder';
+    notifyLabel.textContent = t('enableReminder');
     const notifyToggle = document.createElement('input');
     notifyToggle.type = 'checkbox';
     notifyToggle.checked = !!cp.notify;
@@ -1726,7 +1726,7 @@ function openCheckpointDetail(procId, cpIdx) {
 
     const jumpBtn = document.createElement('button');
     jumpBtn.className = 'sheet-btn secondary';
-    jumpBtn.textContent = cpIdx === curCp ? 'Current' : 'Jump here';
+    jumpBtn.textContent = cpIdx === curCp ? t('current') : t('jumpHere');
     jumpBtn.disabled = cpIdx === curCp;
     jumpBtn.style.opacity = cpIdx === curCp ? '0.5' : '1';
     jumpBtn.addEventListener('click', () => {
@@ -1737,7 +1737,7 @@ function openCheckpointDetail(procId, cpIdx) {
 
     const saveBtn = document.createElement('button');
     saveBtn.className = 'sheet-btn primary';
-    saveBtn.textContent = 'Save';
+    saveBtn.textContent = t('save');
     saveBtn.addEventListener('click', () => {
         if (notifyToggle.checked && !remindInput.value) {
             showToast(t('setReminderFirst'), true);
@@ -1748,7 +1748,7 @@ function openCheckpointDetail(procId, cpIdx) {
             const checkpoints = [...p.checkpoints];
             checkpoints[cpIdx] = {
                 ...checkpoints[cpIdx],
-                name: nameInput.value.trim() || `Checkpoint ${cpIdx + 1}`,
+                name: nameInput.value.trim() || t('checkpointN', {n: cpIdx + 1}),
                 comment: textarea.value.trim(),
                 dueDate: dateInput.value,
                 remindAt: remindInput.value,
@@ -1780,7 +1780,7 @@ function openCheckpointDetail(procId, cpIdx) {
         const delBtn = document.createElement('button');
         delBtn.className = 'sheet-btn secondary';
         delBtn.style.cssText = 'color:var(--danger);border-color:var(--danger-border);width:100%;';
-        delBtn.textContent = 'Delete Checkpoint';
+        delBtn.textContent = t('deleteCheckpoint');
         delBtn.addEventListener('click', () => {
             if (!confirm(t("deleteCheckpoint") + ": " + cp.name + "?")) return;
             const procs = state.processes.map(p => {
@@ -1823,13 +1823,13 @@ function scheduleCheckpointNotification(procId, cpIdx) {
     const tid = setTimeout(() => {
         _reminderTimeouts.delete(key);
         sendTickedNotification(
-            `Checkpoint: ${cp.name}`,
-            `Process "${proc.text}" — ${cp.name} is due now.`,
+            t('checkpointReminder', { name: cp.name }),
+            t('checkpointDueNow', { proc: proc.text, name: cp.name }),
             {
                 tag: `ticked-checkpoint-${procId}-${cpIdx}`,
                 actions: [
-                    { action: 'insta-log', title: 'Insta Log' },
-                    { action: 'open', title: 'Open App' }
+                    { action: 'insta-log', title: t('instaLog') },
+                    { action: 'open', title: t('openApp') }
                 ],
                 data: { action: 'insta-log', procId, cpIdx }
             }
@@ -1877,8 +1877,8 @@ function renderTimelineView(filtered, today) {
     if (hasAuto || hasCustom) {
         const legend = document.createElement('div');
         legend.className = 'tl-legend';
-        if (hasAuto)   legend.innerHTML += `<span class="tl-legend-item"><span class="tl-legend-dot auto"></span>Auto-logged</span>`;
-        if (hasCustom) legend.innerHTML += `<span class="tl-legend-item"><span class="tl-legend-dot custom"></span>Custom</span>`;
+        if (hasAuto)   legend.innerHTML += `<span class="tl-legend-item"><span class="tl-legend-dot auto"></span>${t('autoLogged')}</span>`;
+        if (hasCustom) legend.innerHTML += `<span class="tl-legend-item"><span class="tl-legend-dot custom"></span>${t('custom')}</span>`;
         timelineView.appendChild(legend);
     }
 
@@ -2309,7 +2309,7 @@ function clearAll(tab) {
 // ── Export / Import shared helpers ────────────────────────
 function buildExportPayload() {
     return {
-        app:        'Ticked',
+        app:        t('ticked'),
         version:    SCHEMA_VERSION,
         exportedAt: new Date().toISOString(),
         palette:    state.palette,
@@ -2640,9 +2640,9 @@ async function gdriveDownload() {
         const result = mergeImportedData(parsed);
         const totalNew = result.newEntries + result.newProcs;
         const totalDupe = result.dupeEntries + result.dupeProcs;
-        let msg = 'Synced ' + totalNew + ' new items from Drive';
-        if (totalDupe > 0) msg += ' (' + totalDupe + ' already existed)';
-        if (totalNew === 0 && totalDupe === 0) msg = 'Drive backup is empty';
+        let msg = t('syncedEntries', { n: totalNew });
+        if (totalDupe > 0) msg += ' ' + t('duplicatesSkipped', { n: totalDupe });
+        if (totalNew === 0 && totalDupe === 0) msg = t('alreadyUpToDate');
         showToast(msg);
     } catch (e) {
         showToast(t('syncFailed', {error: e.message}), true);
@@ -2685,15 +2685,15 @@ async function sendTickedNotification(title, body, config = {}) {
     if (!ok) return;
 
     const options = {
-        body: body || 'Tap to log a new entry',
+        body: body || t('tapToLog'),
         icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230d0f14'/%3E%3Crect x='24' y='24' width='464' height='464' rx='64' fill='none' stroke='%2300e5a0' stroke-width='12'/%3E%3Cpath d='M140 256l80 90 152-160' stroke='%2300e5a0' stroke-width='44' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
         badge: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='16' fill='%230d0f14'/%3E%3Cpath d='M24 48l20 22 28-30' stroke='%2300e5a0' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",
         tag: config.tag || 'ticked-checkpoint',
         renotify: config.renotify ?? true,
         requireInteraction: config.requireInteraction ?? true,
         actions: config.actions || [
-            { action: 'insta-log', title: 'Insta Log' },
-            { action: 'open', title: 'Open App' }
+            { action: 'insta-log', title: t('instaLog') },
+            { action: 'open', title: t('openApp') }
         ],
         data: config.data || {},
         vibrate: [100, 50, 100],
@@ -2715,7 +2715,7 @@ async function sendTickedNotification(title, body, config = {}) {
 
     if (reg && reg.active) {
         try {
-            await reg.showNotification(title || 'Ticked', options);
+            await reg.showNotification(title || t('ticked'), options);
             return;
         } catch(e) { /* fallback below */ }
     }
@@ -2724,7 +2724,7 @@ async function sendTickedNotification(title, body, config = {}) {
     try {
         delete options.actions; // basic Notification doesn't support actions
         delete options.requireInteraction;
-        new Notification(title || 'Ticked', options);
+        new Notification(title || t('ticked'), options);
     } catch(e) {}
 }
 
@@ -2780,7 +2780,7 @@ function syncPersistentLogBell() {
     if (!btn) return;
     const on = persistentLogEnabled();
     btn.classList.toggle('active', on);
-    btn.title = on ? 'Disable persistent quick-log notification' : 'Show persistent quick-log notification';
+    btn.title = on ? t('disableNotification') : t('showNotification');
 }
 
 function initPersistentLogBell() {
@@ -2795,12 +2795,12 @@ function initPersistentLogBell() {
 async function showPersistentLogNotification() {
     const ok = await requestNotificationPermission();
     if (!ok) return;
-    await sendTickedNotification('Ticked', 'Quick log is ready — tap Log now anytime.', {
+    await sendTickedNotification(t('ticked'), t('quickLogReady'), {
         tag: PERSISTENT_LOG_NOTIFICATION_TAG,
         renotify: false,
         actions: [
-            { action: 'quick-log', title: 'Log now' },
-            { action: 'open', title: 'Open App' }
+            { action: 'quick-log', title: t('logNow') },
+            { action: 'open', title: t('openApp') }
         ],
         data: { action: 'quick-log', keepAlive: true },
     });
@@ -2944,7 +2944,7 @@ function renderHeatmap() {
             cell.style.opacity = tier;
         }
 
-        cell.title = `${formatDayLabel(dateStr)}: ${count} ${count === 1 ? 'entry' : 'entries'}`;
+        cell.title = t('heatmapTitle', { label: formatDayLabel(dateStr), count: count, unit: count === 1 ? t('entry') : t('entries') });
         grid.appendChild(cell);
         cursor.setDate(cursor.getDate() + 1);
     }
@@ -2960,10 +2960,10 @@ function renderStats() {
     const streakEl = document.getElementById('streakDisplay');
     const weekEl = document.getElementById('weekCountDisplay');
     if (streakEl) {
-        streakEl.textContent = streak + (streak === 1 ? ' day streak' : ' day streak');
+        streakEl.textContent = t('dayStreak', { n: streak });
     }
     if (weekEl) {
-        weekEl.textContent = weekCount + ' this week';
+        weekEl.textContent = t('thisWeek', { n: weekCount });
     }
     renderHeatmap();
 }
