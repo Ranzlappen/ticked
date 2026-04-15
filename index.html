@@ -115,6 +115,11 @@
                     </div>
                 </div>
 
+                <div class="tag-input-row" id="tagInputRow">
+                    <span class="tag-input-label">#</span>
+                    <input type="text" id="tagInput" placeholder="Tags (comma-separated)…" class="tag-text-input">
+                </div>
+
                 <p class="hint">↵ Press Enter to log · timestamp is added automatically</p>
             </div>
 
@@ -241,6 +246,7 @@
                         <button class="filter-chip edited-chip" data-filter="edited" onclick="setTypeFilter('edited', this, 'tasks')">✎ Edited</button>
                         <button class="filter-clear-link" onclick="clearFilters('tasks')">Clear filters</button>
                     </div>
+                    <div class="filter-tag-chips" id="filterTagChips"></div>
                 </div>
             </div>
 
@@ -285,6 +291,11 @@
                         </button>
                     </div>
                 </div>
+                <div class="tag-input-row" id="procTagInputRow">
+                    <span class="tag-input-label">#</span>
+                    <input type="text" id="procTagInput" placeholder="Tags (comma-separated)…" class="tag-text-input">
+                </div>
+
                 <p class="hint">↵ Press Enter to add · processes track work through checkpoints</p>
             </div>
 
@@ -347,6 +358,7 @@
                         <button class="filter-chip overdue-chip" data-filter="overdue" onclick="setTypeFilter('overdue', this, 'processes')">⚠ Overdue</button>
                         <button class="filter-clear-link" onclick="clearFilters('processes')">Clear filters</button>
                     </div>
+                    <div class="filter-tag-chips" id="procFilterTagChips"></div>
                 </div>
             </div>
 
