@@ -2242,6 +2242,89 @@ input[type="datetime-local"]:focus { border-color: var(--accent); }
     display: block;
 }
 
+/* ── Tag Input ── */
+.tag-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.tag-input-label {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+}
+
+.tag-text-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color var(--transition);
+    -webkit-appearance: none;
+}
+
+.tag-text-input::placeholder { color: var(--text-muted); }
+.tag-text-input:focus { border-color: var(--accent); }
+
+/* ── Entry Tag Chips ── */
+.entry-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.entry-tag-chip {
+    font-family: var(--mono);
+    font-size: 0.56rem;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid rgba(0, 229, 160, 0.25);
+    border-radius: 4px;
+    padding: 1px 6px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+/* ── Tag Filter Chips ── */
+.filter-tag-chips {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-tag-chips:empty { display: none; }
+
+.filter-tag-chips .filter-chip-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+}
+
+.filter-chip.tag-filter-chip {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+}
+
+.filter-chip.tag-filter-chip.active {
+    background: var(--accent-dim);
+    border-color: rgba(0, 229, 160, 0.55);
+    color: var(--accent);
+}
+
 /* ── Activity Stats / Streak / Heatmap ── */
 .stats-section {
     background: var(--surface);
