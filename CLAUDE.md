@@ -20,7 +20,7 @@ Ticked is a Process & Workflow Tracker — a PWA built with vanilla HTML/CSS/JS.
 - Mobile-first responsive design
 
 ## When Making Changes
-- After modifying `styles.css` or `app.js`, bump the cache version in `sw.js` (line 1: `const CACHE = 'ticked-vN'`)
+- After modifying `styles.css` or `app.js`, bump `CACHE_REV` in `sw.js` (line 6: `const CACHE_REV = 'YYYYMMDD-N'`)
 - Keep `index.html` as a thin shell — CSS goes in `styles.css`, JS goes in `app.js`
 - Test on mobile viewport sizes — the app is primarily used on phones
 - Preserve localStorage backwards compatibility when changing data structures

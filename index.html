@@ -201,7 +201,7 @@
                                 <circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.5"/>
                                 <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                             </svg>
-                            <input type="text" id="searchInput" placeholder="Search by name, date, or time…" oninput="applyFilters('tasks')">
+                            <input type="text" id="searchInput" placeholder="Search by name, date, or time…" oninput="debouncedApplyFilters()">
                         </div>
                         <div class="filter-date-wrap">
                             <input type="date" id="filterDate" onchange="applyFilters('tasks')">
@@ -306,7 +306,7 @@
                                 <circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.5"/>
                                 <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                             </svg>
-                            <input type="text" id="procSearchInput" placeholder="Search processes…" oninput="applyFilters('processes')">
+                            <input type="text" id="procSearchInput" placeholder="Search processes…" oninput="debouncedApplyFilters()">
                         </div>
                         <div class="filter-date-wrap">
                             <input type="date" id="procFilterDate" onchange="applyFilters('processes')">
