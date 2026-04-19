@@ -25,7 +25,13 @@
     <link rel="apple-touch-icon" href="icon-192.png">
 
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <!-- Styles split by feature. tokens.css must load first so later files can reference its custom properties. -->
+    <link rel="stylesheet" href="styles/tokens.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/list.css">
+    <link rel="stylesheet" href="styles/sheet-views.css">
+    <link rel="stylesheet" href="styles/processes-tags.css">
+    <link rel="stylesheet" href="styles/stats-misc.css">
 </head>
 <body>
     <div class="wrapper">
@@ -487,7 +493,18 @@
         <img height="36" src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" border="0" alt="Buy Me a Coffee at ko-fi.com" />
     </a>
 
+    <!--
+      Classic scripts (not ES modules): all top-level `const`/`let`/`function`
+      declarations remain accessible across files via the shared global scope,
+      which keeps every inline `onclick="foo()"` in the markup working without
+      changes. Order matters — core first, pwa last (owns `window.onload`).
+    -->
     <script src="i18n.js"></script>
-    <script src="app.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/lists.js"></script>
+    <script src="js/interactions.js"></script>
+    <script src="js/views.js"></script>
+    <script src="js/actions.js"></script>
+    <script src="js/pwa.js"></script>
 </body>
 </html>
