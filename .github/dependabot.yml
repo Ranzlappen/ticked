@@ -1,0 +1,24 @@
+# Dependabot configuration for Ticked.
+#
+# The repo has no npm/pip/etc dependencies (vanilla HTML/CSS/JS, no build step),
+# so the only ecosystem worth watching is `github-actions` — bumps the action
+# versions pinned in .github/workflows/ once those exist.
+#
+# Weekly schedule, minor + patch updates grouped into one PR to keep noise low.
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      actions-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
