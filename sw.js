@@ -4,14 +4,24 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox
 // ── Precaching ───────────────────────────────────────────
 // IMPORTANT: Bump CACHE_REV on every deploy so Workbox invalidates stale assets.
 // Without this, PWA users will never receive updates after first install.
-const CACHE_REV = '20260415-4';
+const CACHE_REV = '20260419-1';
 
 workbox.precaching.precacheAndRoute([
     { url: './', revision: CACHE_REV },
     { url: 'index.html', revision: CACHE_REV },
-    { url: 'styles.css', revision: CACHE_REV },
+    { url: 'styles/tokens.css', revision: CACHE_REV },
+    { url: 'styles/layout.css', revision: CACHE_REV },
+    { url: 'styles/list.css', revision: CACHE_REV },
+    { url: 'styles/sheet-views.css', revision: CACHE_REV },
+    { url: 'styles/processes-tags.css', revision: CACHE_REV },
+    { url: 'styles/stats-misc.css', revision: CACHE_REV },
     { url: 'i18n.js', revision: CACHE_REV },
-    { url: 'app.js', revision: CACHE_REV },
+    { url: 'js/core.js', revision: CACHE_REV },
+    { url: 'js/lists.js', revision: CACHE_REV },
+    { url: 'js/interactions.js', revision: CACHE_REV },
+    { url: 'js/views.js', revision: CACHE_REV },
+    { url: 'js/actions.js', revision: CACHE_REV },
+    { url: 'js/pwa.js', revision: CACHE_REV },
     { url: 'manifest.json', revision: CACHE_REV },
     { url: 'icon-192.png', revision: CACHE_REV },
     { url: 'icon-512.png', revision: CACHE_REV },
