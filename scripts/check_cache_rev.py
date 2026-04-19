@@ -15,49 +15,79 @@ import re
 import subprocess
 import sys
 
-PRECACHED_FILES = {
-    "index.html",
-    "styles.css",
-    "app.js",
-    "i18n.js",
-    "manifest.json",
-    "icon-192.png",
-    "icon-512.png",
-    "icon-maskable-192.png",
-    "icon-maskable-512.png",
-}
 CACHE_REV_RE = re.compile(r"const\s+CACHE_REV\s*=\s*'([^']+)'")
+PRECACHE_URL_RE = re.compile(r"\{\s*url:\s*'([^']+)'\s*,\s*revision:")
 
 
 def cmd(*args: str) -> str:
     return subprocess.check_output(args, text=True).strip()
 
 
-def read_cache_rev_at(ref: str) -> str | None:
+def read_sw_at(ref: str) -> str | None:
     try:
-        source = cmd("git", "show", f"{ref}:sw.js")
+        return cmd("git", "show", f"{ref}:sw.js")
     except subprocess.CalledProcessError:
         return None
+
+
+def extract_cache_rev(source: str) -> str | None:
     m = CACHE_REV_RE.search(source)
     return m.group(1) if m else None
 
 
-def changed_files(base: str, head: str) -> set[str]:
-    out = cmd("git", "diff", "--name-only", base, head)
+def extract_precache_paths(source: str) -> set[str]:
+    """URLs listed in precacheAndRoute(), filtered to repo-relative paths.
+
+    Skips './' (the app root, aliased to index.html) since it can't be matched
+    against a file diff path. Also skips anything absolute or protocol-scheme,
+    though the current sw.js shape doesn't use those.
+    """
+    paths: set[str] = set()
+    for url in PRECACHE_URL_RE.findall(source):
+        if url in ("./", "/") or url.startswith(("http://", "https://", "//", "data:")):
+            continue
+        paths.add(url)
+    return paths
+
+
+def changed_files(base: str, head: str) -> set[str] | None:
+    """Return files changed between base..head, or None if git can't compare them.
+
+    Returns None (not raises) on any git failure — this check is advisory, and
+    a missing ref in CI shouldn't fail the whole job. The hard validators
+    (validate_html / validate_manifest / validate_sw) are the real gates.
+    """
+    try:
+        out = cmd("git", "diff", "--name-only", base, head)
+    except subprocess.CalledProcessError:
+        return None
     return {line.strip() for line in out.splitlines() if line.strip()}
 
 
 def main(base: str, head: str) -> int:
     changed = changed_files(base, head)
-    precached_changed = changed & PRECACHED_FILES
-    sw_changed = "sw.js" in changed
+    head_sw = read_sw_at(head)
+    if changed is None or head_sw is None:
+        msg = (
+            f"Could not diff {base[:7]}..{head[:7]} — skipping CACHE_REV check. "
+            "Ensure actions/checkout fetches both refs (fetch-depth: 0)."
+        )
+        print(f"::warning file=sw.js::{msg}")
+        print(f"WARNING: {msg}")
+        return 0
+
+    # Read precache paths from the HEAD sw.js — this stays correct across
+    # layout refactors (e.g. when app.js becomes js/*.js) without edits here.
+    precached = extract_precache_paths(head_sw)
+    precached_changed = changed & precached
 
     if not precached_changed:
         print("No precached assets changed — CACHE_REV bump not required.")
         return 0
 
-    base_rev = read_cache_rev_at(base)
-    head_rev = read_cache_rev_at(head)
+    base_sw = read_sw_at(base)
+    base_rev = extract_cache_rev(base_sw) if base_sw else None
+    head_rev = extract_cache_rev(head_sw)
 
     if base_rev != head_rev:
         print(

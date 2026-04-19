@@ -39,6 +39,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The CACHE_REV bump-reminder step diffs base..head; checkout's default
+          # fetch-depth=1 gives us the merge commit but not the PR head, which
+          # makes `git diff base head` error with "bad object". Full history is
+          # cheap on a repo this size.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -59,6 +65,4 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          git fetch --no-tags --depth=1 origin "$BASE_SHA"
-          python3 scripts/check_cache_rev.py "$BASE_SHA" "$HEAD_SHA"
+        run: python3 scripts/check_cache_rev.py "$BASE_SHA" "$HEAD_SHA"
