@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'styles.css'
+      - 'app.js'
+      - 'i18n.js'
+      - 'sw.js'
+      - 'manifest.json'
+      - 'icon-*.png'
+      - '.github/workflows/ci.yml'
+      - 'scripts/**'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'styles.css'
+      - 'app.js'
+      - 'i18n.js'
+      - 'sw.js'
+      - 'manifest.json'
+      - 'icon-*.png'
+      - '.github/workflows/ci.yml'
+      - 'scripts/**'
+
+# Cancel a stale PR run when new commits land on the same PR.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate-static:
+    name: Validate static shell
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate HTML parses
+        run: python3 scripts/validate_html.py index.html
+
+      - name: Validate manifest.json
+        run: python3 scripts/validate_manifest.py manifest.json
+
+      - name: Validate sw.js precache & CACHE_REV
+        run: python3 scripts/validate_sw.py sw.js
+
+      - name: Warn if precached assets changed without a CACHE_REV bump
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          python3 scripts/check_cache_rev.py "$BASE_SHA" "$HEAD_SHA"
