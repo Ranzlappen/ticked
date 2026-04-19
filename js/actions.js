@@ -281,7 +281,7 @@ function mergeImportedData(parsed) {
 
     setState({ entries: mergedEntries, processes: mergedProcs, palette: newPalette });
     initPalette();
-    save();
+    saveNow();
 
     return {
         newEntries: newEntries.length,

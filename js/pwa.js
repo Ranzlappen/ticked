@@ -175,7 +175,25 @@ inputText.addEventListener('keypress', e => { if (e.key === 'Enter') addEntry();
 procInputText.addEventListener('keypress', e => { if (e.key === 'Enter') addProcess(); });
 
 // ── Init ──────────────────────────────────────────────────
-window.onload = () => { load(); applySettings(loadSettings()); initTooltip(); initKofi(); initStats(); initPWA(); initPersistentLogBell(); initExternalLinkHandler(); };
+window.addEventListener('load', async () => {
+    await load();
+    applySettings(loadSettings());
+    initTooltip();
+    initKofi();
+    initStats();
+    initPWA();
+    initPersistentLogBell();
+    initExternalLinkHandler();
+});
+
+// Force a flush on tab close / hide so pending debounced saves don't lose data.
+// visibilitychange→hidden is the reliable signal on mobile Safari where
+// beforeunload often doesn't fire.
+window.addEventListener('beforeunload', () => { saveNow(); });
+window.addEventListener('pagehide',     () => { saveNow(); });
+window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') saveNow();
+});
 
 // ── PWA + Notification system ────────────────────────────
 let _swRegistration = null;
