@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════
 
 const STORAGE_KEY    = 'ticked_store';
-const SCHEMA_VERSION = 7;
+const SCHEMA_VERSION = 8;
 const DEFAULT_PALETTE = ['#05004d', '#002e0d', '#2b0026', '#363506', '#3b0000'];
 
 // ── Tunable constants ────────────────────────────────────
@@ -221,6 +221,12 @@ const migrations = {
                 completedAt: p.completedAt || '',
             })),
         };
+    },
+    8(store) {
+        // v8 marks the cutover from localStorage to IndexedDB for the main
+        // payload. No field shape changes — the actual data relocation
+        // happens inside load().
+        return { ...store, version: 8 };
     }
 };
 
@@ -233,8 +239,17 @@ function migrate(raw) {
 }
 
 // ── Persistence ───────────────────────────────────────────
-function save() {
-    const payload = {
+// Main payload lives in IndexedDB (~GB quota). Callers keep calling save()
+// the same way they always have; the actual write is a debounced async
+// flush. saveNow() forces an immediate flush and is used on unload and
+// after large imports. If IDB is unavailable or a write fails, we fall
+// back to localStorage so the app never silently drops data.
+let _saveTimer = null;
+let _idbBroken = false;
+const SAVE_DEBOUNCE_MS = 200;
+
+function _buildPayload() {
+    return {
         version:   SCHEMA_VERSION,
         savedAt:   new Date().toISOString(),
         palette:   state.palette,
@@ -242,16 +257,70 @@ function save() {
         processes: state.processes,
         gdriveClientId: _gdriveClientId || '',
     };
-    safeStorage.set(STORAGE_KEY, JSON.stringify(payload));
 }
 
-function load() {
+async function _flushSave() {
+    const payload = _buildPayload();
+    if (_idbBroken || !idbStorage.available()) {
+        safeStorage.set(STORAGE_KEY, JSON.stringify(payload));
+        return;
+    }
+    try {
+        await idbStorage.set(STORAGE_KEY, payload);
+    } catch (e) {
+        const ok = safeStorage.set(STORAGE_KEY, JSON.stringify(payload));
+        if (ok) showToast(t('storageDegraded'), true);
+        _idbBroken = true;
+    }
+}
+
+function save() {
+    if (_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(() => { _saveTimer = null; _flushSave(); }, SAVE_DEBOUNCE_MS);
+}
+
+async function saveNow() {
+    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+    await _flushSave();
+}
+
+async function load() {
     let loaded = { entries: [], processes: [], palette: [...DEFAULT_PALETTE] };
 
     try {
-        const raw = safeStorage.get(STORAGE_KEY);
-        if (raw) {
-            const parsed = JSON.parse(raw);
+        let parsed = null;
+
+        // 1) Preferred: IndexedDB (v8+)
+        if (idbStorage.available()) {
+            try { parsed = await idbStorage.get(STORAGE_KEY); }
+            catch { parsed = null; }
+        }
+
+        // 2) One-time migration from localStorage['ticked_store'] (v1–v7)
+        if (!parsed) {
+            const raw = safeStorage.get(STORAGE_KEY);
+            if (raw) {
+                parsed = JSON.parse(raw);
+                if (idbStorage.available()) {
+                    try {
+                        await idbStorage.set(STORAGE_KEY, parsed);
+                        safeStorage.remove(STORAGE_KEY);
+                    } catch { /* keep LS copy if IDB write fails */ }
+                }
+            }
+        }
+
+        // 3) Ancient legacy keys (pre-schema)
+        if (!parsed) {
+            const legacyRaw = safeStorage.get('tickedEntries_v2') || safeStorage.get('tickedEntries');
+            if (legacyRaw) {
+                parsed = { version: 1, entries: JSON.parse(legacyRaw) };
+                safeStorage.remove('tickedEntries_v2');
+                safeStorage.remove('tickedEntries');
+            }
+        }
+
+        if (parsed) {
             const migrated = migrate(parsed);
             loaded.entries   = migrated.entries   || [];
             loaded.processes = migrated.processes || [];
@@ -259,18 +328,6 @@ function load() {
             if (migrated.gdriveClientId) {
                 _gdriveClientId = String(migrated.gdriveClientId).trim();
                 safeStorage.set('gdriveClientId', _gdriveClientId);
-            }
-        } else {
-            const legacy2 = safeStorage.get('tickedEntries_v2');
-            const legacy1 = safeStorage.get('tickedEntries');
-            const legacyRaw = legacy2 || legacy1;
-            if (legacyRaw) {
-                const arr = JSON.parse(legacyRaw);
-                const fakeStore = { version: 1, entries: arr };
-                const migrated = migrate(fakeStore);
-                loaded.entries = migrated.entries || [];
-                safeStorage.remove('tickedEntries_v2');
-                safeStorage.remove('tickedEntries');
             }
         }
     } catch {

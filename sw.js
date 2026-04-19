@@ -4,7 +4,7 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox
 // ── Precaching ───────────────────────────────────────────
 // IMPORTANT: Bump CACHE_REV on every deploy so Workbox invalidates stale assets.
 // Without this, PWA users will never receive updates after first install.
-const CACHE_REV = '20260419-1';
+const CACHE_REV = '20260419-2';
 
 workbox.precaching.precacheAndRoute([
     { url: './', revision: CACHE_REV },
@@ -16,6 +16,7 @@ workbox.precaching.precacheAndRoute([
     { url: 'styles/processes-tags.css', revision: CACHE_REV },
     { url: 'styles/stats-misc.css', revision: CACHE_REV },
     { url: 'i18n.js', revision: CACHE_REV },
+    { url: 'js/storage.js', revision: CACHE_REV },
     { url: 'js/core.js', revision: CACHE_REV },
     { url: 'js/lists.js', revision: CACHE_REV },
     { url: 'js/interactions.js', revision: CACHE_REV },
