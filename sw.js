@@ -1,4 +1,4 @@
-const CACHE = 'ticked-v6';
+const CACHE = 'ticked-v7';
 const PRECACHE = [
     './',
     './index.html',
@@ -7,6 +7,7 @@ const PRECACHE = [
     './manifest.json',
     './icon-192.png',
     './icon-512.png',
+    './install-prompt.js',
 ];
 
 self.addEventListener('install', e => {

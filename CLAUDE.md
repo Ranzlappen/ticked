@@ -25,6 +25,12 @@ Ticked is a Process & Workflow Tracker — a PWA built with vanilla HTML/CSS/JS.
 - Test on mobile viewport sizes — the app is primarily used on phones
 - Preserve localStorage backwards compatibility when changing data structures
 
+## PWA Maintenance
+- Do not remove or rename `manifest.json`, `sw.js`, or `install-prompt.js`
+- Do not remove the service worker registration in `app.js` (`initPWA` function)
+- After modifying any cached asset, bump the cache version in `sw.js` (line 1)
+- The `install-prompt.js` script auto-triggers the native install dialog on first visit
+
 ## GitHub Pages
 This app is deployed via GitHub Pages from the `main` branch root.
 Live at: https://ranzlappen.github.io/ticked/
