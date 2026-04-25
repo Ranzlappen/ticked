@@ -38,7 +38,7 @@ jobs:
     name: Validate static shell
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # The CACHE_REV bump-reminder step diffs base..head; checkout's default
           # fetch-depth=1 gives us the merge commit but not the PR head, which
