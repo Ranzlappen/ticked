@@ -1,0 +1,329 @@
+/* ── Checkpoint Timeline (Processes) ── */
+.cp-track {
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 8px 0 4px;
+    margin-top: 8px;
+    user-select: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0px, #000 12px, #000 calc(100% - 12px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0px, #000 12px, #000 calc(100% - 12px), transparent 100%);
+    touch-action: pan-x; /* allow horizontal scroll, don't fight card swipe */
+    cursor: grab;
+}
+
+.cp-track:active { cursor: grabbing; }
+
+.cp-track::-webkit-scrollbar { height: 3px; }
+.cp-track::-webkit-scrollbar-track { background: transparent; }
+.cp-track::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.cp-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    position: relative;
+    min-width: max-content;
+    padding: 0 8px;
+}
+
+.cp-spine {
+    position: absolute;
+    top: 7px;
+    left: calc(8px + 30px);
+    right: calc(8px + 40px + 30px); /* skip add-btn width */
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+    border-radius: 1px;
+}
+
+.cp-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+    z-index: 1;
+    width: 60px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.cp-node:hover { opacity: 0.85; }
+
+/* Quick-add checkpoint button at end of row */
+.cp-add-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+    z-index: 1;
+    width: 40px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    opacity: 0.35;
+    padding-top: 0;
+}
+
+.cp-add-btn:hover {
+    opacity: 0.7;
+    transform: scale(1.1);
+}
+
+.cp-add-btn:active {
+    transform: scale(0.95);
+}
+
+.cp-add-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.cp-add-btn:hover .cp-add-dot {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+}
+
+.cp-add-dot svg {
+    color: var(--text-muted);
+    transition: color 0.15s ease;
+}
+
+.cp-add-btn:hover .cp-add-dot svg {
+    color: var(--accent);
+}
+
+.cp-add-label {
+    font-family: var(--mono);
+    font-size: 0.42rem;
+    color: var(--text-muted);
+    text-align: center;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+}
+
+.cp-add-btn:hover .cp-add-label {
+    color: var(--accent);
+}
+
+.cp-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2.5px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cp-dot.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim), 0 0 8px var(--accent-glow);
+}
+
+.cp-dot.completed {
+    background: var(--accent);
+    border-color: var(--accent);
+    opacity: 0.55;
+}
+
+.cp-node:hover .cp-dot {
+    transform: scale(1.4);
+}
+
+.cp-node.active .cp-dot::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    opacity: 0.35;
+    animation: pulse-ring 2.4s ease-in-out infinite;
+}
+
+.cp-stem {
+    width: 1px;
+    height: 10px;
+    background: var(--border);
+    opacity: 0.3;
+    flex-shrink: 0;
+}
+
+.cp-stem.active {
+    background: var(--accent);
+    opacity: 0.4;
+}
+
+.cp-label {
+    font-family: var(--mono);
+    font-size: 0.48rem;
+    color: var(--text-muted);
+    text-align: center;
+    max-width: 56px;
+    line-height: 1.2;
+    transition: color 0.15s ease;
+    word-break: break-word;
+}
+
+.cp-node.active .cp-label {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.cp-node.completed .cp-label {
+    color: var(--text-dim);
+}
+
+.cp-due {
+    font-family: var(--mono);
+    font-size: 0.42rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+.cp-due.overdue {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+/* ── Stage detail in sheet ── */
+.stage-detail-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 0;
+}
+
+.stage-detail-form textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 10px 14px;
+    outline: none;
+    resize: vertical;
+    min-height: 120px;
+    transition: border-color var(--transition);
+}
+
+.stage-detail-form textarea:focus { border-color: var(--accent); }
+
+/* Larger resize handle for touch targets */
+.stage-detail-form textarea::-webkit-resizer {
+    background: transparent;
+    border-width: 0 0 12px 12px;
+    border-style: solid;
+    border-color: transparent transparent var(--border) transparent;
+    cursor: ns-resize;
+}
+
+/* ── Tab content panels ── */
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+/* ── Tag Input ── */
+.tag-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.tag-input-label {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+}
+
+.tag-text-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color var(--transition);
+    -webkit-appearance: none;
+}
+
+.tag-text-input::placeholder { color: var(--text-muted); }
+.tag-text-input:focus { border-color: var(--accent); }
+
+/* ── Entry Tag Chips ── */
+.entry-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.entry-tag-chip {
+    font-family: var(--mono);
+    font-size: 0.56rem;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid rgba(0, 229, 160, 0.25);
+    border-radius: 4px;
+    padding: 1px 6px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+/* ── Tag Filter Chips ── */
+.filter-tag-chips {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-tag-chips:empty { display: none; }
+
+.filter-tag-chips .filter-chip-label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+}
+
+.filter-chip.tag-filter-chip {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+}
+
+.filter-chip.tag-filter-chip.active {
+    background: var(--accent-dim);
+    border-color: rgba(0, 229, 160, 0.55);
+    color: var(--accent);
+}
+
