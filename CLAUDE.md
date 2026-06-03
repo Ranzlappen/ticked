@@ -45,7 +45,7 @@ After changing any precached asset (`index.html`, anything under `styles/`, anyt
 
 | Change | CI | Deploy |
 | --- | --- | --- |
-| Source (`index.html`, `styles/**`, `js/**`, `i18n.js`, `sw.js`, `manifest.json`, `icon-*.png`) | ✓ | ✓ |
+| Source (`index.html`, `styles/**`, `js/**`, `i18n.js`, `sw.js`, `manifest.json`, `icons/**`) | ✓ | ✓ |
 | Workflow or validator script (`.github/workflows/ci.yml`, `scripts/**`) | ✓ | ✓ |
 | Docs (`README.md`, `CLAUDE.md`, `LICENSE`) | — | ✓ (Pages rebuilds on every push but nothing user-visible changes) |
 
@@ -78,8 +78,12 @@ ticked/
 ├── i18n.js                     # language dictionaries + settings persistence
 ├── sw.js                       # Workbox service worker (root path is load-bearing)
 ├── manifest.json               # PWA manifest (start_url/scope/id must stay './')
-├── icon-{192,512}.png          # PWA icons (regular + maskable, 2 sizes each)
-├── icon-maskable-{192,512}.png
+├── icons/                      # favicon + PWA icon set (shared "icon universe")
+│   ├── favicon.ico             # multi-res 16/32/48
+│   ├── favicon-16x16.png  favicon-32x32.png
+│   ├── apple-touch-icon.png    # 180×180 on theme bg
+│   ├── icon-192.png  icon-512.png            # PWA "any"
+│   └── icon-maskable-192.png  icon-maskable-512.png
 ├── CNAME                       # custom domain for GitHub Pages
 ├── js/
 │   ├── core.js                 # constants, state, DOM refs, migrations, storage, utilities

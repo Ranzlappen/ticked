@@ -4,7 +4,7 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox
 // ── Precaching ───────────────────────────────────────────
 // IMPORTANT: Bump CACHE_REV on every deploy so Workbox invalidates stale assets.
 // Without this, PWA users will never receive updates after first install.
-const CACHE_REV = '20260419-2';
+const CACHE_REV = '20260603-1';
 
 workbox.precaching.precacheAndRoute([
     { url: './', revision: CACHE_REV },
@@ -24,10 +24,14 @@ workbox.precaching.precacheAndRoute([
     { url: 'js/actions.js', revision: CACHE_REV },
     { url: 'js/pwa.js', revision: CACHE_REV },
     { url: 'manifest.json', revision: CACHE_REV },
-    { url: 'icon-192.png', revision: CACHE_REV },
-    { url: 'icon-512.png', revision: CACHE_REV },
-    { url: 'icon-maskable-192.png', revision: CACHE_REV },
-    { url: 'icon-maskable-512.png', revision: CACHE_REV },
+    { url: 'icons/favicon.ico', revision: CACHE_REV },
+    { url: 'icons/favicon-16x16.png', revision: CACHE_REV },
+    { url: 'icons/favicon-32x32.png', revision: CACHE_REV },
+    { url: 'icons/apple-touch-icon.png', revision: CACHE_REV },
+    { url: 'icons/icon-192.png', revision: CACHE_REV },
+    { url: 'icons/icon-512.png', revision: CACHE_REV },
+    { url: 'icons/icon-maskable-192.png', revision: CACHE_REV },
+    { url: 'icons/icon-maskable-512.png', revision: CACHE_REV },
 ]);
 
 // ── Runtime caching for Google Fonts ─────────────────────
