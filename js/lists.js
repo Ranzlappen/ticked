@@ -293,6 +293,14 @@ window.addEventListener('resize', lazyFallbackHandler, { passive: true });
 // ── Keyed DOM diffing (tasks) ─────────────────────────────
 const _listKeys = new Map();
 
+// Reset the keyed list: drop the cached node map AND the DOM it tracks.
+// Clearing the map alone desyncs it from entryList, so a later renderListView
+// re-creates every node alongside the orphaned ones (duplicate entries).
+function resetListView() {
+    _listKeys.clear();
+    entryList.innerHTML = '';
+}
+
 function renderListView(filtered, today) {
     const newIds = new Set(filtered.map(e => e.id));
 
@@ -331,6 +339,11 @@ function renderListView(filtered, today) {
 
 // ── Keyed DOM diffing (processes) ─────────────────────────
 const _procKeys = new Map();
+
+function resetProcessListView() {
+    _procKeys.clear();
+    processList.innerHTML = '';
+}
 
 function renderProcessListView(filtered, today) {
     const newIds = new Set(filtered.map(p => p.id));

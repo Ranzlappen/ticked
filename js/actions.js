@@ -23,11 +23,11 @@ function render() {
             renderListView(visibleTasks, today);
             lazyFallbackHandler();
         } else if (currentView === 'timeline') {
-            _listKeys.clear();
+            resetListView();
             tasksLazyLoader.style.display = 'none';
             renderTimelineView(tasksFiltered, today);
         } else if (currentView === 'daily') {
-            _listKeys.clear();
+            resetListView();
             tasksLazyLoader.style.display = 'none';
             renderDailyView(tasksFiltered, today);
         }
@@ -227,11 +227,11 @@ function renderTagFilterChips(tab) {
 function clearAll(tab) {
     if (tab === 'tasks') {
         if (!confirm(t('confirmClearEntries'))) return;
-        _listKeys.clear();
+        resetListView();
         setState({ entries: [] });
     } else {
         if (!confirm(t('confirmClearProcesses'))) return;
-        _procKeys.clear();
+        resetProcessListView();
         setState({ processes: [] });
     }
     save();
