@@ -239,6 +239,9 @@ function clearAll(tab) {
 
 // ── Export / Import shared helpers ────────────────────────
 function buildExportPayload() {
+    // gdriveClientId is intentionally NOT exported: it's device/account-identifying
+    // metadata a user wouldn't expect in a backup they share or upload. Import still
+    // restores it from older backups that include it (see mergeImportedData).
     return {
         app:        t('ticked'),
         version:    SCHEMA_VERSION,
@@ -246,7 +249,6 @@ function buildExportPayload() {
         palette:    state.palette,
         entries:    state.entries,
         processes:  state.processes,
-        gdriveClientId: _gdriveClientId || '',
     };
 }
 
