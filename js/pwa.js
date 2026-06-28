@@ -363,6 +363,22 @@ function togglePersistentLogNotification() {
 
 let _deferredInstallPrompt = null;
 
+function syncInstallButton() {
+    const field = document.getElementById('installAppField');
+    if (field) field.style.display = _deferredInstallPrompt ? '' : 'none';
+}
+
+async function promptInstall() {
+    if (!_deferredInstallPrompt) return;
+    const promptEvent = _deferredInstallPrompt;
+    _deferredInstallPrompt = null;
+    syncInstallButton();
+    try {
+        promptEvent.prompt();
+        await promptEvent.userChoice;
+    } catch (_) { /* user dismissed or prompt unavailable */ }
+}
+
 async function initPWA() {
     if ('serviceWorker' in navigator) {
         try {
@@ -384,11 +400,15 @@ async function initPWA() {
 
     // Native install prompt support
     window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault();
         _deferredInstallPrompt = e;
+        syncInstallButton();
     });
     window.addEventListener('appinstalled', () => {
         _deferredInstallPrompt = null;
+        syncInstallButton();
     });
+    syncInstallButton();
 
     // Handle hash-based actions from notification clicks (when app was not open)
     const hash = new URLSearchParams(location.hash.replace(/^#/, ''));

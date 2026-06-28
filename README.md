@@ -69,7 +69,7 @@ The PWA install prompt and offline cache only work over HTTP(S), not `file://`.
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
-| _none yet_ | — | A static-HTML validation workflow lands in a follow-up PR. |
+| [`ci.yml`](./.github/workflows/ci.yml) | PRs + pushes to `main` touching source, the workflow, or the validators | Static validation: HTML parses, manifest identity + icons, SW precache list + `CACHE_REV` format & bump reminder, i18n dictionary parity |
 
 Deployment is GitHub Pages from the `main` branch root, served on the custom domain `ticked.ranzlappen.com` (see `CNAME`).
 

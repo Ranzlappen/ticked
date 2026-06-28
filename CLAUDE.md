@@ -31,14 +31,14 @@ After changing any precached asset (`index.html`, anything under `styles/`, anyt
 * **`sw.js` lives at the repo root.** GitHub Pages doesn't allow custom `Service-Worker-Allowed` headers, so moving the file would shrink its scope and break installed users.
 * **Manifest identity is fixed.** `start_url`, `scope`, and `id` are all `./`. Changing them invalidates every installed PWA on every user's home screen.
 * **Mobile-first.** The primary target is a phone in portrait. Test responsive breakpoints, not just desktop.
-* **i18n covers everything user-visible.** New strings go through `t('key')` and into all four dictionaries in `i18n.js` (en/es/de/fr).
+* **i18n covers everything user-visible.** New strings go through `t('key')` and into all four dictionaries in `i18n.js` (en/es/de/fr). Static markup localizes via `data-i18n` (text), `data-i18n-placeholder`, `data-i18n-title`, `data-i18n-aria-label`, and `data-i18n-html` attributes, applied by `localizeStaticHTML()`. Key parity across the four dictionaries (and that referenced keys exist) is enforced in CI by `scripts/validate_i18n.py`.
 * **`gdriveClientId` is user-supplied.** The app never ships a Google Drive client ID — users paste their own in Settings. Don't commit any secret.
 
 ## Deployment & CI/CD
 
 | Workflow | Trigger | Scope | Deploys |
 | --- | --- | --- | --- |
-| [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) | PRs + pushes to `main` touching source or the workflow itself | static validation: HTML parses, manifest identity + icons, SW precache list + `CACHE_REV` format, CACHE_REV-bump reminder on PRs | Nothing (validation only) |
+| [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) | PRs + pushes to `main` touching source or the workflow itself | static validation: HTML parses, manifest identity + icons, SW precache list + `CACHE_REV` format, i18n dictionary parity, CACHE_REV-bump reminder on PRs | Nothing (validation only) |
 | GitHub Pages (built-in) | push to `main` | repo root | `ticked.ranzlappen.com` (custom domain via `CNAME`) |
 
 **What fires on a given change:**
@@ -103,6 +103,7 @@ ticked/
 │   ├── validate_html.py        # HTML parses + local refs resolve
 │   ├── validate_manifest.py    # manifest JSON valid + identity fields unchanged
 │   ├── validate_sw.py          # sw.js precache list + CACHE_REV format
+│   ├── validate_i18n.py        # i18n dictionary parity + referenced-key resolution
 │   └── check_cache_rev.py      # PR-only bump reminder
 ├── .github/
 │   ├── dependabot.yml          # weekly github-actions updates, grouped

@@ -43,6 +43,7 @@ function openSettingsModal() {
     applySettings(s);
     document.getElementById('settingsModalOverlay').classList.add('open');
     document.body.classList.add('sheet-open');
+    if (typeof syncInstallButton === 'function') syncInstallButton();
 }
 function closeSettingsModal() {
     document.getElementById('settingsModalOverlay').classList.remove('open');
@@ -60,18 +61,19 @@ function localizeStaticHTML() {
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
     document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel)); });
     document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
 }
 
 const I18N = {
 en: {
-entries:'entries',entry:'entry',process:'process',processes:'Processes',today:'Today',yesterday:'Yesterday',
-delete:'Delete',cancel:'Cancel',save:'Save',close:'Close',apply:'Apply',
+entries:'entries',entry:'entry',processes:'Processes',today:'Today',yesterday:'Yesterday',
+cancel:'Cancel',save:'Save',apply:'Apply',
 custom:'custom',edited:'edited',completed:'completed',noText:'(no text)',
 log:'Log',logTab:'✔ Log',processesTab:'⟳ Processes',palette:'Palette',
 dayStreak:'{n} day streak',thisWeek:'{n} this week',less:'Less',more:'More',
 enterNote:'Enter a note (optional)…',logEntry:'Log Entry',customTimestamp:'Custom timestamp',
-logCustom:'Log ✦',tagsPlaceholder:'Tags (comma-separated)…',
+logCustom:'Log ✦',tagsPlaceholder:'Tags (comma-separated)…',tagsLabel:'Tags:',dateLabel:'Date',timeLabel:'Time',
 hintLog:'↵ Press Enter to log · timestamp is added automatically',
 enterProcessName:'Enter process name…',addProcess:'Add Process',
 hintProcess:'↵ Press Enter to add · processes track work through checkpoints',
@@ -142,7 +144,7 @@ quickLogReady:'Quick log is ready — tap Log now anytime.',logNow:'Log now',
 ticked:'Ticked',checkpointReminder:'Checkpoint: {name}',
 checkpointDueNow:'Process "{proc}" — {name} is due now.',
 preview:'Preview',settings:'Settings',language:'Language',
-headingFont:'Heading Font',bodyFont:'Body Font',
+headingFont:'Heading Font',bodyFont:'Body Font',installAppLabel:'Install',installApp:'Install app',
 resultsOf:'{filtered} of {total} entries',procResultsOf:'{filtered} of {total} processes',
 nEntries:'{n} entries',oneEntry:'1 entry',
 loadingMore:'Loading more entries…',loadingMoreProcesses:'Loading more processes…',
@@ -160,13 +162,13 @@ syncedEntries:'Synced {n} entries from Drive',syncedProcesses:'Synced {n} proces
 alreadyUpToDate:'Already up to date with Drive',
 },
 es: {
-entries:'entradas',entry:'entrada',process:'proceso',processes:'Procesos',today:'Hoy',yesterday:'Ayer',
-delete:'Eliminar',cancel:'Cancelar',save:'Guardar',close:'Cerrar',apply:'Aplicar',
+entries:'entradas',entry:'entrada',processes:'Procesos',today:'Hoy',yesterday:'Ayer',
+cancel:'Cancelar',save:'Guardar',apply:'Aplicar',
 custom:'personalizado',edited:'editado',completed:'completado',noText:'(sin texto)',
 log:'Registro',logTab:'✔ Registro',processesTab:'⟳ Procesos',palette:'Paleta',
 dayStreak:'{n} días de racha',thisWeek:'{n} esta semana',less:'Menos',more:'Más',
 enterNote:'Escribe una nota (opcional)…',logEntry:'Registrar',customTimestamp:'Marca de tiempo personalizada',
-logCustom:'Registrar ✦',tagsPlaceholder:'Etiquetas (separadas por comas)…',
+logCustom:'Registrar ✦',tagsPlaceholder:'Etiquetas (separadas por comas)…',tagsLabel:'Etiquetas:',dateLabel:'Fecha',timeLabel:'Hora',
 hintLog:'↵ Presiona Enter para registrar · la marca de tiempo se agrega automáticamente',
 enterProcessName:'Nombre del proceso…',addProcess:'Agregar Proceso',
 hintProcess:'↵ Presiona Enter para agregar · los procesos rastrean el trabajo mediante puntos de control',
@@ -239,7 +241,7 @@ quickLogReady:'Registro rápido listo — toca Registrar ahora en cualquier mome
 ticked:'Ticked',checkpointReminder:'Punto de control: {name}',
 checkpointDueNow:'Proceso "{proc}" — {name} vence ahora.',
 preview:'Vista Previa',settings:'Configuración',language:'Idioma',
-headingFont:'Fuente de Título',bodyFont:'Fuente de Texto',
+headingFont:'Fuente de Título',bodyFont:'Fuente de Texto',installAppLabel:'Instalar',installApp:'Instalar app',
 resultsOf:'{filtered} de {total} entradas',procResultsOf:'{filtered} de {total} procesos',
 nEntries:'{n} entradas',oneEntry:'1 entrada',
 loadingMore:'Cargando más entradas…',loadingMoreProcesses:'Cargando más procesos…',
@@ -257,13 +259,13 @@ syncedEntries:'{n} entradas sincronizadas desde Drive',syncedProcesses:'{n} proc
 alreadyUpToDate:'Ya actualizado con Drive',
 },
 de: {
-entries:'Einträge',entry:'Eintrag',process:'Prozess',processes:'Prozesse',today:'Heute',yesterday:'Gestern',
-delete:'Löschen',cancel:'Abbrechen',save:'Speichern',close:'Schließen',apply:'Anwenden',
+entries:'Einträge',entry:'Eintrag',processes:'Prozesse',today:'Heute',yesterday:'Gestern',
+cancel:'Abbrechen',save:'Speichern',apply:'Anwenden',
 custom:'benutzerdefiniert',edited:'bearbeitet',completed:'abgeschlossen',noText:'(kein Text)',
 log:'Protokoll',logTab:'✔ Protokoll',processesTab:'⟳ Prozesse',palette:'Palette',
 dayStreak:'{n} Tage Serie',thisWeek:'{n} diese Woche',less:'Weniger',more:'Mehr',
 enterNote:'Notiz eingeben (optional)…',logEntry:'Eintragen',customTimestamp:'Benutzerdefinierter Zeitstempel',
-logCustom:'Eintragen ✦',tagsPlaceholder:'Tags (kommagetrennt)…',
+logCustom:'Eintragen ✦',tagsPlaceholder:'Tags (kommagetrennt)…',tagsLabel:'Tags:',dateLabel:'Datum',timeLabel:'Zeit',
 hintLog:'↵ Enter drücken zum Eintragen · Zeitstempel wird automatisch hinzugefügt',
 enterProcessName:'Prozessname eingeben…',addProcess:'Prozess Hinzufügen',
 hintProcess:'↵ Enter drücken · Prozesse verfolgen Arbeit durch Kontrollpunkte',
@@ -336,7 +338,7 @@ quickLogReady:'Schnellprotokoll bereit — tippe jederzeit auf Jetzt eintragen.'
 ticked:'Ticked',checkpointReminder:'Kontrollpunkt: {name}',
 checkpointDueNow:'Prozess "{proc}" — {name} ist jetzt fällig.',
 preview:'Vorschau',settings:'Einstellungen',language:'Sprache',
-headingFont:'Überschrift-Schriftart',bodyFont:'Text-Schriftart',
+headingFont:'Überschrift-Schriftart',bodyFont:'Text-Schriftart',installAppLabel:'Installieren',installApp:'App installieren',
 resultsOf:'{filtered} von {total} Einträgen',procResultsOf:'{filtered} von {total} Prozessen',
 nEntries:'{n} Einträge',oneEntry:'1 Eintrag',
 loadingMore:'Weitere Einträge laden…',loadingMoreProcesses:'Weitere Prozesse laden…',
@@ -354,13 +356,13 @@ syncedEntries:'{n} Einträge von Drive synchronisiert',syncedProcesses:'{n} Proz
 alreadyUpToDate:'Bereits auf dem neuesten Stand mit Drive',
 },
 fr: {
-entries:'entrées',entry:'entrée',process:'processus',processes:'Processus',today:"Aujourd'hui",yesterday:'Hier',
-delete:'Supprimer',cancel:'Annuler',save:'Enregistrer',close:'Fermer',apply:'Appliquer',
+entries:'entrées',entry:'entrée',processes:'Processus',today:"Aujourd'hui",yesterday:'Hier',
+cancel:'Annuler',save:'Enregistrer',apply:'Appliquer',
 custom:'personnalisé',edited:'modifié',completed:'terminé',noText:'(pas de texte)',
 log:'Journal',logTab:'✔ Journal',processesTab:'⟳ Processus',palette:'Palette',
 dayStreak:'{n} jours consécutifs',thisWeek:'{n} cette semaine',less:'Moins',more:'Plus',
 enterNote:'Écrire une note (optionnel)…',logEntry:'Enregistrer',customTimestamp:'Horodatage personnalisé',
-logCustom:'Enregistrer ✦',tagsPlaceholder:'Tags (séparés par des virgules)…',
+logCustom:'Enregistrer ✦',tagsPlaceholder:'Tags (séparés par des virgules)…',tagsLabel:'Tags :',dateLabel:'Date',timeLabel:'Heure',
 hintLog:'↵ Appuyez sur Entrée pour enregistrer · horodatage ajouté automatiquement',
 enterProcessName:'Nom du processus…',addProcess:'Ajouter Processus',
 hintProcess:'↵ Appuyez sur Entrée · les processus suivent le travail par points de contrôle',
@@ -433,7 +435,7 @@ quickLogReady:'Journal rapide prêt — appuyez sur Enregistrer maintenant à to
 ticked:'Ticked',checkpointReminder:'Point de contrôle : {name}',
 checkpointDueNow:'Processus "{proc}" — {name} est dû maintenant.',
 preview:'Aperçu',settings:'Paramètres',language:'Langue',
-headingFont:'Police de Titre',bodyFont:'Police de Texte',
+headingFont:'Police de Titre',bodyFont:'Police de Texte',installAppLabel:'Installer',installApp:'Installer l’app',
 resultsOf:'{filtered} sur {total} entrées',procResultsOf:'{filtered} sur {total} processus',
 nEntries:'{n} entrées',oneEntry:'1 entrée',
 loadingMore:'Chargement d\'entrées supplémentaires…',loadingMoreProcesses:'Chargement de processus supplémentaires…',

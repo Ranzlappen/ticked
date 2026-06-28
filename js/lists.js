@@ -118,6 +118,11 @@ function addProcessFromTemplate(templateKey) {
 }
 
 function deleteProcess(id) {
+    const proc = state.processes.find(p => p.id === id);
+    if (proc) {
+        const count = (proc.checkpoints || []).length;
+        for (let i = 0; i < count; i++) cancelCheckpointNotification(id, i);
+    }
     setState({ processes: state.processes.filter(p => p.id !== id) });
     save();
 }
@@ -360,7 +365,7 @@ function renderProcessListView(filtered, today) {
         const isToday     = displayDate === today;
         const displayTs   = isoToDisplayDate(proc.isoDate);
         const tagsKey     = (proc.tags || []).join(',');
-        const bodyKey     = `${proc.text}|${displayTs}|${isToday}|${proc.bgColor}|${proc.borderColor}|${tagsKey}|${proc.currentCheckpoint}|${JSON.stringify(proc.checkpoints)}`;
+        const bodyKey     = `${proc.text}|${displayTs}|${isToday}|${proc.bgColor}|${proc.borderColor}|${tagsKey}|${proc.currentCheckpoint}|${proc.completedAt || ''}|${JSON.stringify(proc.checkpoints)}`;
 
         if (_procKeys.has(proc.id)) {
             const cached = _procKeys.get(proc.id);

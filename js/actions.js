@@ -212,7 +212,7 @@ function renderTagFilterChips(tab) {
     container.innerHTML = '';
     const label = document.createElement('span');
     label.className = 'filter-chip-label';
-    label.textContent = 'Tags:';
+    label.textContent = t('tagsLabel');
     container.appendChild(label);
 
     tags.forEach(tag => {
