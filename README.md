@@ -8,7 +8,7 @@
 
 ## What this is
 
-Ticked is a single-page PWA for keeping a timestamped log and tracking processes that move through named checkpoints. It runs entirely in the browser, persists everything in `localStorage`, and works offline once installed. Mobile-first, dark by default, no account required.
+Ticked is a single-page PWA for keeping a timestamped log and tracking processes that move through named checkpoints. It runs entirely in the browser, stores your data locally (primarily in **IndexedDB**, with `localStorage` for small settings and as a migration/fallback path), and works offline once installed. Mobile-first, dark by default, no account required.
 
 Use it for: tracking work sessions, daily routines, recurring procedures, anything where you'd otherwise reach for a notes app and a stopwatch.
 
@@ -80,21 +80,22 @@ Deployment is GitHub Pages from the `main` branch root, served on the custom dom
 ```
 ticked/
 ├── index.html                  ← thin shell — markup + script tags
-├── styles.css                  ← all styles (theme tokens, layout, components)
-├── app.js                      ← all app logic (storage, UI, notifications, gdrive)
+├── styles/                     ← feature CSS (tokens, layout, list, sheets, processes, stats)
+├── js/                         ← feature JS (core, lists, interactions, views, actions, pwa, storage)
 ├── i18n.js                     ← language dictionaries + settings persistence
 ├── sw.js                       ← Workbox service worker (precaches the shell)
 ├── manifest.json               ← PWA manifest
-├── icon-*.png                  ← PWA icons (regular + maskable, 192 + 512)
+├── icons/                      ← PWA icon set (regular + maskable, 192 + 512, favicons, apple-touch)
+├── scripts/                    ← CI validators (pure stdlib Python)
 ├── CNAME                       ← custom domain for GitHub Pages
-├── CLAUDE.md                   ← architecture source of truth
+├── CLAUDE.md                   ← architecture source of truth (full module map)
 └── README.md                   ← this file
 ```
 
 **For everyday use** you only touch:
 
-* `app.js` — application logic.
-* `styles.css` — visual changes.
+* `js/*.js` — application logic (see [`CLAUDE.md`](./CLAUDE.md) for what each module owns).
+* `styles/*.css` — visual changes.
 * `i18n.js` — UI string changes / new languages.
 * `sw.js` — bump `CACHE_REV` after changing any precached asset.
 

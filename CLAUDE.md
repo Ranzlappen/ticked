@@ -4,7 +4,7 @@ A vanilla-JS PWA for timestamped logging and multi-checkpoint process tracking. 
 
 ## Architecture
 
-Single-page app served as static files from the repo root. No build step, no bundler, no package manager. The browser loads `index.html`, which pulls in six feature CSS files from `styles/`, `i18n.js`, and six feature JS files from `js/` directly. A Workbox-based service worker (`sw.js`) precaches the entire shell so the app works offline once installed. All user data lives in `localStorage`.
+Single-page app served as static files from the repo root. No build step, no bundler, no package manager. The browser loads `index.html`, which pulls in six feature CSS files from `styles/`, `i18n.js`, and six feature JS files from `js/` directly. A Workbox-based service worker (`sw.js`) precaches the entire shell so the app works offline once installed. The main user-data payload lives in **IndexedDB** (`ticked_idb` / `kv` / `ticked_store`); `localStorage` holds small settings and serves as the migration/fallback path (see "Storage keys are sacred" below).
 
 The whole project is a single "module" — there are no sub-projects.
 
@@ -32,6 +32,7 @@ After changing any precached asset (`index.html`, anything under `styles/`, anyt
 * **Manifest identity is fixed.** `start_url`, `scope`, and `id` are all `./`. Changing them invalidates every installed PWA on every user's home screen.
 * **Mobile-first.** The primary target is a phone in portrait. Test responsive breakpoints, not just desktop.
 * **i18n covers everything user-visible.** New strings go through `t('key')` and into all four dictionaries in `i18n.js` (en/es/de/fr). Static markup localizes via `data-i18n` (text), `data-i18n-placeholder`, `data-i18n-title`, `data-i18n-aria-label`, and `data-i18n-html` attributes, applied by `localizeStaticHTML()`. Key parity across the four dictionaries (and that referenced keys exist) is enforced in CI by `scripts/validate_i18n.py`.
+* **User/imported data never goes through `innerHTML`.** Render entry/process/checkpoint text and any imported-JSON values with `textContent` or DOM-node APIs. `innerHTML` is reserved for static markup (SVG/template snippets) and trusted localized strings via `data-i18n-html`. This keeps stored-XSS off the table even without a server-set CSP (GitHub Pages can't send one).
 * **`gdriveClientId` is user-supplied.** The app never ships a Google Drive client ID — users paste their own in Settings. Don't commit any secret.
 
 ## Deployment & CI/CD
@@ -66,7 +67,7 @@ After changing any precached asset (`index.html`, anything under `styles/`, anyt
 | Logic | Vanilla JS (ES2020+) | App behavior, storage, UI | Direct, debuggable, ages well |
 | i18n | Hand-written dictionaries | en/es/de/fr | No runtime dependency |
 | PWA shell | Workbox 7 (CDN, in SW) | Precache + runtime caching | Battle-tested SW patterns |
-| Storage | `localStorage` (JSON-serialized) | Persistent user data | Synchronous, simple, sufficient |
+| Storage | **IndexedDB** (primary) + `localStorage` (settings/fallback) | Persistent user data | Async + roomy for the payload; localStorage stays for small synchronous settings & migration |
 | Optional sync | Google Drive REST API | Backup/restore | User brings their own client ID |
 | Hosting | GitHub Pages + CNAME | Static delivery | Free, fast, SSL included |
 
