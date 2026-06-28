@@ -4,8 +4,8 @@ on:
   pull_request:
     paths:
       - 'index.html'
-      - 'styles.css'
-      - 'app.js'
+      - 'styles/**'
+      - 'js/**'
       - 'i18n.js'
       - 'sw.js'
       - 'manifest.json'
@@ -16,8 +16,8 @@ on:
     branches: [main]
     paths:
       - 'index.html'
-      - 'styles.css'
-      - 'app.js'
+      - 'styles/**'
+      - 'js/**'
       - 'i18n.js'
       - 'sw.js'
       - 'manifest.json'
@@ -59,6 +59,9 @@ jobs:
 
       - name: Validate sw.js precache & CACHE_REV
         run: python3 scripts/validate_sw.py sw.js
+
+      - name: Validate i18n dictionary parity
+        run: python3 scripts/validate_i18n.py i18n.js .
 
       - name: Warn if precached assets changed without a CACHE_REV bump
         if: github.event_name == 'pull_request'

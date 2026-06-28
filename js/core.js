@@ -342,7 +342,10 @@ async function load() {
     _gdriveClientId = _gdriveClientId || (safeStorage.get('gdriveClientId') || '').trim();
     if (gdriveClientInput) gdriveClientInput.value = _gdriveClientId;
     initPalette();
-    save();
+    // Persist the migrated/relocated payload immediately so a crash before the
+    // debounced save can't leave the pre-migration shape in IndexedDB and force
+    // a re-migration on next load.
+    await saveNow();
 }
 
 // ── Timestamp helpers ─────────────────────────────────────

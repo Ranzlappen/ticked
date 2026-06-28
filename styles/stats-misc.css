@@ -312,3 +312,19 @@
     border-radius: 50%;
     border: 2px solid rgba(255,255,255,0.12);
 }
+
+/* ── Visible keyboard focus indicator (a11y) ───────────────
+   Several controls set `outline: none` on :focus for aesthetics.
+   Restore a high-contrast ring for keyboard users only, so mouse
+   clicks stay clean while Tab navigation is always visible. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+[role="button"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
